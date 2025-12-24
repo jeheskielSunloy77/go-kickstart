@@ -10,6 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type AuthRepositoryInterface interface {
+	Save(ctx context.Context, user *model.User) error
+	CreateUser(ctx context.Context, user *model.User) error
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
+	GetByUsername(ctx context.Context, username string) (*model.User, error)
+	GetByGoogleID(ctx context.Context, googleID string) (*model.User, error)
+	UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error
+}
+
 type AuthRepository struct {
 	db *gorm.DB
 }

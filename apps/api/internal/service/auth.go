@@ -25,7 +25,7 @@ var (
 )
 
 type AuthService struct {
-	repo           *repository.AuthRepository
+	repo           repository.AuthRepositoryInterface
 	secretKey      []byte
 	accessTokenTTL time.Duration
 	googleClientID string
@@ -41,7 +41,13 @@ type AuthResult struct {
 	Token AuthToken   `json:"token"`
 }
 
-func NewAuthService(cfg *config.AuthConfig, repo *repository.AuthRepository) *AuthService {
+type AuthServiceInterface interface {
+	Register(ctx context.Context, email, username, password string) (*AuthResult, error)
+	Login(ctx context.Context, identifier, password string) (*AuthResult, error)
+	LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error)
+}
+
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface) *AuthService {
 	return &AuthService{
 		repo:           repo,
 		secretKey:      []byte(cfg.SecretKey),

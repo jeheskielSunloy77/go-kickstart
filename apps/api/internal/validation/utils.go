@@ -27,6 +27,13 @@ func (c CustomValidationErrors) Error() string {
 }
 
 func BindAndValidate(c *fiber.Ctx, payload Validatable) error {
+	if len(c.Body()) == 0 {
+		if msg, fieldErrors := validateStruct(payload); fieldErrors != nil {
+			return errs.NewBadRequestError(msg, true, nil, fieldErrors, nil)
+		}
+		return nil
+	}
+
 	if err := c.BodyParser(payload); err != nil {
 		return errs.NewBadRequestError("Invalid request body", false, nil, nil, nil)
 	}

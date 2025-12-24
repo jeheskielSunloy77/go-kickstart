@@ -15,7 +15,7 @@ import (
 
 type AuthHandler struct {
 	Handler
-	authService *service.AuthService
+	authService service.AuthServiceInterface
 }
 
 type registerRequest struct {
@@ -45,7 +45,7 @@ func (r googleLoginRequest) Validate() error {
 	return validator.New().Struct(r)
 }
 
-func NewAuthHandler(h Handler, authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHandler {
 	return &AuthHandler{
 		Handler:     h,
 		authService: authService,
