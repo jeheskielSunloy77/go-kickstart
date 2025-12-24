@@ -1,0 +1,86 @@
+package middleware
+
+import (
+	"context"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/logger"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/server"
+	"github.com/newrelic/go-agent/v3/newrelic"
+	"github.com/rs/zerolog"
+)
+
+const (
+	UserIDKey   = "user_id"
+	UserRoleKey = "user_role"
+	LoggerKey   = "logger"
+)
+
+type ContextEnhancer struct {
+	server *server.Server
+}
+
+func NewContextEnhancer(s *server.Server) *ContextEnhancer {
+	return &ContextEnhancer{server: s}
+}
+
+func (ce *ContextEnhancer) EnhanceContext() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		requestID := GetRequestID(c)
+
+		contextLogger := ce.server.Logger.With().
+			Str("request_id", requestID).
+			Str("method", c.Method()).
+			Str("path", c.Path()).
+			Str("ip", c.IP()).
+			Logger()
+
+		if txn := newrelic.FromContext(c.UserContext()); txn != nil {
+			contextLogger = logger.WithTraceContext(contextLogger, txn)
+		}
+
+		if userID := ce.extractUserID(c); userID != "" {
+			contextLogger = contextLogger.With().Str("user_id", userID).Logger()
+		}
+
+		if userRole := ce.extractUserRole(c); userRole != "" {
+			contextLogger = contextLogger.With().Str("user_role", userRole).Logger()
+		}
+
+		c.Locals(LoggerKey, &contextLogger)
+
+		ctx := context.WithValue(c.UserContext(), LoggerKey, &contextLogger)
+		c.SetUserContext(ctx)
+
+		return c.Next()
+	}
+}
+
+func (ce *ContextEnhancer) extractUserID(c *fiber.Ctx) string {
+	if userID, ok := c.Locals("user_id").(string); ok && userID != "" {
+		return userID
+	}
+	return ""
+}
+
+func (ce *ContextEnhancer) extractUserRole(c *fiber.Ctx) string {
+	if userRole, ok := c.Locals("user_role").(string); ok && userRole != "" {
+		return userRole
+	}
+	return ""
+}
+
+func GetUserID(c *fiber.Ctx) string {
+	if userID, ok := c.Locals(UserIDKey).(string); ok {
+		return userID
+	}
+	return ""
+}
+
+func GetLogger(c *fiber.Ctx) *zerolog.Logger {
+	if logger, ok := c.Locals(LoggerKey).(*zerolog.Logger); ok {
+		return logger
+	}
+	logger := zerolog.Nop()
+	return &logger
+}

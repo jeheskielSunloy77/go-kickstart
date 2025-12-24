@@ -1,0 +1,57 @@
+package utils
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/google/uuid"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+)
+
+func PrintJSON(v any) {
+	json, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling to JSON:", err)
+		return
+	}
+	fmt.Println("JSON:", string(json))
+}
+
+func ParseUUIDParam(raw string) (uuid.UUID, error) {
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		return uuid.Nil, errs.NewBadRequestError("invalid id provided", true, nil, []errs.FieldError{{Field: "id", Error: "must be a valid uuid"}}, nil)
+	}
+	return id, nil
+}
+
+func ParseQueryInt(raw string, maxAndDefaultVal ...int) int {
+	var (
+		defaultVal int
+		max        *int
+	)
+
+	if len(maxAndDefaultVal) > 0 {
+		max = &maxAndDefaultVal[0]
+	}
+	if len(maxAndDefaultVal) > 1 {
+		defaultVal = maxAndDefaultVal[1]
+	}
+
+	if raw == "" {
+		return defaultVal
+	}
+
+	if v, err := strconv.Atoi(raw); err == nil {
+		if v < 1 {
+			return defaultVal
+		}
+		if max != nil && v > *max {
+			return *max
+		}
+		return v
+	}
+
+	return defaultVal
+}
