@@ -15,7 +15,7 @@ func registerRoutes(
 	// system routes
 	r.Get("/status", h.Health.CheckHealth)
 	r.Static("/static", "static")
-	r.Get("/docs", h.OpenAPI.ServeOpenAPIUI)
+	r.Get("/api/docs", h.OpenAPI.ServeOpenAPIUI)
 
 	// versioned routes
 	api := r.Group("/api/v1")

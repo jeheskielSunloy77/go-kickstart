@@ -23,7 +23,8 @@ const filePaths = ['./openapi.json', '../../apps/api/static/openapi.json']
 filePaths.forEach((filePath) => {
 	fs.writeFile(filePath, JSON.stringify(formattedDoc, null, 2), (err) => {
 		if (err) {
-			console.error(`Error writing to ${filePath}:`, err)
+			return console.error(`Error writing to ${filePath}:`, err)
 		}
+		console.log(`OpenAPI doc successfully written to ${filePath}`)
 	})
 })

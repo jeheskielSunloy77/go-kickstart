@@ -9,7 +9,13 @@
 		"lint": "turbo run lint",
 		"lint:fix": "turbo run lint:fix",
 		"typecheck": "turbo run typecheck",
-		"clean": "turbo run clean && rimraf node_modules"
+		"clean": "turbo run clean && rimraf node_modules",
+		"api:run": "cd apps/api && go run ./cmd/api",
+		"api:migrations-new": "cd apps/api && sh -c \"if [ -z '$$NAME' ]; then echo 'Error: NAME parameter is required'; echo 'Usage: bun run api:migrations-new -- NAME=migration_name'; exit 1; fi; migrate create -ext sql -dir ./internal/database/migrations -seq '$$NAME'\"",
+		"api:migrations-down": "cd apps/api && sh -c \"printf 'Are you sure? [y/N] ' && read ans && [ \"$${ans:-N}\" = \"y\" ] && migrate -database \"$$API_DB_DSN\" -path ./internal/database/migrations down 1 || echo 'Aborted'\"",
+		"api:migrations-up": "cd apps/api && sh -c \"printf 'Are you sure? [y/N] ' && read ans && [ \"$${ans:-N}\" = \"y\" ] && migrate -database \"$$API_DB_DSN\" -path ./internal/database/migrations up || echo 'Aborted'\"",
+		"api:tidy": "cd apps/api && go fmt ./... && go mod tidy && go mod verify",
+		"openapi:generate": "cd packages/openapi && bun generate"
 	},
 	"packageManager": "bun@1.2.13",
 	"engines": {

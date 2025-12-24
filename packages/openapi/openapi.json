@@ -1,101 +1,1134 @@
 {
-	"openapi": "3.0.2",
-	"paths": {
-		"/status": {
-			"get": {
-				"description": "Get health status",
-				"summary": "Get health",
-				"tags": ["Health"],
-				"parameters": [],
-				"operationId": "getHealth",
-				"responses": {
-					"200": {
-						"description": "200",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"status": {
-											"type": "string",
-											"enum": ["healthy", "unhealthy"]
-										},
-										"timestamp": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"environment": {
-											"type": "string"
-										},
-										"checks": {
-											"type": "object",
-											"properties": {
-												"database": {
-													"type": "object",
-													"properties": {
-														"status": {
-															"type": "string"
-														},
-														"response_time": {
-															"type": "string"
-														},
-														"error": {
-															"type": "string"
-														}
-													},
-													"required": ["status", "response_time"]
-												},
-												"redis": {
-													"type": "object",
-													"properties": {
-														"status": {
-															"type": "string"
-														},
-														"response_time": {
-															"type": "string"
-														},
-														"error": {
-															"type": "string"
-														}
-													},
-													"required": ["status", "response_time"]
-												}
-											},
-											"required": ["database"]
-										}
-									},
-									"required": ["status", "timestamp", "environment", "checks"]
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	},
-	"info": {
-		"version": "1.0.0",
-		"title": "go-kickstart REST API - Documentation",
-		"description": "go-kickstart REST API - Documentation"
-	},
-	"servers": [
-		{
-			"url": "http://localhost:8080",
-			"description": "Local Server"
-		}
-	],
-	"components": {
-		"securitySchemes": {
-			"bearerAuth": {
-				"type": "http",
-				"scheme": "bearer",
-				"bearerFormat": "JWT"
-			},
-			"x-service-token": {
-				"type": "apiKey",
-				"name": "x-service-token",
-				"in": "header"
-			}
-		}
-	}
+  "openapi": "3.0.2",
+  "paths": {
+    "/status": {
+      "get": {
+        "description": "Get health status",
+        "summary": "Get health",
+        "tags": [
+          "Health"
+        ],
+        "parameters": [],
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "healthy",
+                        "unhealthy"
+                      ]
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "environment": {
+                      "type": "string"
+                    },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "response_time": {
+                              "type": "string"
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status",
+                            "response_time"
+                          ]
+                        },
+                        "redis": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "response_time": {
+                              "type": "string"
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status",
+                            "response_time"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp",
+                    "environment",
+                    "checks"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "operationId": "register",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "email",
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "object",
+                          "properties": {
+                            "Time": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "Valid": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "Time",
+                            "Valid"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "username",
+                        "createdAt",
+                        "updatedAt",
+                        "deletedAt"
+                      ]
+                    },
+                    "token": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Login",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "operationId": "login",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "identifier",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "object",
+                          "properties": {
+                            "Time": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "Valid": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "Time",
+                            "Valid"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "username",
+                        "createdAt",
+                        "updatedAt",
+                        "deletedAt"
+                      ]
+                    },
+                    "token": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/google": {
+      "post": {
+        "summary": "Google login",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "operationId": "googleLogin",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "idToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "idToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "object",
+                          "properties": {
+                            "Time": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "Valid": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "Time",
+                            "Valid"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "username",
+                        "createdAt",
+                        "updatedAt",
+                        "deletedAt"
+                      ]
+                    },
+                    "token": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "description": "Retrieve a paginated list of Users that can be filtered, sorted, and preloaded.",
+        "summary": "Get Many Users",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "preloads",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_direction",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "operationId": "getMany",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "email": {
+                            "type": "string",
+                            "format": "email"
+                          },
+                          "username": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 50
+                          },
+                          "googleId": {
+                            "type": "string"
+                          },
+                          "lastLoginAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "deletedAt": {
+                            "type": "object",
+                            "properties": {
+                              "Time": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "Valid": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "Time",
+                              "Valid"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "username",
+                          "createdAt",
+                          "updatedAt",
+                          "deletedAt"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit",
+                    "totalPages"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "description": "Create a new User with the provided data, with validation and will return the created entity.",
+        "summary": "Store User",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [],
+        "operationId": "store",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  },
+                  "googleId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "object",
+                      "properties": {
+                        "Time": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "Valid": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "Time",
+                        "Valid"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "username",
+                    "createdAt",
+                    "updatedAt",
+                    "deletedAt"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "description": "Retrieve a single User by its unique identifier (ID), with optional preloaded relationships.",
+        "summary": "Get User by ID",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "preloads",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getById",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "object",
+                      "properties": {
+                        "Time": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "Valid": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "Time",
+                        "Valid"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "username",
+                    "createdAt",
+                    "updatedAt",
+                    "deletedAt"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Update an existing User by its ID with the provided data, and return the updated entity.",
+        "summary": "Update User",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "update",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "object",
+                      "properties": {
+                        "Time": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "Valid": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "Time",
+                        "Valid"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "username",
+                    "createdAt",
+                    "updatedAt",
+                    "deletedAt"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "description": "Soft delete the specified User by its ID. This action is reversible.",
+        "summary": "Destroy User",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "destroy",
+        "responses": {
+          "204": {
+            "description": "204"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/kill": {
+      "delete": {
+        "description": "Permanently delete the specified User by its ID. This action is irreversible.",
+        "summary": "Kill User",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "operationId": "kill",
+        "responses": {
+          "204": {
+            "description": "204"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/restore": {
+      "patch": {
+        "description": "Restore a previously soft-deleted User by its ID and then return the restored entity.",
+        "summary": "Restore User",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "preloads",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "restore",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "object",
+                      "properties": {
+                        "Time": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "Valid": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "Time",
+                        "Valid"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "username",
+                    "createdAt",
+                    "updatedAt",
+                    "deletedAt"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "version": "1.0.0",
+    "title": "go-kickstart REST API - Documentation",
+    "description": "go-kickstart REST API - Documentation"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "x-service-token": {
+        "type": "apiKey",
+        "name": "x-service-token",
+        "in": "header"
+      }
+    }
+  }
 }
