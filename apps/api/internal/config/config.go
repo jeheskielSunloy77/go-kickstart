@@ -87,9 +87,10 @@ type SMTPConfig struct {
 }
 
 type AuthConfig struct {
-	SecretKey      string        `koanf:"secret_key" validate:"required"`
-	AccessTokenTTL time.Duration `koanf:"access_token_ttl"`
-	GoogleClientID string        `koanf:"google_client_id"`
+	SecretKey            string        `koanf:"secret_key" validate:"required"`
+	AccessTokenTTL       time.Duration `koanf:"access_token_ttl"`
+	GoogleClientID       string        `koanf:"google_client_id"`
+	EmailVerificationTTL time.Duration `koanf:"email_verification_ttl"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -109,6 +110,10 @@ func LoadConfig() (*Config, error) {
 	err = k.Unmarshal("", mainConfig)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not unmarshal main config")
+	}
+
+	if mainConfig.Auth.EmailVerificationTTL == 0 {
+		mainConfig.Auth.EmailVerificationTTL = 24 * time.Hour
 	}
 
 	validate := validator.New()

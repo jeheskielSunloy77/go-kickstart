@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "email dev --dir ./src/templates -p 3001",
-		"export": "email export --pretty --dir ./src/templates --outDir ../../apps/api/templates/emails"
+		"generate": "email export --pretty --dir ./src/templates --outDir ../../apps/api/templates/emails"
 	},
 	"keywords": [],
 	"author": "",

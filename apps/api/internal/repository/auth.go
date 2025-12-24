@@ -17,6 +17,7 @@ type AuthRepositoryInterface interface {
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	GetByGoogleID(ctx context.Context, googleID string) (*model.User, error)
 	UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error
+	UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error
 }
 
 type AuthRepository struct {
@@ -75,5 +76,13 @@ func (r *AuthRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts tim
 		Model(&model.User{}).
 		Where("id = ?", id).
 		Update("last_login_at", ts).
+		Error
+}
+
+func (r *AuthRepository) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error {
+	return r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("id = ?", id).
+		Update("email_verified_at", ts).
 		Error
 }

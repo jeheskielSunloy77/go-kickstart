@@ -104,4 +104,4 @@
 
 - React Email templates live in `packages/emails/src/templates`.
 - Use Go template placeholders (e.g., `{{.UserFirstName}}`) to match `internal/lib/email` data keys.
-- Export HTML to `apps/api/templates/emails` via `bun run --cwd packages/emails export`.
+- Export HTML to `apps/api/templates/emails` via `bun run emails:generate`.

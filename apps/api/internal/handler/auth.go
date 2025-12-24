@@ -1,48 +1,18 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/service"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/validation"
 )
 
 type AuthHandler struct {
 	Handler
 	authService service.AuthServiceInterface
-}
-
-type registerRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Username string `json:"username" validate:"required,min=3,max=50"`
-	Password string `json:"password" validate:"required,min=8,max=128"`
-}
-
-type loginRequest struct {
-	Identifier string `json:"identifier" validate:"required"`
-	Password   string `json:"password" validate:"required"`
-}
-
-type googleLoginRequest struct {
-	IDToken string `json:"idToken" validate:"required"`
-}
-
-func (r registerRequest) Validate() error {
-	return validator.New().Struct(r)
-}
-
-func (r loginRequest) Validate() error {
-	return validator.New().Struct(r)
-}
-
-func (r googleLoginRequest) Validate() error {
-	return validator.New().Struct(r)
 }
 
 func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHandler {
@@ -52,60 +22,33 @@ func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHa
 	}
 }
 
-func (h *AuthHandler) Register(c *fiber.Ctx) error {
-	var req registerRequest
-	if err := validation.BindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(c.UserContext(), 10*time.Second)
-	defer cancel()
-
-	result, err := h.authService.Register(ctx, req.Email, req.Username, req.Password)
-	if err != nil {
-		return err
-	}
-
-	return c.Status(http.StatusCreated).JSON(result)
+func (h *AuthHandler) Register() fiber.Handler {
+	return Handle(h.Handler, func(c *fiber.Ctx, req *model.RegisterDTO) (*service.AuthResult, error) {
+		return h.authService.Register(c.UserContext(), req.Email, req.Username, req.Password)
+	}, http.StatusCreated, &model.RegisterDTO{})
 }
 
-func (h *AuthHandler) Login(c *fiber.Ctx) error {
-	var req loginRequest
-	if err := validation.BindAndValidate(c, &req); err != nil {
-		return err
-	}
+func (h *AuthHandler) Login() fiber.Handler {
+	return Handle(h.Handler, func(c *fiber.Ctx, req *model.LoginDTO) (*service.AuthResult, error) {
+		identifier := req.Identifier
+		if isEmail(identifier) {
+			identifier = normalizeEmail(identifier)
+		}
 
-	identifier := req.Identifier
-	if isEmail(identifier) {
-		identifier = normalizeEmail(identifier)
-	}
-
-	ctx, cancel := context.WithTimeout(c.UserContext(), 10*time.Second)
-	defer cancel()
-
-	result, err := h.authService.Login(ctx, identifier, req.Password)
-	if err != nil {
-		return err
-	}
-
-	return c.Status(http.StatusOK).JSON(result)
+		return h.authService.Login(c.UserContext(), identifier, req.Password)
+	}, http.StatusOK, &model.LoginDTO{})
 }
 
-func (h *AuthHandler) GoogleLogin(c *fiber.Ctx) error {
-	var req googleLoginRequest
-	if err := validation.BindAndValidate(c, &req); err != nil {
-		return err
-	}
+func (h *AuthHandler) GoogleLogin() fiber.Handler {
+	return Handle(h.Handler, func(c *fiber.Ctx, req *model.GoogleLoginDTO) (*service.AuthResult, error) {
+		return h.authService.LoginWithGoogle(c.UserContext(), req.IDToken)
+	}, http.StatusOK, &model.GoogleLoginDTO{})
+}
 
-	ctx, cancel := context.WithTimeout(c.UserContext(), 10*time.Second)
-	defer cancel()
-
-	result, err := h.authService.LoginWithGoogle(ctx, req.IDToken)
-	if err != nil {
-		return err
-	}
-
-	return c.Status(http.StatusOK).JSON(result)
+func (h *AuthHandler) VerifyEmail() fiber.Handler {
+	return Handle(h.Handler, func(c *fiber.Ctx, req *model.VerifyEmailDTO) (*model.User, error) {
+		return h.authService.VerifyEmail(c.UserContext(), req.Email, req.Code)
+	}, http.StatusOK, &model.VerifyEmailDTO{})
 }
 
 func isEmail(identifier string) bool {

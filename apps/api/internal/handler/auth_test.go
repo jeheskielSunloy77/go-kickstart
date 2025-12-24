@@ -21,6 +21,7 @@ type stubAuthService struct {
 	registerFn    func(ctx context.Context, email, username, password string) (*service.AuthResult, error)
 	loginFn       func(ctx context.Context, identifier, password string) (*service.AuthResult, error)
 	googleLoginFn func(ctx context.Context, idToken string) (*service.AuthResult, error)
+	verifyEmailFn func(ctx context.Context, email, code string) (*model.User, error)
 }
 
 func (s *stubAuthService) Register(ctx context.Context, email, username, password string) (*service.AuthResult, error) {
@@ -44,6 +45,13 @@ func (s *stubAuthService) LoginWithGoogle(ctx context.Context, idToken string) (
 	return nil, nil
 }
 
+func (s *stubAuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) {
+	if s.verifyEmailFn != nil {
+		return s.verifyEmailFn(ctx, email, code)
+	}
+	return nil, nil
+}
+
 // Ensures Register returns validation errors without invoking the service.
 func TestAuthHandlerRegister_ValidationError(t *testing.T) {
 	srv := newTestServer()
@@ -58,7 +66,7 @@ func TestAuthHandlerRegister_ValidationError(t *testing.T) {
 	}
 
 	h := NewAuthHandler(NewHandler(srv), authService)
-	app.Post("/register", h.Register)
+	app.Post("/register", h.Register())
 
 	req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewReader(mustJSON(t, map[string]any{})))
 	require.NoError(t, err)
@@ -86,7 +94,7 @@ func TestAuthHandlerRegister_Success(t *testing.T) {
 	}
 
 	h := NewAuthHandler(NewHandler(srv), authService)
-	app.Post("/register", h.Register)
+	app.Post("/register", h.Register())
 
 	body := mustJSON(t, map[string]any{
 		"email":    "user@example.com",
@@ -122,7 +130,7 @@ func TestAuthHandlerLogin_NormalizesEmail(t *testing.T) {
 	}
 
 	h := NewAuthHandler(NewHandler(srv), authService)
-	app.Post("/login", h.Login)
+	app.Post("/login", h.Login())
 
 	body := mustJSON(t, map[string]any{
 		"identifier": "USER@Example.COM",
@@ -138,4 +146,64 @@ func TestAuthHandlerLogin_NormalizesEmail(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	fmt.Printf("comparing user@example.com to %s", gotIdentifier)
 	require.Equal(t, "user@example.com", gotIdentifier)
+}
+
+// Ensures VerifyEmail validates required fields.
+func TestAuthHandlerVerifyEmail_ValidationError(t *testing.T) {
+	srv := newTestServer()
+	app := newTestApp(srv)
+
+	called := false
+	authService := &stubAuthService{
+		verifyEmailFn: func(ctx context.Context, email, code string) (*model.User, error) {
+			called = true
+			return nil, nil
+		},
+	}
+
+	h := NewAuthHandler(NewHandler(srv), authService)
+	app.Post("/verify-email", h.VerifyEmail())
+
+	req, err := http.NewRequest(http.MethodPost, "/verify-email", bytes.NewReader(mustJSON(t, map[string]any{})))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	require.False(t, called)
+}
+
+// Ensures VerifyEmail returns a user on success.
+func TestAuthHandlerVerifyEmail_Success(t *testing.T) {
+	srv := newTestServer()
+	app := newTestApp(srv)
+
+	userID := uuid.New()
+	authService := &stubAuthService{
+		verifyEmailFn: func(ctx context.Context, email, code string) (*model.User, error) {
+			return &model.User{ID: userID, Email: email, Username: "user"}, nil
+		},
+	}
+
+	h := NewAuthHandler(NewHandler(srv), authService)
+	app.Post("/verify-email", h.VerifyEmail())
+
+	body := mustJSON(t, map[string]any{
+		"email": "user@example.com",
+		"code":  "123456",
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "/verify-email", bytes.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var got model.User
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&got))
+	require.Equal(t, userID, got.ID)
+	require.Equal(t, "user@example.com", got.Email)
 }

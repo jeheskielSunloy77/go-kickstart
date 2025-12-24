@@ -8,24 +8,23 @@ import (
 )
 
 const (
-	TaskWelcome = "email:welcome"
+	TaskEmailVerification = "email:verification"
 )
 
-type WelcomeEmailPayload struct {
-	To        string `json:"to"`
-	FirstName string `json:"first_name"`
+type EmailVerificationPayload struct {
+	To               string `json:"to"`
+	Username         string `json:"username"`
+	Code             string `json:"code"`
+	ExpiresInMinutes int    `json:"expires_in_minutes"`
 }
 
-func NewWelcomeEmailTask(to, firstName string) (*asynq.Task, error) {
-	payload, err := json.Marshal(WelcomeEmailPayload{
-		To:        to,
-		FirstName: firstName,
-	})
+func NewEmailVerificationTask(payload EmailVerificationPayload) (*asynq.Task, error) {
+	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
 
-	return asynq.NewTask(TaskWelcome, payload,
+	return asynq.NewTask(TaskEmailVerification, payloadBytes,
 		asynq.MaxRetry(3),
 		asynq.Queue("default"),
 		asynq.Timeout(30*time.Second)), nil

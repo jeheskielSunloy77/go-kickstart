@@ -16,7 +16,8 @@
 		"api:migrations-up": "cd apps/api && sh -c \"printf 'Are you sure? [y/N] ' && read ans && [ \"$${ans:-N}\" = \"y\" ] && migrate -database \"$$API_DB_DSN\" -path ./internal/database/migrations up || echo 'Aborted'\"",
 		"api:tidy": "cd apps/api && go fmt ./... && go mod tidy && go mod verify",
 		"api:test": "cd apps/api && go test ./internal/service ./internal/handler ./internal/repository",
-		"openapi:generate": "cd packages/openapi && bun generate"
+		"openapi:generate": "cd packages/openapi && bun generate",
+		"emails:generate": "cd packages/emails && bun run generate"
 	},
 	"packageManager": "bun@1.2.13",
 	"engines": {

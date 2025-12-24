@@ -65,6 +65,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 		middlewares.Tracing.NewRelicMiddleware(),
 		middlewares.Tracing.EnhanceTracing(),
 		middlewares.ContextEnhancer.EnhanceContext(),
+		middlewares.ContextEnhancer.WithTimeout(),
 		middlewares.Global.RequestLogger(),
 		middlewares.Global.Recover(),
 	)

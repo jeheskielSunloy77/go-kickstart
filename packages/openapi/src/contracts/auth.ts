@@ -5,6 +5,8 @@ import {
 	ZAuthLoginRequest,
 	ZAuthRegisterRequest,
 	ZAuthResult,
+	ZAuthVerifyEmailRequest,
+	ZAuthVerifyEmailResponse,
 } from '@go-kickstart/zod'
 
 const c = initContract()
@@ -35,6 +37,15 @@ export const authContract = c.router({
 		body: ZAuthGoogleLoginRequest,
 		responses: {
 			200: ZAuthResult,
+		},
+	},
+	verifyEmail: {
+		summary: 'Verify email',
+		path: '/api/v1/auth/verify-email',
+		method: 'POST',
+		body: ZAuthVerifyEmailRequest,
+		responses: {
+			200: ZAuthVerifyEmailResponse,
 		},
 	},
 })

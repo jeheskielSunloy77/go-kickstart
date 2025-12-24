@@ -13,7 +13,11 @@ type Services struct {
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
-	authService := NewAuthService(&s.Config.Auth, repos.Auth)
+	var enqueuer TaskEnqueuer
+	if s.Job != nil {
+		enqueuer = s.Job.Client
+	}
+	authService := NewAuthService(&s.Config.Auth, repos.Auth, repos.EmailVerification, enqueuer, s.Logger)
 	userService := NewUserService(repos.User)
 
 	return &Services{

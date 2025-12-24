@@ -18,12 +18,20 @@ import (
 )
 
 type mockAuthRepo struct {
-	createUserFn    func(ctx context.Context, user *model.User) error
-	getByEmailFn    func(ctx context.Context, email string) (*model.User, error)
-	getByUsernameFn func(ctx context.Context, username string) (*model.User, error)
-	getByGoogleIDFn func(ctx context.Context, googleID string) (*model.User, error)
-	saveFn          func(ctx context.Context, user *model.User) error
-	updateLoginAtFn func(ctx context.Context, id uuid.UUID, ts time.Time) error
+	createUserFn            func(ctx context.Context, user *model.User) error
+	getByEmailFn            func(ctx context.Context, email string) (*model.User, error)
+	getByUsernameFn         func(ctx context.Context, username string) (*model.User, error)
+	getByGoogleIDFn         func(ctx context.Context, googleID string) (*model.User, error)
+	saveFn                  func(ctx context.Context, user *model.User) error
+	updateLoginAtFn         func(ctx context.Context, id uuid.UUID, ts time.Time) error
+	updateEmailVerifiedAtFn func(ctx context.Context, id uuid.UUID, ts time.Time) error
+}
+
+type mockVerificationRepo struct {
+	createFn       func(ctx context.Context, verification *model.EmailVerification) error
+	getActiveFn    func(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error)
+	expireActiveFn func(ctx context.Context, userID uuid.UUID, now time.Time) error
+	markVerifiedFn func(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error
 }
 
 func (m *mockAuthRepo) Save(ctx context.Context, user *model.User) error {
@@ -68,6 +76,41 @@ func (m *mockAuthRepo) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.
 	return nil
 }
 
+func (m *mockAuthRepo) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error {
+	if m.updateEmailVerifiedAtFn != nil {
+		return m.updateEmailVerifiedAtFn(ctx, id, ts)
+	}
+	return nil
+}
+
+func (m *mockVerificationRepo) Create(ctx context.Context, verification *model.EmailVerification) error {
+	if m.createFn != nil {
+		return m.createFn(ctx, verification)
+	}
+	return nil
+}
+
+func (m *mockVerificationRepo) GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error) {
+	if m.getActiveFn != nil {
+		return m.getActiveFn(ctx, userID, codeHash, now)
+	}
+	return nil, gorm.ErrRecordNotFound
+}
+
+func (m *mockVerificationRepo) ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error {
+	if m.expireActiveFn != nil {
+		return m.expireActiveFn(ctx, userID, now)
+	}
+	return nil
+}
+
+func (m *mockVerificationRepo) MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error {
+	if m.markVerifiedFn != nil {
+		return m.markVerifiedFn(ctx, id, verifiedAt)
+	}
+	return nil
+}
+
 // Ensures Register hashes passwords and returns a signed token tied to the user ID.
 func TestAuthServiceRegister_HashesPasswordAndReturnsToken(t *testing.T) {
 	secret := "test-secret"
@@ -85,7 +128,7 @@ func TestAuthServiceRegister_HashesPasswordAndReturnsToken(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: ttl}, repo)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: ttl}, repo, nil, nil, nil)
 
 	result, err := svc.Register(ctx, "user@example.com", "user", "password123")
 	require.NoError(t, err)
@@ -117,7 +160,7 @@ func TestAuthServiceRegister_ShortPassword(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil)
 
 	_, err := svc.Register(ctx, "user@example.com", "user", "short")
 	require.Error(t, err)
@@ -138,7 +181,7 @@ func TestAuthServiceLogin_UserNotFound(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil)
 
 	_, err := svc.Login(ctx, "user@example.com", "password123")
 	require.Error(t, err)
@@ -166,7 +209,7 @@ func TestAuthServiceLogin_PasswordMismatch(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil)
 
 	_, err = svc.Login(ctx, "user", "wrong-password")
 	require.Error(t, err)
@@ -197,7 +240,7 @@ func TestAuthServiceLogin_Success(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: time.Minute}, repo)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: time.Minute}, repo, nil, nil, nil)
 
 	result, err := svc.Login(ctx, "user@example.com", "password123")
 	require.NoError(t, err)
@@ -217,9 +260,72 @@ func TestAuthServiceLogin_Success(t *testing.T) {
 func TestAuthServiceLoginWithGoogle_ConfigMissing(t *testing.T) {
 	ctx := context.Background()
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{})
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, nil, nil, nil)
 
 	_, err := svc.LoginWithGoogle(ctx, "token")
+	require.Error(t, err)
+
+	var httpErr *errs.HTTPError
+	require.ErrorAs(t, err, &httpErr)
+	require.Equal(t, http.StatusBadRequest, httpErr.Status)
+}
+
+// Ensures VerifyEmail marks the user as verified when the code is valid.
+func TestAuthServiceVerifyEmail_Success(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	code := "123456"
+	codeHash := hashVerificationCode(code)
+	verifiedCalled := false
+
+	repo := &mockAuthRepo{
+		getByEmailFn: func(_ context.Context, email string) (*model.User, error) {
+			return &model.User{ID: userID, Email: email}, nil
+		},
+		updateEmailVerifiedAtFn: func(_ context.Context, id uuid.UUID, ts time.Time) error {
+			verifiedCalled = true
+			return nil
+		},
+	}
+
+	verificationRepo := &mockVerificationRepo{
+		getActiveFn: func(_ context.Context, id uuid.UUID, hash string, now time.Time) (*model.EmailVerification, error) {
+			require.Equal(t, userID, id)
+			require.Equal(t, codeHash, hash)
+			return &model.EmailVerification{ID: uuid.New(), UserID: id}, nil
+		},
+		markVerifiedFn: func(_ context.Context, id uuid.UUID, verifiedAt time.Time) error {
+			return nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, verificationRepo, nil, nil)
+
+	user, err := svc.VerifyEmail(ctx, "user@example.com", code)
+	require.NoError(t, err)
+	require.True(t, verifiedCalled)
+	require.NotNil(t, user.EmailVerifiedAt)
+}
+
+// Ensures VerifyEmail rejects invalid codes.
+func TestAuthServiceVerifyEmail_InvalidCode(t *testing.T) {
+	ctx := context.Background()
+
+	repo := &mockAuthRepo{
+		getByEmailFn: func(_ context.Context, email string) (*model.User, error) {
+			return &model.User{ID: uuid.New(), Email: email}, nil
+		},
+	}
+
+	verificationRepo := &mockVerificationRepo{
+		getActiveFn: func(_ context.Context, id uuid.UUID, hash string, now time.Time) (*model.EmailVerification, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, verificationRepo, nil, nil)
+
+	_, err := svc.VerifyEmail(ctx, "user@example.com", "bad-code")
 	require.Error(t, err)
 
 	var httpErr *errs.HTTPError

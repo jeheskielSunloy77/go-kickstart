@@ -26,3 +26,10 @@ export const ZAuthLoginRequest = z.object({
 export const ZAuthGoogleLoginRequest = z.object({
   idToken: z.string(),
 });
+
+export const ZAuthVerifyEmailRequest = z.object({
+  email: z.string().email(),
+  code: z.string().min(4).max(10),
+});
+
+export const ZAuthVerifyEmailResponse = ZUser;

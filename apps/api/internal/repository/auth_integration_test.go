@@ -48,10 +48,15 @@ func TestAuthRepository_CreateAndLookupUser(t *testing.T) {
 		loginAt := time.Now().UTC().Truncate(time.Second)
 		require.NoError(t, repo.UpdateLoginAt(ctx, user.ID, loginAt))
 
+		verifiedAt := time.Now().UTC().Truncate(time.Second)
+		require.NoError(t, repo.UpdateEmailVerifiedAt(ctx, user.ID, verifiedAt))
+
 		updated, err := repo.GetByID(ctx, user.ID)
 		require.NoError(t, err)
 		require.NotNil(t, updated.LastLoginAt)
 		require.WithinDuration(t, loginAt, *updated.LastLoginAt, time.Second)
+		require.NotNil(t, updated.EmailVerifiedAt)
+		require.WithinDuration(t, verifiedAt, *updated.EmailVerifiedAt, time.Second)
 
 		return nil
 	})

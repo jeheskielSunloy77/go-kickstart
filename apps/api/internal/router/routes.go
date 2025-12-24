@@ -21,9 +21,10 @@ func registerRoutes(
 	api := r.Group("/api/v1")
 
 	authGroup := api.Group("/auth")
-	authGroup.Post("/register", h.Auth.Register)
-	authGroup.Post("/login", h.Auth.Login)
-	authGroup.Post("/google", h.Auth.GoogleLogin)
+	authGroup.Post("/register", h.Auth.Register())
+	authGroup.Post("/login", h.Auth.Login())
+	authGroup.Post("/google", h.Auth.GoogleLogin())
+	authGroup.Post("/verify-email", h.Auth.VerifyEmail())
 
 	// protected routes
 	protected := api.Group("", middlewares.Auth.RequireAuth())

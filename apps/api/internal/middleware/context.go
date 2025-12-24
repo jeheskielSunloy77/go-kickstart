@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/logger"
@@ -22,6 +23,22 @@ type ContextEnhancer struct {
 
 func NewContextEnhancer(s *server.Server) *ContextEnhancer {
 	return &ContextEnhancer{server: s}
+}
+
+func (ce *ContextEnhancer) WithTimeout() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		timeout := ce.timeoutForMethod(c.Method())
+		if timeout <= 0 {
+			return c.Next()
+		}
+
+		ctx, cancel := context.WithTimeout(c.UserContext(), timeout)
+		defer cancel()
+
+		c.SetUserContext(ctx)
+
+		return c.Next()
+	}
 }
 
 func (ce *ContextEnhancer) EnhanceContext() fiber.Handler {
@@ -68,6 +85,15 @@ func (ce *ContextEnhancer) extractUserRole(c *fiber.Ctx) string {
 		return userRole
 	}
 	return ""
+}
+
+func (ce *ContextEnhancer) timeoutForMethod(method string) time.Duration {
+	switch method {
+	case fiber.MethodGet, fiber.MethodHead, fiber.MethodOptions:
+		return ce.server.Config.Server.ReadTimeout
+	default:
+		return ce.server.Config.Server.WriteTimeout
+	}
 }
 
 func GetUserID(c *fiber.Ctx) string {

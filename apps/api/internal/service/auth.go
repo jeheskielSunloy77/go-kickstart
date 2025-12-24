@@ -2,18 +2,25 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
 	"regexp"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/repository"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
+	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
@@ -25,10 +32,14 @@ var (
 )
 
 type AuthService struct {
-	repo           repository.AuthRepositoryInterface
-	secretKey      []byte
-	accessTokenTTL time.Duration
-	googleClientID string
+	repo                 repository.AuthRepositoryInterface
+	verificationRepo     repository.EmailVerificationRepositoryInterface
+	taskEnqueuer         TaskEnqueuer
+	logger               *zerolog.Logger
+	secretKey            []byte
+	accessTokenTTL       time.Duration
+	googleClientID       string
+	emailVerificationTTL time.Duration
 }
 
 type AuthToken struct {
@@ -45,14 +56,23 @@ type AuthServiceInterface interface {
 	Register(ctx context.Context, email, username, password string) (*AuthResult, error)
 	Login(ctx context.Context, identifier, password string) (*AuthResult, error)
 	LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error)
+	VerifyEmail(ctx context.Context, email, code string) (*model.User, error)
 }
 
-func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface) *AuthService {
+type TaskEnqueuer interface {
+	EnqueueContext(ctx context.Context, task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+}
+
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService {
 	return &AuthService{
-		repo:           repo,
-		secretKey:      []byte(cfg.SecretKey),
-		accessTokenTTL: cfg.AccessTokenTTL,
-		googleClientID: cfg.GoogleClientID,
+		repo:                 repo,
+		verificationRepo:     verificationRepo,
+		taskEnqueuer:         taskEnqueuer,
+		logger:               logger,
+		secretKey:            []byte(cfg.SecretKey),
+		accessTokenTTL:       cfg.AccessTokenTTL,
+		googleClientID:       cfg.GoogleClientID,
+		emailVerificationTTL: cfg.EmailVerificationTTL,
 	}
 }
 
@@ -80,6 +100,10 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {
 		return nil, sqlerr.HandleError(err)
+	}
+
+	if err := s.queueEmailVerification(ctx, user); err != nil {
+		s.logVerificationQueueError(err)
 	}
 
 	token, exp, err := s.generateToken(user.ID)
@@ -172,6 +196,10 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*Aut
 
 	now := time.Now().UTC()
 	_ = s.repo.UpdateLoginAt(ctx, user.ID, now)
+	if user.EmailVerifiedAt == nil {
+		_ = s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now)
+		user.EmailVerifiedAt = &now
+	}
 
 	token, exp, err := s.generateToken(user.ID)
 	if err != nil {
@@ -189,6 +217,45 @@ func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model
 		return s.repo.GetByEmail(ctx, identifier)
 	}
 	return s.repo.GetByUsername(ctx, identifier)
+}
+
+func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) {
+	user, err := s.repo.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, invalidVerificationError()
+		}
+		return nil, sqlerr.HandleError(err)
+	}
+
+	if user.EmailVerifiedAt != nil {
+		return user, nil
+	}
+
+	if s.verificationRepo == nil {
+		return nil, errs.NewInternalServerError()
+	}
+
+	codeHash := hashVerificationCode(code)
+	now := time.Now().UTC()
+	verification, err := s.verificationRepo.GetActiveByUserIDAndCodeHash(ctx, user.ID, codeHash, now)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, invalidVerificationError()
+		}
+		return nil, sqlerr.HandleError(err)
+	}
+
+	if err := s.verificationRepo.MarkVerified(ctx, verification.ID, now); err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	if err := s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now); err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	user.EmailVerifiedAt = &now
+	return user, nil
 }
 
 func (s *AuthService) generateToken(userID uuid.UUID) (string, time.Time, error) {
@@ -213,4 +280,93 @@ func deriveUsername(email string) string {
 		return parts[0]
 	}
 	return fmt.Sprintf("user-%s", uuid.New().String()[:8])
+}
+
+func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error {
+	if user == nil || user.Email == "" || user.EmailVerifiedAt != nil || s.verificationRepo == nil {
+		return nil
+	}
+
+	code, err := generateVerificationCode()
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+	ttl := s.emailVerificationTTL
+	if ttl <= 0 {
+		ttl = 24 * time.Hour
+	}
+	if err := s.verificationRepo.ExpireActiveByUserID(ctx, user.ID, now); err != nil {
+		return err
+	}
+
+	verification := &model.EmailVerification{
+		UserID:    user.ID,
+		Email:     user.Email,
+		CodeHash:  hashVerificationCode(code),
+		ExpiresAt: now.Add(ttl),
+	}
+	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		return err
+	}
+
+	if s.taskEnqueuer == nil {
+		return nil
+	}
+
+	expiresInMinutes := int(ttl.Minutes())
+	if expiresInMinutes <= 0 {
+		expiresInMinutes = 1
+	}
+	task, err := job.NewEmailVerificationTask(job.EmailVerificationPayload{
+		To:               user.Email,
+		Username:         user.Username,
+		Code:             code,
+		ExpiresInMinutes: expiresInMinutes,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = s.taskEnqueuer.EnqueueContext(ctx, task)
+	return err
+}
+
+func (s *AuthService) logVerificationQueueError(err error) {
+	if err == nil || s.logger == nil {
+		return
+	}
+	s.logger.Error().Err(err).Msg("failed to queue email verification")
+}
+
+func generateVerificationCode() (string, error) {
+	const codeLength = 6
+	const maxDigit = 10
+
+	code := make([]byte, 0, codeLength)
+	for range codeLength {
+		n, err := rand.Int(rand.Reader, big.NewInt(maxDigit))
+		if err != nil {
+			return "", err
+		}
+		code = append(code, byte('0'+n.Int64()))
+	}
+
+	return string(code), nil
+}
+
+func hashVerificationCode(code string) string {
+	sum := sha256.Sum256([]byte(code))
+	return hex.EncodeToString(sum[:])
+}
+
+func invalidVerificationError() *errs.HTTPError {
+	return errs.NewBadRequestError(
+		"Invalid or expired verification code",
+		true,
+		nil,
+		[]errs.FieldError{{Field: "code", Error: "invalid or expired"}},
+		nil,
+	)
 }
