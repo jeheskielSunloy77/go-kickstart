@@ -80,7 +80,7 @@ export function VerifyEmailPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Verify your email
         </p>
-        <CardTitle className="font-display text-3xl">Enter your code</CardTitle>
+        <CardTitle className="font-serif text-3xl">Enter your code</CardTitle>
         <CardDescription>
           We sent a code to your inbox. It expires shortly.
         </CardDescription>

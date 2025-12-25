@@ -5,12 +5,18 @@ import { LoginPage } from "@/pages/auth/login";
 import { MePage } from "@/pages/auth/me";
 import { RegisterPage } from "@/pages/auth/register";
 import { VerifyEmailPage } from "@/pages/auth/verify-email";
+import { HealthDemoPage } from "@/pages/health-demo";
+import { HomePage } from "@/pages/home";
 import { Navigate, createBrowserRouter } from "react-router";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/auth/login" replace />,
+    element: <HomePage />,
+  },
+  {
+    path: "/health-demo",
+    element: <HealthDemoPage />,
   },
   {
     path: "/auth",
@@ -33,6 +39,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/auth/login" replace />,
+    element: <Navigate to="/" replace />,
   },
 ]);

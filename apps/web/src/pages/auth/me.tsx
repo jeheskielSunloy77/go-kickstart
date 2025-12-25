@@ -58,7 +58,7 @@ export function MePage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Your session
           </p>
-          <CardTitle className="font-display text-3xl">
+          <CardTitle className="font-serif text-3xl">
             Welcome, {user.username}
           </CardTitle>
         </div>

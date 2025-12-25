@@ -70,7 +70,7 @@ export function LoginPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Welcome back
           </p>
-          <CardTitle className="font-display text-3xl">
+          <CardTitle className="font-serif text-3xl">
             Sign in to continue
           </CardTitle>
         </div>

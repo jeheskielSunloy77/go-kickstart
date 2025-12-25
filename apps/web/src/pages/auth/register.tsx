@@ -56,7 +56,7 @@ export function RegisterPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Join the workspace
           </p>
-          <CardTitle className="font-display text-3xl">
+          <CardTitle className="font-serif text-3xl">
             Create your account
           </CardTitle>
         </div>

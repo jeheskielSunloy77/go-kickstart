@@ -31,7 +31,7 @@ export function AuthLayout() {
                   <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Go Kickstart
                   </span>
-                  <h1 className="font-display text-4xl font-semibold text-foreground">
+                  <h1 className="font-serif text-4xl font-semibold text-foreground">
                     Security-first auth.
                     <span className="block text-muted-foreground">
                       Quietly powerful UX.
