@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/middleware"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/server"
 )
 
 type HealthHandler struct {
@@ -26,14 +27,14 @@ func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error {
 		Str("operation", "health_check").
 		Logger()
 
-	response := map[string]any{
+	result := map[string]any{
 		"status":      "healthy",
 		"timestamp":   time.Now().UTC(),
 		"environment": h.server.Config.Primary.Env,
 		"checks":      make(map[string]any),
 	}
 
-	checks := response["checks"].(map[string]any)
+	checks := result["checks"].(map[string]any)
 	isHealthy := true
 
 	// Check database connectivity
@@ -108,9 +109,19 @@ func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error {
 		}
 	}
 
+	response := server.Response[map[string]any]{
+		Message: "Health check completed, all systems operational",
+		Data:    &result,
+		Status:  http.StatusOK,
+		Success: true,
+	}
+
 	// Set overall status
 	if !isHealthy {
-		response["status"] = "unhealthy"
+		result["status"] = "unhealthy"
+		response.Message = "Health check completed, some systems are unhealthy"
+		response.Data = &result
+
 		logger.Warn().
 			Dur("total_duration", time.Since(start)).
 			Msg("health check failed")
@@ -123,6 +134,7 @@ func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error {
 					"total_duration_ms": time.Since(start).Milliseconds(),
 				})
 		}
+
 		return c.Status(http.StatusServiceUnavailable).JSON(response)
 	}
 

@@ -1,16 +1,18 @@
 import { ZHealthResponse } from '@go-kickstart/zod'
 import { initContract } from '@ts-rest/core'
+import { failResponses } from '../utils.js'
 
 const c = initContract()
 
 export const healthContract = c.router({
 	getHealth: {
 		summary: 'Get health',
-		path: '/status',
+		path: '/statusxx',
 		method: 'GET',
 		description: 'Get health status',
 		responses: {
 			200: ZHealthResponse,
+			...failResponses,
 		},
 	},
 })

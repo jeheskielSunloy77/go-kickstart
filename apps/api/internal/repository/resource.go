@@ -132,8 +132,8 @@ func NewGetManyOptionsFromRequest(c *fiber.Ctx) GetManyOptions {
 		Limit:          utils.ParseQueryInt(c.Query("limit")),
 		Offset:         utils.ParseQueryInt(c.Query("offset")),
 		Preloads:       ParsePreloads(c.Query("preloads")),
-		OrderBy:        c.Query("order_by"),
-		OrderDirection: c.Query("order_direction"),
+		OrderBy:        c.Query("orderBy"),
+		OrderDirection: c.Query("orderDirection"),
 	}
 	opts.Normalize()
 	return opts

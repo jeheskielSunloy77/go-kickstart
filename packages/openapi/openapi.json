@@ -18,70 +18,202 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "healthy",
-                        "unhealthy"
-                      ]
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "environment": {
-                      "type": "string"
-                    },
-                    "checks": {
+                    "data": {
                       "type": "object",
                       "properties": {
-                        "database": {
-                          "type": "object",
-                          "properties": {
-                            "status": {
-                              "type": "string"
-                            },
-                            "response_time": {
-                              "type": "string"
-                            },
-                            "error": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "status",
-                            "response_time"
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "healthy",
+                            "unhealthy"
                           ]
                         },
-                        "redis": {
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "environment": {
+                          "type": "string"
+                        },
+                        "checks": {
                           "type": "object",
                           "properties": {
-                            "status": {
-                              "type": "string"
+                            "database": {
+                              "type": "object",
+                              "properties": {
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "healthy",
+                                    "unhealthy"
+                                  ]
+                                },
+                                "response_time": {
+                                  "type": "string"
+                                },
+                                "error": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "status",
+                                "response_time"
+                              ]
                             },
-                            "response_time": {
-                              "type": "string"
-                            },
-                            "error": {
-                              "type": "string"
+                            "redis": {
+                              "type": "object",
+                              "properties": {
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "healthy",
+                                    "unhealthy"
+                                  ]
+                                },
+                                "response_time": {
+                                  "type": "string"
+                                },
+                                "error": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "status",
+                                "response_time"
+                              ]
                             }
                           },
                           "required": [
-                            "status",
-                            "response_time"
+                            "database"
                           ]
                         }
                       },
                       "required": [
-                        "database"
+                        "status",
+                        "timestamp",
+                        "environment",
+                        "checks"
                       ]
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "status",
-                    "timestamp",
-                    "environment",
-                    "checks"
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -140,10 +272,6 @@
                     "user": {
                       "type": "object",
                       "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
                         "email": {
                           "type": "string",
                           "format": "email"
@@ -156,9 +284,21 @@
                         "googleId": {
                           "type": "string"
                         },
+                        "emailVerifiedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
                         "lastLoginAt": {
                           "type": "string",
                           "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
                         },
                         "createdAt": {
                           "type": "string",
@@ -169,29 +309,16 @@
                           "format": "date-time"
                         },
                         "deletedAt": {
-                          "type": "object",
-                          "properties": {
-                            "Time": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "Valid": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "Time",
-                            "Valid"
-                          ]
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "id",
                         "email",
                         "username",
+                        "id",
                         "createdAt",
-                        "updatedAt",
-                        "deletedAt"
+                        "updatedAt"
                       ]
                     },
                     "token": {
@@ -214,6 +341,110 @@
                   "required": [
                     "user",
                     "token"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -263,10 +494,6 @@
                     "user": {
                       "type": "object",
                       "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
                         "email": {
                           "type": "string",
                           "format": "email"
@@ -279,9 +506,21 @@
                         "googleId": {
                           "type": "string"
                         },
+                        "emailVerifiedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
                         "lastLoginAt": {
                           "type": "string",
                           "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
                         },
                         "createdAt": {
                           "type": "string",
@@ -292,29 +531,16 @@
                           "format": "date-time"
                         },
                         "deletedAt": {
-                          "type": "object",
-                          "properties": {
-                            "Time": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "Valid": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "Time",
-                            "Valid"
-                          ]
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "id",
                         "email",
                         "username",
+                        "id",
                         "createdAt",
-                        "updatedAt",
-                        "deletedAt"
+                        "updatedAt"
                       ]
                     },
                     "token": {
@@ -337,6 +563,110 @@
                   "required": [
                     "user",
                     "token"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -382,10 +712,6 @@
                     "user": {
                       "type": "object",
                       "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
                         "email": {
                           "type": "string",
                           "format": "email"
@@ -398,9 +724,21 @@
                         "googleId": {
                           "type": "string"
                         },
+                        "emailVerifiedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
                         "lastLoginAt": {
                           "type": "string",
                           "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
                         },
                         "createdAt": {
                           "type": "string",
@@ -411,29 +749,16 @@
                           "format": "date-time"
                         },
                         "deletedAt": {
-                          "type": "object",
-                          "properties": {
-                            "Time": {
-                              "type": "string",
-                              "format": "date-time"
-                            },
-                            "Valid": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "Time",
-                            "Valid"
-                          ]
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "id",
                         "email",
                         "username",
+                        "id",
                         "createdAt",
-                        "updatedAt",
-                        "deletedAt"
+                        "updatedAt"
                       ]
                     },
                     "token": {
@@ -456,6 +781,310 @@
                   "required": [
                     "user",
                     "token"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "summary": "Verify email",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 10
+                  }
+                },
+                "required": [
+                  "email",
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "emailVerifiedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "isAdmin": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "username",
+                    "id",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -498,14 +1127,14 @@
             }
           },
           {
-            "name": "order_by",
+            "name": "orderBy",
             "in": "query",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "order_direction",
+            "name": "orderDirection",
             "in": "query",
             "schema": {
               "type": "string",
@@ -525,15 +1154,23 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    },
                     "data": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
                           "email": {
                             "type": "string",
                             "format": "email"
@@ -546,9 +1183,21 @@
                           "googleId": {
                             "type": "string"
                           },
+                          "emailVerifiedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
                           "lastLoginAt": {
                             "type": "string",
                             "format": "date-time"
+                          },
+                          "isAdmin": {
+                            "default": false,
+                            "type": "boolean"
+                          },
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
                           },
                           "createdAt": {
                             "type": "string",
@@ -559,51 +1208,142 @@
                             "format": "date-time"
                           },
                           "deletedAt": {
-                            "type": "object",
-                            "properties": {
-                              "Time": {
-                                "type": "string",
-                                "format": "date-time"
-                              },
-                              "Valid": {
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "Time",
-                              "Valid"
-                            ]
+                            "type": "string",
+                            "format": "date-time"
                           }
                         },
                         "required": [
-                          "id",
                           "email",
                           "username",
+                          "id",
                           "createdAt",
-                          "updatedAt",
-                          "deletedAt"
+                          "updatedAt"
                         ]
                       }
                     },
-                    "total": {
-                      "type": "number"
+                    "status": {
+                      "type": "integer"
                     },
-                    "page": {
-                      "type": "number"
+                    "message": {
+                      "type": "string"
                     },
-                    "limit": {
-                      "type": "number"
-                    },
-                    "totalPages": {
-                      "type": "number"
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "data",
                     "total",
                     "page",
                     "limit",
-                    "totalPages"
+                    "totalPages",
+                    "data",
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -640,13 +1380,13 @@
                     "minLength": 3,
                     "maxLength": 50
                   },
+                  "googleId": {
+                    "type": "string"
+                  },
                   "password": {
                     "type": "string",
                     "minLength": 8,
                     "maxLength": 128
-                  },
-                  "googleId": {
-                    "type": "string"
                   }
                 },
                 "required": [
@@ -666,58 +1406,177 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "username": {
-                      "type": "string",
-                      "minLength": 3,
-                      "maxLength": 50
-                    },
-                    "googleId": {
-                      "type": "string"
-                    },
-                    "lastLoginAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "deletedAt": {
+                    "data": {
                       "type": "object",
                       "properties": {
-                        "Time": {
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "emailVerifiedAt": {
                           "type": "string",
                           "format": "date-time"
                         },
-                        "Valid": {
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
                           "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "Time",
-                        "Valid"
+                        "email",
+                        "username",
+                        "id",
+                        "createdAt",
+                        "updatedAt"
                       ]
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "id",
-                    "email",
-                    "username",
-                    "createdAt",
-                    "updatedAt",
-                    "deletedAt"
+                    "data",
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -765,58 +1624,177 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "username": {
-                      "type": "string",
-                      "minLength": 3,
-                      "maxLength": 50
-                    },
-                    "googleId": {
-                      "type": "string"
-                    },
-                    "lastLoginAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "deletedAt": {
+                    "data": {
                       "type": "object",
                       "properties": {
-                        "Time": {
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "emailVerifiedAt": {
                           "type": "string",
                           "format": "date-time"
                         },
-                        "Valid": {
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
                           "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "Time",
-                        "Valid"
+                        "email",
+                        "username",
+                        "id",
+                        "createdAt",
+                        "updatedAt"
                       ]
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "id",
-                    "email",
-                    "username",
-                    "createdAt",
-                    "updatedAt",
-                    "deletedAt"
+                    "data",
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -862,13 +1840,12 @@
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 50
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "maxLength": 128
                   }
-                }
+                },
+                "required": [
+                  "email",
+                  "username"
+                ]
               }
             }
           }
@@ -881,58 +1858,177 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "username": {
-                      "type": "string",
-                      "minLength": 3,
-                      "maxLength": 50
-                    },
-                    "googleId": {
-                      "type": "string"
-                    },
-                    "lastLoginAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "deletedAt": {
+                    "data": {
                       "type": "object",
                       "properties": {
-                        "Time": {
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "emailVerifiedAt": {
                           "type": "string",
                           "format": "date-time"
                         },
-                        "Valid": {
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
                           "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "Time",
-                        "Valid"
+                        "email",
+                        "username",
+                        "id",
+                        "createdAt",
+                        "updatedAt"
                       ]
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "id",
-                    "email",
-                    "username",
-                    "createdAt",
-                    "updatedAt",
-                    "deletedAt"
+                    "data",
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }
@@ -964,8 +2060,135 @@
         ],
         "operationId": "destroy",
         "responses": {
-          "204": {
-            "description": "204"
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -995,8 +2218,135 @@
         ],
         "operationId": "kill",
         "responses": {
-          "204": {
-            "description": "204"
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1032,6 +2382,32 @@
           }
         ],
         "operationId": "restore",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "integer"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "success": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "status",
+                  "message",
+                  "success"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "200",
@@ -1040,58 +2416,177 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "username": {
-                      "type": "string",
-                      "minLength": 3,
-                      "maxLength": 50
-                    },
-                    "googleId": {
-                      "type": "string"
-                    },
-                    "lastLoginAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "deletedAt": {
+                    "data": {
                       "type": "object",
                       "properties": {
-                        "Time": {
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "username": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 50
+                        },
+                        "googleId": {
+                          "type": "string"
+                        },
+                        "emailVerifiedAt": {
                           "type": "string",
                           "format": "date-time"
                         },
-                        "Valid": {
+                        "lastLoginAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "isAdmin": {
+                          "default": false,
                           "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deletedAt": {
+                          "type": "string",
+                          "format": "date-time"
                         }
                       },
                       "required": [
-                        "Time",
-                        "Valid"
+                        "email",
+                        "username",
+                        "id",
+                        "createdAt",
+                        "updatedAt"
                       ]
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "id",
-                    "email",
-                    "username",
-                    "createdAt",
-                    "updatedAt",
-                    "deletedAt"
+                    "data",
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
                   ]
                 }
               }

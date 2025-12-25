@@ -1,17 +1,22 @@
-import { z } from "zod";
+import { z } from 'zod'
+import { ZResponseWithData } from './utils.js'
+
+const ZHealthStatus = z.enum(['healthy', 'unhealthy'])
 
 const ZHealthCheck = z.object({
-  status: z.string(),
-  response_time: z.string(),
-  error: z.string().optional(),
-});
+	status: ZHealthStatus,
+	response_time: z.string(),
+	error: z.string().optional(),
+})
 
-export const ZHealthResponse = z.object({
-  status: z.enum(["healthy", "unhealthy"]),
-  timestamp: z.string().datetime(),
-  environment: z.string(),
-  checks: z.object({
-    database: ZHealthCheck,
-    redis: ZHealthCheck.optional(),
-  }),
-});
+export const ZHealthResponse = ZResponseWithData(
+	z.object({
+		status: ZHealthStatus,
+		timestamp: z.string().datetime(),
+		environment: z.string(),
+		checks: z.object({
+			database: ZHealthCheck,
+			redis: ZHealthCheck.optional(),
+		}),
+	})
+)

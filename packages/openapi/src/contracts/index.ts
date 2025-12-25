@@ -6,7 +6,7 @@ import { userContract } from './user.js'
 const c = initContract()
 
 export const apiContract = c.router({
-	Health: healthContract,
-	Auth: authContract,
-	Users: userContract,
+	health: healthContract,
+	auth: authContract,
+	user: userContract,
 })

@@ -1,4 +1,4 @@
-import { ZStoreUserRequest, ZUpdateUserRequest, ZUser } from '@go-kickstart/zod'
+import { ZStoreUserDTO, ZUpdateUserDTO, ZUser } from '@go-kickstart/zod'
 
 import { createResourceContract } from './resource.js'
 
@@ -8,7 +8,7 @@ export const userContract = createResourceContract({
 	resourcePlural: 'Users',
 	schemas: {
 		entity: ZUser,
-		create: ZStoreUserRequest,
-		update: ZUpdateUserRequest,
+		createDTO: ZStoreUserDTO,
+		updateDTO: ZUpdateUserDTO,
 	},
 })
