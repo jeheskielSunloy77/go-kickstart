@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"reflect"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
@@ -10,10 +9,6 @@ import (
 	"github.com/jeheskielSunloy77/go-kickstart/internal/repository"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/service"
 )
-
-type emptyRequest struct{}
-
-func (r emptyRequest) Validate() error { return nil }
 
 type ResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
 	Handler
@@ -35,11 +30,11 @@ func (h *ResourceHandler[T, S, U]) Update() fiber.Handler {
 		}
 
 		return h.service.Update(c.UserContext(), id, dto)
-	}, http.StatusOK, newDTO[U]())
+	}, http.StatusOK, model.NewDTO[U]())
 }
 
 func (h *ResourceHandler[T, S, U]) GetByID() fiber.Handler {
-	return Handle(h.Handler, func(c *fiber.Ctx, _ emptyRequest) (*T, error) {
+	return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*T, error) {
 		id, err := utils.ParseUUIDParam(c.Params("id"))
 		if err != nil {
 			return nil, err
@@ -47,11 +42,11 @@ func (h *ResourceHandler[T, S, U]) GetByID() fiber.Handler {
 
 		preloads := repository.ParsePreloads(c.Query("preloads"))
 		return h.service.GetByID(c.UserContext(), id, preloads)
-	}, http.StatusOK, emptyRequest{})
+	}, http.StatusOK, &model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) GetMany() fiber.Handler {
-	return Handle(h.Handler, func(c *fiber.Ctx, _ emptyRequest) (model.PaginatedResponse[T], error) {
+	return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (model.PaginatedResponse[T], error) {
 		options := repository.NewGetManyOptionsFromRequest(c)
 		entities, total, err := h.service.GetMany(c.UserContext(), options)
 		if err != nil {
@@ -66,33 +61,33 @@ func (h *ResourceHandler[T, S, U]) GetMany() fiber.Handler {
 			TotalPages: int((total + int64(options.Limit) - 1) / int64(options.Limit)),
 		}
 		return resp, nil
-	}, http.StatusOK, emptyRequest{})
+	}, http.StatusOK, &model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Destroy() fiber.Handler {
-	return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ emptyRequest) error {
+	return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) error {
 		id, err := utils.ParseUUIDParam(c.Params("id"))
 		if err != nil {
 			return err
 		}
 
 		return h.service.Destroy(c.UserContext(), id)
-	}, http.StatusNoContent, emptyRequest{})
+	}, http.StatusNoContent, &model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Kill() fiber.Handler {
-	return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ emptyRequest) error {
+	return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) error {
 		id, err := utils.ParseUUIDParam(c.Params("id"))
 		if err != nil {
 			return err
 		}
 
 		return h.service.Kill(c.UserContext(), id)
-	}, http.StatusNoContent, emptyRequest{})
+	}, http.StatusNoContent, &model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Restore() fiber.Handler {
-	return Handle(h.Handler, func(c *fiber.Ctx, _ emptyRequest) (*T, error) {
+	return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*T, error) {
 		id, err := utils.ParseUUIDParam(c.Params("id"))
 		if err != nil {
 			return nil, err
@@ -100,20 +95,11 @@ func (h *ResourceHandler[T, S, U]) Restore() fiber.Handler {
 
 		preloads := repository.ParsePreloads(c.Query("preloads"))
 		return h.service.Restore(c.UserContext(), id, preloads)
-	}, http.StatusOK, emptyRequest{})
+	}, http.StatusOK, &model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Store() fiber.Handler {
 	return Handle(h.Handler, func(c *fiber.Ctx, dto S) (*T, error) {
 		return h.service.Store(c.UserContext(), dto)
-	}, http.StatusCreated, newDTO[S]())
-}
-
-func newDTO[T any]() T {
-	var dto T
-	t := reflect.TypeOf(dto)
-	if t != nil && t.Kind() == reflect.Pointer {
-		return reflect.New(t.Elem()).Interface().(T)
-	}
-	return dto
+	}, http.StatusCreated, model.NewDTO[S]())
 }

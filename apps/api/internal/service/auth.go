@@ -106,7 +106,7 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
 		s.logVerificationQueueError(err)
 	}
 
-	token, exp, err := s.generateToken(user.ID)
+	token, exp, err := s.generateToken(user)
 	if err != nil {
 		return nil, errs.NewInternalServerError()
 	}
@@ -137,7 +137,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (*
 	now := time.Now().UTC()
 	_ = s.repo.UpdateLoginAt(ctx, user.ID, now)
 
-	token, exp, err := s.generateToken(user.ID)
+	token, exp, err := s.generateToken(user)
 	if err != nil {
 		return nil, errs.NewInternalServerError()
 	}
@@ -201,7 +201,7 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*Aut
 		user.EmailVerifiedAt = &now
 	}
 
-	token, exp, err := s.generateToken(user.ID)
+	token, exp, err := s.generateToken(user)
 	if err != nil {
 		return nil, errs.NewInternalServerError()
 	}
@@ -258,12 +258,20 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*mod
 	return user, nil
 }
 
-func (s *AuthService) generateToken(userID uuid.UUID) (string, time.Time, error) {
+func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) {
+	if user == nil {
+		return "", time.Time{}, errs.NewInternalServerError()
+	}
+
 	exp := time.Now().Add(s.accessTokenTTL)
-	claims := jwt.RegisteredClaims{
-		Subject:   userID.String(),
-		ExpiresAt: jwt.NewNumericDate(exp),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	claims := model.AuthClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   user.ID.String(),
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email:   user.Email,
+		IsAdmin: user.IsAdmin,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

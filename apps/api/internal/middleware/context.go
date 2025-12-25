@@ -12,9 +12,11 @@ import (
 )
 
 const (
-	UserIDKey   = "user_id"
-	UserRoleKey = "user_role"
-	LoggerKey   = "logger"
+	UserIDKey      = "user_id"
+	UserRoleKey    = "user_role"
+	UserEmailKey   = "user_email"
+	UserIsAdminKey = "user_is_admin"
+	LoggerKey      = "logger"
 )
 
 type ContextEnhancer struct {
@@ -74,14 +76,14 @@ func (ce *ContextEnhancer) EnhanceContext() fiber.Handler {
 }
 
 func (ce *ContextEnhancer) extractUserID(c *fiber.Ctx) string {
-	if userID, ok := c.Locals("user_id").(string); ok && userID != "" {
+	if userID, ok := c.Locals(UserIDKey).(string); ok && userID != "" {
 		return userID
 	}
 	return ""
 }
 
 func (ce *ContextEnhancer) extractUserRole(c *fiber.Ctx) string {
-	if userRole, ok := c.Locals("user_role").(string); ok && userRole != "" {
+	if userRole, ok := c.Locals(UserRoleKey).(string); ok && userRole != "" {
 		return userRole
 	}
 	return ""
@@ -101,6 +103,20 @@ func GetUserID(c *fiber.Ctx) string {
 		return userID
 	}
 	return ""
+}
+
+func GetUserEmail(c *fiber.Ctx) string {
+	if email, ok := c.Locals(UserEmailKey).(string); ok {
+		return email
+	}
+	return ""
+}
+
+func GetUserIsAdmin(c *fiber.Ctx) bool {
+	if isAdmin, ok := c.Locals(UserIsAdminKey).(bool); ok {
+		return isAdmin
+	}
+	return false
 }
 
 func GetLogger(c *fiber.Ctx) *zerolog.Logger {

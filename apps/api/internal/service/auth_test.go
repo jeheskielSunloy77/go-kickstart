@@ -139,13 +139,15 @@ func TestAuthServiceRegister_HashesPasswordAndReturnsToken(t *testing.T) {
 	require.NotEqual(t, "password123", result.User.PasswordHash)
 	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(result.User.PasswordHash), []byte("password123")))
 
-	claims := &jwt.RegisteredClaims{}
+	claims := &model.AuthClaims{}
 	parsed, err := jwt.ParseWithClaims(result.Token.Token, claims, func(token *jwt.Token) (any, error) {
 		return []byte(secret), nil
 	})
 	require.NoError(t, err)
 	require.True(t, parsed.Valid)
 	require.Equal(t, result.User.ID.String(), claims.Subject)
+	require.Equal(t, result.User.Email, claims.Email)
+	require.False(t, claims.IsAdmin)
 }
 
 // Ensures Register rejects short passwords before hitting the repository.
@@ -247,13 +249,15 @@ func TestAuthServiceLogin_Success(t *testing.T) {
 	require.True(t, called)
 	require.NotNil(t, result)
 
-	claims := &jwt.RegisteredClaims{}
+	claims := &model.AuthClaims{}
 	parsed, err := jwt.ParseWithClaims(result.Token.Token, claims, func(token *jwt.Token) (any, error) {
 		return []byte(secret), nil
 	})
 	require.NoError(t, err)
 	require.True(t, parsed.Valid)
 	require.Equal(t, userID.String(), claims.Subject)
+	require.Equal(t, "user@example.com", claims.Email)
+	require.False(t, claims.IsAdmin)
 }
 
 // Ensures LoginWithGoogle fails fast when Google auth is not configured.

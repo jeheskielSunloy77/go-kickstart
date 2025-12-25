@@ -7,9 +7,10 @@ import (
 )
 
 type Services struct {
-	Auth *AuthService
-	User *UserService
-	Job  *job.JobService
+	Auth          *AuthService
+	User          *UserService
+	Authorization *AuthorizationService
+	Job           *job.JobService
 }
 
 func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) {
@@ -19,10 +20,15 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 	}
 	authService := NewAuthService(&s.Config.Auth, repos.Auth, repos.EmailVerification, enqueuer, s.Logger)
 	userService := NewUserService(repos.User)
+	authorizationService, err := NewAuthorizationService(s.DB.DB, s.Logger)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Services{
-		Job:  s.Job,
-		Auth: authService,
-		User: userService,
+		Job:           s.Job,
+		Auth:          authService,
+		User:          userService,
+		Authorization: authorizationService,
 	}, nil
 }

@@ -17,8 +17,7 @@ import (
 )
 
 func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services) *fiber.App {
-	_ = services
-	middlewares := middleware.NewMiddlewares(s)
+	middlewares := middleware.NewMiddlewares(s, services)
 
 	router := fiber.New(fiber.Config{
 		ErrorHandler:          middlewares.Global.GlobalErrorHandler,

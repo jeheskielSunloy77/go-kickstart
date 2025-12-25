@@ -30,7 +30,7 @@ func main() {
 
 	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
 
-	if cfg.Primary.Env != "local" {
+	if cfg.Primary.Env != config.EnvDevelopment {
 		if err := database.Migrate(context.Background(), &log, cfg); err != nil {
 			log.Fatal().Err(err).Msg("failed to migrate database")
 		}

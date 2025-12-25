@@ -72,7 +72,7 @@ func (tm *TracingMiddleware) EnhanceTracing() fiber.Handler {
 			txn.AddAttribute("request.id", requestID)
 		}
 
-		if userID := c.Locals("user_id"); userID != nil {
+		if userID := c.Locals(UserIDKey); userID != nil {
 			if userIDStr, ok := userID.(string); ok {
 				txn.AddAttribute("user.id", userIDStr)
 			}

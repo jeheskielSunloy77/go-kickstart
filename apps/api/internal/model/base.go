@@ -1,6 +1,7 @@
 package model
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/google/uuid"
@@ -46,4 +47,17 @@ type UpdateDTO[T any] interface {
 	BaseDTO[T]
 	validation.Validatable
 	ToMap() map[string]any
+}
+
+type EmptyDTO struct{}
+
+func (d *EmptyDTO) Validate() error { return nil }
+
+func NewDTO[T any]() T {
+	var dto T
+	t := reflect.TypeOf(dto)
+	if t != nil && t.Kind() == reflect.Pointer {
+		return reflect.New(t.Elem()).Interface().(T)
+	}
+	return dto
 }

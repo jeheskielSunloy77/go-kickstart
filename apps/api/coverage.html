@@ -1,0 +1,2623 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>handler: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/jeheskielSunloy77/go-kickstart/internal/handler/auth.go (86.7%)</option>
+				
+				<option value="file1">github.com/jeheskielSunloy77/go-kickstart/internal/handler/base.go (51.3%)</option>
+				
+				<option value="file2">github.com/jeheskielSunloy77/go-kickstart/internal/handler/handlers.go (0.0%)</option>
+				
+				<option value="file3">github.com/jeheskielSunloy77/go-kickstart/internal/handler/health.go (0.0%)</option>
+				
+				<option value="file4">github.com/jeheskielSunloy77/go-kickstart/internal/handler/openapi.go (0.0%)</option>
+				
+				<option value="file5">github.com/jeheskielSunloy77/go-kickstart/internal/handler/resource.go (24.3%)</option>
+				
+				<option value="file6">github.com/jeheskielSunloy77/go-kickstart/internal/handler/user.go (0.0%)</option>
+				
+				<option value="file7">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/auth.go (0.0%)</option>
+				
+				<option value="file8">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/authorization.go (91.3%)</option>
+				
+				<option value="file9">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/context.go (27.3%)</option>
+				
+				<option value="file10">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/global.go (0.0%)</option>
+				
+				<option value="file11">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/middlewares.go (0.0%)</option>
+				
+				<option value="file12">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/rate_limit.go (0.0%)</option>
+				
+				<option value="file13">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/request_id.go (0.0%)</option>
+				
+				<option value="file14">github.com/jeheskielSunloy77/go-kickstart/internal/middleware/tracing.go (0.0%)</option>
+				
+				<option value="file15">github.com/jeheskielSunloy77/go-kickstart/internal/repository/auth.go (78.3%)</option>
+				
+				<option value="file16">github.com/jeheskielSunloy77/go-kickstart/internal/repository/email_verification.go (90.9%)</option>
+				
+				<option value="file17">github.com/jeheskielSunloy77/go-kickstart/internal/repository/repositories.go (0.0%)</option>
+				
+				<option value="file18">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (48.8%)</option>
+				
+				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/user.go (100.0%)</option>
+				
+				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/service/auth.go (38.6%)</option>
+				
+				<option value="file21">github.com/jeheskielSunloy77/go-kickstart/internal/service/authorization.go (30.4%)</option>
+				
+				<option value="file22">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource.go (19.2%)</option>
+				
+				<option value="file23">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				
+				<option value="file24">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (71.7%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package handler
+
+import (
+        "net/http"
+        "regexp"
+        "strings"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/service"
+)
+
+type AuthHandler struct {
+        Handler
+        authService service.AuthServiceInterface
+}
+
+func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHandler <span class="cov8" title="1">{
+        return &amp;AuthHandler{
+                Handler:     h,
+                authService: authService,
+        }
+}</span>
+
+func (h *AuthHandler) Register() fiber.Handler <span class="cov8" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.RegisterDTO) (*service.AuthResult, error) </span><span class="cov8" title="1">{
+                return h.authService.Register(c.UserContext(), req.Email, req.Username, req.Password)
+        }</span>, http.StatusCreated, &amp;model.RegisterDTO{})
+}
+
+func (h *AuthHandler) Login() fiber.Handler <span class="cov8" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.LoginDTO) (*service.AuthResult, error) </span><span class="cov8" title="1">{
+                identifier := req.Identifier
+                if isEmail(identifier) </span><span class="cov8" title="1">{
+                        identifier = normalizeEmail(identifier)
+                }</span>
+
+                <span class="cov8" title="1">return h.authService.Login(c.UserContext(), identifier, req.Password)</span>
+        }, http.StatusOK, &amp;model.LoginDTO{})
+}
+
+func (h *AuthHandler) GoogleLogin() fiber.Handler <span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.GoogleLoginDTO) (*service.AuthResult, error) </span><span class="cov0" title="0">{
+                return h.authService.LoginWithGoogle(c.UserContext(), req.IDToken)
+        }</span>, http.StatusOK, &amp;model.GoogleLoginDTO{})
+}
+
+func (h *AuthHandler) VerifyEmail() fiber.Handler <span class="cov8" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.VerifyEmailDTO) (*model.User, error) </span><span class="cov8" title="1">{
+                return h.authService.VerifyEmail(c.UserContext(), req.Email, req.Code)
+        }</span>, http.StatusOK, &amp;model.VerifyEmailDTO{})
+}
+
+func isEmail(identifier string) bool <span class="cov8" title="1">{
+        emailRegex := regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+        return emailRegex.MatchString(identifier)
+}</span>
+
+func normalizeEmail(email string) string <span class="cov8" title="1">{
+        return strings.ToLower(strings.TrimSpace(email))
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package handler
+
+import (
+        "time"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/middleware"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/validation"
+        "github.com/newrelic/go-agent/v3/integrations/nrpkgerrors"
+        "github.com/newrelic/go-agent/v3/newrelic"
+)
+
+// Handler provides base functionality for all handlers
+type Handler struct {
+        server *server.Server
+}
+
+// NewHandler creates a new base handler
+func NewHandler(s *server.Server) Handler <span class="cov8" title="1">{
+        return Handler{server: s}
+}</span>
+
+// HandlerFunc represents a typed handler function that processes a request and returns a response
+type HandlerFunc[Req validation.Validatable, Res any] func(c *fiber.Ctx, req Req) (Res, error)
+
+// HandlerFuncNoContent represents a typed handler function that processes a request without returning content
+type HandlerFuncNoContent[Req validation.Validatable] func(c *fiber.Ctx, req Req) error
+
+// ResponseHandler defines the interface for handling different response types
+type ResponseHandler interface {
+        Handle(c *fiber.Ctx, result any) error
+        GetOperation() string
+        AddAttributes(txn *newrelic.Transaction, result any)
+}
+
+// JSONResponseHandler handles JSON responses
+type JSONResponseHandler struct {
+        status int
+}
+
+func (h JSONResponseHandler) Handle(c *fiber.Ctx, result any) error <span class="cov8" title="1">{
+        return c.Status(h.status).JSON(result)
+}</span>
+
+func (h JSONResponseHandler) GetOperation() string <span class="cov8" title="1">{
+        return "handler"
+}</span>
+
+func (h JSONResponseHandler) AddAttributes(txn *newrelic.Transaction, result any) {<span class="cov0" title="0">
+        // http.status_code is already set by tracing middleware
+}</span>
+
+// NoContentResponseHandler handles no-content responses
+type NoContentResponseHandler struct {
+        status int
+}
+
+func (h NoContentResponseHandler) Handle(c *fiber.Ctx, result any) error <span class="cov0" title="0">{
+        return c.SendStatus(h.status)
+}</span>
+
+func (h NoContentResponseHandler) GetOperation() string <span class="cov0" title="0">{
+        return "handler_no_content"
+}</span>
+
+func (h NoContentResponseHandler) AddAttributes(txn *newrelic.Transaction, result any) {<span class="cov0" title="0">
+        // http.status_code is already set by tracing middleware
+}</span>
+
+// FileResponseHandler handles file responses
+type FileResponseHandler struct {
+        status      int
+        filename    string
+        contentType string
+}
+
+func (h FileResponseHandler) Handle(c *fiber.Ctx, result any) error <span class="cov0" title="0">{
+        data := result.([]byte)
+        c.Response().Header.Set("Content-Disposition", "attachment; filename="+h.filename)
+        c.Set(fiber.HeaderContentType, h.contentType)
+        return c.Status(h.status).Send(data)
+}</span>
+
+func (h FileResponseHandler) GetOperation() string <span class="cov0" title="0">{
+        return "handler_file"
+}</span>
+
+func (h FileResponseHandler) AddAttributes(txn *newrelic.Transaction, result any) <span class="cov0" title="0">{
+        if txn != nil </span><span class="cov0" title="0">{
+                // http.status_code is already set by tracing middleware
+                txn.AddAttribute("file.name", h.filename)
+                txn.AddAttribute("file.content_type", h.contentType)
+                if data, ok := result.([]byte); ok </span><span class="cov0" title="0">{
+                        txn.AddAttribute("file.size_bytes", len(data))
+                }</span>
+        }
+}
+
+// handleRequest is the unified handler function that eliminates code duplication
+func handleRequest[Req validation.Validatable](
+        c *fiber.Ctx,
+        req Req,
+        handler func(c *fiber.Ctx, req Req) (any, error),
+        responseHandler ResponseHandler,
+) error <span class="cov8" title="1">{
+        start := time.Now()
+        method := c.Method()
+        path := c.Path()
+        route := path
+        if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov8" title="1">{
+                route = c.Route().Path
+        }</span>
+
+        // Get New Relic transaction from context
+        <span class="cov8" title="1">txn := newrelic.FromContext(c.UserContext())
+        if txn != nil </span><span class="cov0" title="0">{
+                txn.AddAttribute("handler.name", route)
+                txn.AddAttribute("http.method", method)
+                txn.AddAttribute("http.route", route)
+                responseHandler.AddAttributes(txn, nil)
+        }</span>
+
+        // Get context-enhanced logger
+        <span class="cov8" title="1">loggerBuilder := middleware.GetLogger(c).With().
+                Str("operation", responseHandler.GetOperation()).
+                Str("method", method).
+                Str("path", path).
+                Str("route", route)
+
+        // Add file-specific fields to logger if it's a file handler
+        if fileHandler, ok := responseHandler.(FileResponseHandler); ok </span><span class="cov0" title="0">{
+                loggerBuilder = loggerBuilder.
+                        Str("filename", fileHandler.filename).
+                        Str("content_type", fileHandler.contentType)
+        }</span>
+
+        <span class="cov8" title="1">logger := loggerBuilder.Logger()
+
+        // user.id is already set by tracing middleware
+
+        logger.Info().Msg("handling request")
+
+        // Validation with observability
+        validationStart := time.Now()
+        if err := validation.BindAndValidate(c, req); err != nil </span><span class="cov8" title="1">{
+                validationDuration := time.Since(validationStart)
+
+                logger.Error().
+                        Err(err).
+                        Dur("validation_duration", validationDuration).
+                        Msg("request validation failed")
+
+                if txn != nil </span><span class="cov0" title="0">{
+                        txn.NoticeError(nrpkgerrors.Wrap(err))
+                        txn.AddAttribute("validation.status", "failed")
+                        txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
+                }</span>
+                <span class="cov8" title="1">return err</span>
+        }
+
+        <span class="cov8" title="1">validationDuration := time.Since(validationStart)
+        if txn != nil </span><span class="cov0" title="0">{
+                txn.AddAttribute("validation.status", "success")
+                txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
+        }</span>
+
+        <span class="cov8" title="1">logger.Debug().
+                Dur("validation_duration", validationDuration).
+                Msg("request validation successful")
+
+        // Execute handler with observability
+        handlerStart := time.Now()
+        result, err := handler(c, req)
+        handlerDuration := time.Since(handlerStart)
+
+        if err != nil </span><span class="cov8" title="1">{
+                totalDuration := time.Since(start)
+
+                logger.Error().
+                        Err(err).
+                        Dur("handler_duration", handlerDuration).
+                        Dur("total_duration", totalDuration).
+                        Msg("handler execution failed")
+
+                if txn != nil </span><span class="cov0" title="0">{
+                        txn.NoticeError(nrpkgerrors.Wrap(err))
+                        txn.AddAttribute("handler.status", "error")
+                        txn.AddAttribute("handler.duration_ms", handlerDuration.Milliseconds())
+                        txn.AddAttribute("total.duration_ms", totalDuration.Milliseconds())
+                }</span>
+                <span class="cov8" title="1">return err</span>
+        }
+
+        <span class="cov8" title="1">totalDuration := time.Since(start)
+
+        // Record success metrics and tracing
+        if txn != nil </span><span class="cov0" title="0">{
+                txn.AddAttribute("handler.status", "success")
+                txn.AddAttribute("handler.duration_ms", handlerDuration.Milliseconds())
+                txn.AddAttribute("total.duration_ms", totalDuration.Milliseconds())
+                responseHandler.AddAttributes(txn, result)
+        }</span>
+
+        <span class="cov8" title="1">logger.Info().
+                Dur("handler_duration", handlerDuration).
+                Dur("validation_duration", validationDuration).
+                Dur("total_duration", totalDuration).
+                Msg("request completed successfully")
+
+        return responseHandler.Handle(c, result)</span>
+}
+
+// Handle wraps a handler with validation, error handling, logging, metrics, and tracing
+func Handle[Req validation.Validatable, Res any](
+        h Handler,
+        handler HandlerFunc[Req, Res],
+        status int,
+        req Req,
+) fiber.Handler <span class="cov8" title="1">{
+        return func(c *fiber.Ctx) error </span><span class="cov8" title="1">{
+                return handleRequest(c, req, func(c *fiber.Ctx, req Req) (any, error) </span><span class="cov8" title="1">{
+                        return handler(c, req)
+                }</span>, JSONResponseHandler{status: status})
+        }
+}
+
+func HandleFile[Req validation.Validatable](
+        h Handler,
+        handler HandlerFunc[Req, []byte],
+        status int,
+        req Req,
+        filename string,
+        contentType string,
+) fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                return handleRequest(c, req, func(c *fiber.Ctx, req Req) (any, error) </span><span class="cov0" title="0">{
+                        return handler(c, req)
+                }</span>, FileResponseHandler{
+                        status:      status,
+                        filename:    filename,
+                        contentType: contentType,
+                })
+        }
+}
+
+// HandleNoContent wraps a handler with validation, error handling, logging, metrics, and tracing for endpoints that don't return content
+func HandleNoContent[Req validation.Validatable](
+        h Handler,
+        handler HandlerFuncNoContent[Req],
+        status int,
+        req Req,
+) fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                return handleRequest(c, req, func(c *fiber.Ctx, req Req) (any, error) </span><span class="cov0" title="0">{
+                        err := handler(c, req)
+                        return nil, err
+                }</span>, NoContentResponseHandler{status: status})
+        }
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handler
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/service"
+)
+
+type Handlers struct {
+        Health  *HealthHandler
+        Auth    *AuthHandler
+        User    *UserHandler
+        OpenAPI *OpenAPIHandler
+}
+
+func NewHandlers(s *server.Server, services *service.Services) *Handlers <span class="cov0" title="0">{
+        h := NewHandler(s)
+
+        return &amp;Handlers{
+                Health:  NewHealthHandler(h),
+                Auth:    NewAuthHandler(h, services.Auth),
+                User:    NewUserHandler(h, services.User),
+                OpenAPI: NewOpenAPIHandler(h),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package handler
+
+import (
+        "context"
+        "fmt"
+        "net/http"
+        "time"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/middleware"
+)
+
+type HealthHandler struct {
+        Handler
+}
+
+func NewHealthHandler(h Handler) *HealthHandler <span class="cov0" title="0">{
+        return &amp;HealthHandler{
+                Handler: h,
+        }
+}</span>
+
+func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error <span class="cov0" title="0">{
+        start := time.Now()
+        logger := middleware.GetLogger(c).With().
+                Str("operation", "health_check").
+                Logger()
+
+        response := map[string]any{
+                "status":      "healthy",
+                "timestamp":   time.Now().UTC(),
+                "environment": h.server.Config.Primary.Env,
+                "checks":      make(map[string]any),
+        }
+
+        checks := response["checks"].(map[string]any)
+        isHealthy := true
+
+        // Check database connectivity
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        sqlDB := h.server.DB.SQLDB
+        dbStart := time.Now()
+        if sqlDB == nil </span><span class="cov0" title="0">{
+                checks["database"] = map[string]any{
+                        "status":        "unhealthy",
+                        "response_time": time.Since(dbStart).String(),
+                        "error":         "database connection not initialized",
+                }
+                isHealthy = false
+                logger.Error().Msg("database health check failed: no connection")
+        }</span> else<span class="cov0" title="0"> if err := sqlDB.PingContext(ctx); err != nil </span><span class="cov0" title="0">{
+                checks["database"] = map[string]any{
+                        "status":        "unhealthy",
+                        "response_time": time.Since(dbStart).String(),
+                        "error":         err.Error(),
+                }
+                isHealthy = false
+                logger.Error().Err(err).Dur("response_time", time.Since(dbStart)).Msg("database health check failed")
+                if h.server.LoggerService != nil &amp;&amp; h.server.LoggerService.GetApplication() != nil </span><span class="cov0" title="0">{
+                        h.server.LoggerService.GetApplication().RecordCustomEvent(
+                                "HealthCheckError", map[string]any{
+                                        "check_type":       "database",
+                                        "operation":        "health_check",
+                                        "error_type":       "database_unhealthy",
+                                        "response_time_ms": time.Since(dbStart).Milliseconds(),
+                                        "error_message":    err.Error(),
+                                })
+                }</span>
+        } else<span class="cov0" title="0"> {
+                checks["database"] = map[string]any{
+                        "status":        "healthy",
+                        "response_time": time.Since(dbStart).String(),
+                }
+                logger.Info().Dur("response_time", time.Since(dbStart)).Msg("database health check passed")
+        }</span>
+
+        // Check Redis connectivity
+        <span class="cov0" title="0">if h.server.Redis != nil </span><span class="cov0" title="0">{
+                ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+                defer cancel()
+
+                redisStart := time.Now()
+                if err := h.server.Redis.Ping(ctx).Err(); err != nil </span><span class="cov0" title="0">{
+                        checks["redis"] = map[string]any{
+                                "status":        "unhealthy",
+                                "response_time": time.Since(redisStart).String(),
+                                "error":         err.Error(),
+                        }
+                        logger.Error().Err(err).Dur("response_time", time.Since(redisStart)).Msg("redis health check failed")
+                        if h.server.LoggerService != nil &amp;&amp; h.server.LoggerService.GetApplication() != nil </span><span class="cov0" title="0">{
+                                h.server.LoggerService.GetApplication().RecordCustomEvent(
+                                        "HealthCheckError", map[string]any{
+                                                "check_type":       "redis",
+                                                "operation":        "health_check",
+                                                "error_type":       "redis_unhealthy",
+                                                "response_time_ms": time.Since(redisStart).Milliseconds(),
+                                                "error_message":    err.Error(),
+                                        })
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        checks["redis"] = map[string]any{
+                                "status":        "healthy",
+                                "response_time": time.Since(redisStart).String(),
+                        }
+                        logger.Info().Dur("response_time", time.Since(redisStart)).Msg("redis health check passed")
+                }</span>
+        }
+
+        // Set overall status
+        <span class="cov0" title="0">if !isHealthy </span><span class="cov0" title="0">{
+                response["status"] = "unhealthy"
+                logger.Warn().
+                        Dur("total_duration", time.Since(start)).
+                        Msg("health check failed")
+                if h.server.LoggerService != nil &amp;&amp; h.server.LoggerService.GetApplication() != nil </span><span class="cov0" title="0">{
+                        h.server.LoggerService.GetApplication().RecordCustomEvent(
+                                "HealthCheckError", map[string]any{
+                                        "check_type":        "overall",
+                                        "operation":         "health_check",
+                                        "error_type":        "overall_unhealthy",
+                                        "total_duration_ms": time.Since(start).Milliseconds(),
+                                })
+                }</span>
+                <span class="cov0" title="0">return c.Status(http.StatusServiceUnavailable).JSON(response)</span>
+        }
+
+        <span class="cov0" title="0">logger.Info().
+                Dur("total_duration", time.Since(start)).
+                Msg("health check passed")
+
+        err := c.Status(http.StatusOK).JSON(response)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error().Err(err).Msg("failed to write JSON response")
+                if h.server.LoggerService != nil &amp;&amp; h.server.LoggerService.GetApplication() != nil </span><span class="cov0" title="0">{
+                        h.server.LoggerService.GetApplication().RecordCustomEvent(
+                                "HealthCheckError", map[string]any{
+                                        "check_type":    "response",
+                                        "operation":     "health_check",
+                                        "error_type":    "json_response_error",
+                                        "error_message": err.Error(),
+                                })
+                }</span>
+                <span class="cov0" title="0">return fmt.Errorf("failed to write JSON response: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package handler
+
+import (
+        "fmt"
+        "net/http"
+        "os"
+
+        "github.com/gofiber/fiber/v2"
+)
+
+type OpenAPIHandler struct {
+        Handler
+}
+
+func NewOpenAPIHandler(h Handler) *OpenAPIHandler <span class="cov0" title="0">{
+        return &amp;OpenAPIHandler{
+                Handler: h,
+        }
+}</span>
+
+func (h *OpenAPIHandler) ServeOpenAPIUI(c *fiber.Ctx) error <span class="cov0" title="0">{
+        templateBytes, err := os.ReadFile("static/openapi.html")
+        c.Set("Cache-Control", "no-cache")
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to read OpenAPI UI template: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">templateString := string(templateBytes)
+
+        if err := c.Type("html").Status(http.StatusOK).SendString(templateString); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to write HTML response: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package handler
+
+import (
+        "net/http"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/service"
+)
+
+type ResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+        Handler
+        service service.ResourceServiceInterface[T, S, U]
+}
+
+func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](base Handler, service service.ResourceServiceInterface[T, S, U]) *ResourceHandler[T, S, U] <span class="cov8" title="1">{
+        return &amp;ResourceHandler[T, S, U]{
+                Handler: base,
+                service: service,
+        }
+}</span>
+
+func (h *ResourceHandler[T, S, U]) Update() fiber.Handler <span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, dto U) (*T, error) </span><span class="cov0" title="0">{
+                id, err := utils.ParseUUIDParam(c.Params("id"))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">return h.service.Update(c.UserContext(), id, dto)</span>
+        }, http.StatusOK, model.NewDTO[U]())
+}
+
+func (h *ResourceHandler[T, S, U]) GetByID() fiber.Handler <span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*T, error) </span><span class="cov0" title="0">{
+                id, err := utils.ParseUUIDParam(c.Params("id"))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">preloads := repository.ParsePreloads(c.Query("preloads"))
+                return h.service.GetByID(c.UserContext(), id, preloads)</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *ResourceHandler[T, S, U]) GetMany() fiber.Handler <span class="cov8" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (model.PaginatedResponse[T], error) </span><span class="cov8" title="1">{
+                options := repository.NewGetManyOptionsFromRequest(c)
+                entities, total, err := h.service.GetMany(c.UserContext(), options)
+                if err != nil </span><span class="cov0" title="0">{
+                        return model.PaginatedResponse[T]{}, err
+                }</span>
+
+                <span class="cov8" title="1">resp := model.PaginatedResponse[T]{
+                        Data:       entities,
+                        Page:       options.Offset/options.Limit + 1,
+                        Limit:      options.Limit,
+                        Total:      int(total),
+                        TotalPages: int((total + int64(options.Limit) - 1) / int64(options.Limit)),
+                }
+                return resp, nil</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *ResourceHandler[T, S, U]) Destroy() fiber.Handler <span class="cov0" title="0">{
+        return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) error </span><span class="cov0" title="0">{
+                id, err := utils.ParseUUIDParam(c.Params("id"))
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">return h.service.Destroy(c.UserContext(), id)</span>
+        }, http.StatusNoContent, &amp;model.EmptyDTO{})
+}
+
+func (h *ResourceHandler[T, S, U]) Kill() fiber.Handler <span class="cov0" title="0">{
+        return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) error </span><span class="cov0" title="0">{
+                id, err := utils.ParseUUIDParam(c.Params("id"))
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">return h.service.Kill(c.UserContext(), id)</span>
+        }, http.StatusNoContent, &amp;model.EmptyDTO{})
+}
+
+func (h *ResourceHandler[T, S, U]) Restore() fiber.Handler <span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*T, error) </span><span class="cov0" title="0">{
+                id, err := utils.ParseUUIDParam(c.Params("id"))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">preloads := repository.ParsePreloads(c.Query("preloads"))
+                return h.service.Restore(c.UserContext(), id, preloads)</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *ResourceHandler[T, S, U]) Store() fiber.Handler <span class="cov8" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, dto S) (*T, error) </span><span class="cov8" title="1">{
+                return h.service.Store(c.UserContext(), dto)
+        }</span>, http.StatusCreated, model.NewDTO[S]())
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package handler
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/service"
+)
+
+type UserHandler struct {
+        *ResourceHandler[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
+}
+
+func NewUserHandler(h Handler, service *service.UserService) *UserHandler <span class="cov0" title="0">{
+        return &amp;UserHandler{
+                ResourceHandler: NewResourceHandler(h, service),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package middleware
+
+import (
+        "strings"
+        "time"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+)
+
+type AuthMiddleware struct {
+        server *server.Server
+        secret []byte
+}
+
+func NewAuthMiddleware(s *server.Server) *AuthMiddleware <span class="cov0" title="0">{
+        return &amp;AuthMiddleware{
+                server: s,
+                secret: []byte(s.Config.Auth.SecretKey),
+        }
+}</span>
+
+func (auth *AuthMiddleware) RequireAuth() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                start := time.Now()
+
+                authHeader := c.Get(fiber.HeaderAuthorization)
+                parts := strings.Fields(authHeader)
+                if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov0" title="0">{
+                        return errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+
+                <span class="cov0" title="0">rawToken := strings.TrimSpace(parts[1])
+                if rawToken == "" </span><span class="cov0" title="0">{
+                        return errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+
+                <span class="cov0" title="0">claims := &amp;model.AuthClaims{}
+                token, err := jwt.ParseWithClaims(rawToken, claims, func(token *jwt.Token) (any, error) </span><span class="cov0" title="0">{
+                        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                                return nil, errs.NewUnauthorizedError("invalid token", true)
+                        }</span>
+                        <span class="cov0" title="0">return auth.secret, nil</span>
+                })
+                <span class="cov0" title="0">if err != nil || !token.Valid </span><span class="cov0" title="0">{
+                        auth.server.Logger.Error().
+                                Err(err).
+                                Str("function", "RequireAuth").
+                                Str("request_id", GetRequestID(c)).
+                                Dur("duration", time.Since(start)).
+                                Msg("token validation failed")
+
+                        return errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+
+                <span class="cov0" title="0">if claims.Subject == "" </span><span class="cov0" title="0">{
+                        return errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+
+                <span class="cov0" title="0">if _, err := uuid.Parse(claims.Subject); err != nil </span><span class="cov0" title="0">{
+                        return errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+
+                <span class="cov0" title="0">c.Locals(UserIDKey, claims.Subject)
+                c.Locals(UserEmailKey, claims.Email)
+                c.Locals(UserIsAdminKey, claims.IsAdmin)
+
+                auth.server.Logger.Info().
+                        Str("function", "RequireAuth").
+                        Str("user_id", claims.Subject).
+                        Str("request_id", GetRequestID(c)).
+                        Dur("duration", time.Since(start)).
+                        Msg("user authenticated successfully")
+
+                return c.Next()</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package middleware
+
+import (
+        "context"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/service"
+)
+
+type AuthorizationMiddleware struct {
+        authorizer AuthorizationEnforcer
+}
+
+type AuthorizationEnforcer interface {
+        Enforce(ctx context.Context, sub service.AuthorizationSubject, obj service.AuthorizationObject, act string) (bool, error)
+}
+
+func NewAuthorizationMiddleware(authorizer AuthorizationEnforcer) *AuthorizationMiddleware <span class="cov8" title="1">{
+        return &amp;AuthorizationMiddleware{authorizer: authorizer}
+}</span>
+
+func (am *AuthorizationMiddleware) RequireAuthorization() fiber.Handler <span class="cov8" title="1">{
+        return func(c *fiber.Ctx) error </span><span class="cov8" title="1">{
+                userID := GetUserID(c)
+                if userID == "" </span><span class="cov8" title="1">{
+                        return errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+
+                <span class="cov8" title="1">isAdmin := GetUserIsAdmin(c)
+                if isAdmin </span><span class="cov8" title="1">{
+                        return c.Next()
+                }</span>
+
+                <span class="cov8" title="1">if am.authorizer == nil </span><span class="cov0" title="0">{
+                        return errs.NewInternalServerError()
+                }</span>
+
+                <span class="cov8" title="1">subject := service.AuthorizationSubject{
+                        ID:      userID,
+                        Email:   GetUserEmail(c),
+                        IsAdmin: isAdmin,
+                }
+                obj := service.AuthorizationObject{
+                        Route:  routePattern(c),
+                        Path:   c.Path(),
+                        Params: c.AllParams(),
+                        Query:  c.Queries(),
+                }
+
+                allowed, err := am.authorizer.Enforce(c.UserContext(), subject, obj, c.Method())
+                if err != nil </span><span class="cov8" title="1">{
+                        logger := GetLogger(c)
+                        logger.Error().Err(err).Msg("authorization check failed")
+                        return errs.NewInternalServerError()
+                }</span>
+                <span class="cov8" title="1">if !allowed </span><span class="cov8" title="1">{
+                        return errs.NewForbiddenError("Forbidden", false)
+                }</span>
+
+                <span class="cov8" title="1">return c.Next()</span>
+        }
+}
+
+func routePattern(c *fiber.Ctx) string <span class="cov8" title="1">{
+        if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov8" title="1">{
+                return c.Route().Path
+        }</span>
+        <span class="cov0" title="0">return c.Path()</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package middleware
+
+import (
+        "context"
+        "time"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/logger"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+        "github.com/newrelic/go-agent/v3/newrelic"
+        "github.com/rs/zerolog"
+)
+
+const (
+        UserIDKey      = "user_id"
+        UserRoleKey    = "user_role"
+        UserEmailKey   = "user_email"
+        UserIsAdminKey = "user_is_admin"
+        LoggerKey      = "logger"
+)
+
+type ContextEnhancer struct {
+        server *server.Server
+}
+
+func NewContextEnhancer(s *server.Server) *ContextEnhancer <span class="cov0" title="0">{
+        return &amp;ContextEnhancer{server: s}
+}</span>
+
+func (ce *ContextEnhancer) WithTimeout() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                timeout := ce.timeoutForMethod(c.Method())
+                if timeout &lt;= 0 </span><span class="cov0" title="0">{
+                        return c.Next()
+                }</span>
+
+                <span class="cov0" title="0">ctx, cancel := context.WithTimeout(c.UserContext(), timeout)
+                defer cancel()
+
+                c.SetUserContext(ctx)
+
+                return c.Next()</span>
+        }
+}
+
+func (ce *ContextEnhancer) EnhanceContext() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                requestID := GetRequestID(c)
+
+                contextLogger := ce.server.Logger.With().
+                        Str("request_id", requestID).
+                        Str("method", c.Method()).
+                        Str("path", c.Path()).
+                        Str("ip", c.IP()).
+                        Logger()
+
+                if txn := newrelic.FromContext(c.UserContext()); txn != nil </span><span class="cov0" title="0">{
+                        contextLogger = logger.WithTraceContext(contextLogger, txn)
+                }</span>
+
+                <span class="cov0" title="0">if userID := ce.extractUserID(c); userID != "" </span><span class="cov0" title="0">{
+                        contextLogger = contextLogger.With().Str("user_id", userID).Logger()
+                }</span>
+
+                <span class="cov0" title="0">if userRole := ce.extractUserRole(c); userRole != "" </span><span class="cov0" title="0">{
+                        contextLogger = contextLogger.With().Str("user_role", userRole).Logger()
+                }</span>
+
+                <span class="cov0" title="0">c.Locals(LoggerKey, &amp;contextLogger)
+
+                ctx := context.WithValue(c.UserContext(), LoggerKey, &amp;contextLogger)
+                c.SetUserContext(ctx)
+
+                return c.Next()</span>
+        }
+}
+
+func (ce *ContextEnhancer) extractUserID(c *fiber.Ctx) string <span class="cov0" title="0">{
+        if userID, ok := c.Locals(UserIDKey).(string); ok &amp;&amp; userID != "" </span><span class="cov0" title="0">{
+                return userID
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+
+func (ce *ContextEnhancer) extractUserRole(c *fiber.Ctx) string <span class="cov0" title="0">{
+        if userRole, ok := c.Locals(UserRoleKey).(string); ok &amp;&amp; userRole != "" </span><span class="cov0" title="0">{
+                return userRole
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+
+func (ce *ContextEnhancer) timeoutForMethod(method string) time.Duration <span class="cov0" title="0">{
+        switch method </span>{
+        case fiber.MethodGet, fiber.MethodHead, fiber.MethodOptions:<span class="cov0" title="0">
+                return ce.server.Config.Server.ReadTimeout</span>
+        default:<span class="cov0" title="0">
+                return ce.server.Config.Server.WriteTimeout</span>
+        }
+}
+
+func GetUserID(c *fiber.Ctx) string <span class="cov8" title="1">{
+        if userID, ok := c.Locals(UserIDKey).(string); ok </span><span class="cov8" title="1">{
+                return userID
+        }</span>
+        <span class="cov8" title="1">return ""</span>
+}
+
+func GetUserEmail(c *fiber.Ctx) string <span class="cov8" title="1">{
+        if email, ok := c.Locals(UserEmailKey).(string); ok </span><span class="cov8" title="1">{
+                return email
+        }</span>
+        <span class="cov8" title="1">return ""</span>
+}
+
+func GetUserIsAdmin(c *fiber.Ctx) bool <span class="cov8" title="1">{
+        if isAdmin, ok := c.Locals(UserIsAdminKey).(bool); ok </span><span class="cov8" title="1">{
+                return isAdmin
+        }</span>
+        <span class="cov8" title="1">return false</span>
+}
+
+func GetLogger(c *fiber.Ctx) *zerolog.Logger <span class="cov8" title="1">{
+        if logger, ok := c.Locals(LoggerKey).(*zerolog.Logger); ok </span><span class="cov0" title="0">{
+                return logger
+        }</span>
+        <span class="cov8" title="1">logger := zerolog.Nop()
+        return &amp;logger</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package middleware
+
+import (
+        "net/http"
+        "time"
+
+        "github.com/gofiber/fiber/v2"
+        fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
+        "github.com/pkg/errors"
+        "github.com/rs/zerolog"
+)
+
+type GlobalMiddlewares struct {
+        server *server.Server
+}
+
+func NewGlobalMiddlewares(s *server.Server) *GlobalMiddlewares <span class="cov0" title="0">{
+        return &amp;GlobalMiddlewares{
+                server: s,
+        }
+}</span>
+
+func (global *GlobalMiddlewares) RequestLogger() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                start := time.Now()
+                err := c.Next()
+
+                statusCode := c.Response().StatusCode()
+                if statusCode == 0 </span><span class="cov0" title="0">{
+                        statusCode = http.StatusOK
+                }</span>
+
+                <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                        var httpErr *errs.HTTPError
+                        var fiberErr *fiber.Error
+                        switch </span>{
+                        case errors.As(err, &amp;httpErr):<span class="cov0" title="0">
+                                statusCode = httpErr.Status</span>
+                        case errors.As(err, &amp;fiberErr):<span class="cov0" title="0">
+                                statusCode = fiberErr.Code</span>
+                        default:<span class="cov0" title="0">
+                                statusCode = http.StatusInternalServerError</span>
+                        }
+                }
+
+                <span class="cov0" title="0">logger := GetLogger(c)
+
+                var e *zerolog.Event
+
+                switch </span>{
+                case statusCode &gt;= 500:<span class="cov0" title="0">
+                        e = logger.Error().Err(err)</span>
+                case statusCode &gt;= 400:<span class="cov0" title="0">
+                        e = logger.Warn()</span>
+                default:<span class="cov0" title="0">
+                        e = logger.Info()</span>
+                }
+
+                <span class="cov0" title="0">if requestID := GetRequestID(c); requestID != "" </span><span class="cov0" title="0">{
+                        e = e.Str("request_id", requestID)
+                }</span>
+
+                <span class="cov0" title="0">if userID := GetUserID(c); userID != "" </span><span class="cov0" title="0">{
+                        e = e.Str("user_id", userID)
+                }</span>
+
+                <span class="cov0" title="0">e.
+                        Dur("latency", time.Since(start)).
+                        Int("status", statusCode).
+                        Str("method", c.Method()).
+                        Str("uri", c.OriginalURL()).
+                        Str("host", c.Hostname()).
+                        Str("ip", c.IP()).
+                        Str("user_agent", c.Get(fiber.HeaderUserAgent)).
+                        Msg("API")
+
+                return err</span>
+        }
+}
+
+func (global *GlobalMiddlewares) Recover() fiber.Handler <span class="cov0" title="0">{
+        return fiberrecover.New()
+}</span>
+
+func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) error <span class="cov0" title="0">{
+        // First try to handle database errors and convert them to appropriate HTTP errors
+        originalErr := err
+
+        // Try to handle known database errors
+        // Only do this for errors that haven't already been converted to HTTPError
+        var httpErr *errs.HTTPError
+        if !errors.As(err, &amp;httpErr) </span><span class="cov0" title="0">{
+                var fiberErr *fiber.Error
+                if errors.As(err, &amp;fiberErr) </span><span class="cov0" title="0">{
+                        if fiberErr.Code == http.StatusNotFound </span><span class="cov0" title="0">{
+                                err = errs.NewNotFoundError("Route not found", false, nil)
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        // Here we call our sqlerr handler which will convert database errors
+                        // to appropriate application errors
+                        err = sqlerr.HandleError(err)
+                }</span>
+        }
+
+        // Now process the possibly converted error
+        <span class="cov0" title="0">var fiberErr *fiber.Error
+        var status int
+        var code string
+        var message string
+        var fieldErrors []errs.FieldError
+        var action *errs.Action
+
+        switch </span>{
+        case errors.As(err, &amp;httpErr):<span class="cov0" title="0">
+                status = httpErr.Status
+                code = httpErr.Code
+                message = httpErr.Message
+                fieldErrors = httpErr.Errors
+                action = httpErr.Action</span>
+
+        case errors.As(err, &amp;fiberErr):<span class="cov0" title="0">
+                status = fiberErr.Code
+                code = errs.MakeUpperCaseWithUnderscores(http.StatusText(status))
+                message = fiberErr.Message</span>
+
+        default:<span class="cov0" title="0">
+                status = http.StatusInternalServerError
+                code = errs.MakeUpperCaseWithUnderscores(
+                        http.StatusText(http.StatusInternalServerError))
+                message = http.StatusText(http.StatusInternalServerError)</span>
+        }
+
+        // Log the original error to help with debugging
+        // Use enhanced logger from context which already includes request_id, method, path, ip, user context, and trace context
+        <span class="cov0" title="0">logger := *GetLogger(c)
+
+        logger.Error().Stack().
+                Err(originalErr).
+                Int("status", status).
+                Str("error_code", code).
+                Msg(message)
+
+        _ = c.Status(status).JSON(errs.HTTPError{
+                Code:     code,
+                Message:  message,
+                Status:   status,
+                Override: httpErr != nil &amp;&amp; httpErr.Override,
+                Errors:   fieldErrors,
+                Action:   action,
+        })
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package middleware
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/service"
+        "github.com/newrelic/go-agent/v3/newrelic"
+)
+
+type Middlewares struct {
+        Global          *GlobalMiddlewares
+        Auth            *AuthMiddleware
+        Authorization   *AuthorizationMiddleware
+        ContextEnhancer *ContextEnhancer
+        Tracing         *TracingMiddleware
+        RateLimit       *RateLimitMiddleware
+}
+
+func NewMiddlewares(s *server.Server, services *service.Services) *Middlewares <span class="cov0" title="0">{
+        // Get New Relic application instance from server
+        var nrApp *newrelic.Application
+        if s.LoggerService != nil </span><span class="cov0" title="0">{
+                nrApp = s.LoggerService.GetApplication()
+        }</span>
+
+        <span class="cov0" title="0">var authorizer AuthorizationEnforcer
+        if services != nil </span><span class="cov0" title="0">{
+                authorizer = services.Authorization
+        }</span>
+
+        <span class="cov0" title="0">return &amp;Middlewares{
+                Global:          NewGlobalMiddlewares(s),
+                Auth:            NewAuthMiddleware(s),
+                Authorization:   NewAuthorizationMiddleware(authorizer),
+                ContextEnhancer: NewContextEnhancer(s),
+                Tracing:         NewTracingMiddleware(s, nrApp),
+                RateLimit:       NewRateLimitMiddleware(s),
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package middleware
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+)
+
+type RateLimitMiddleware struct {
+        server *server.Server
+}
+
+func NewRateLimitMiddleware(s *server.Server) *RateLimitMiddleware <span class="cov0" title="0">{
+        return &amp;RateLimitMiddleware{
+                server: s,
+        }
+}</span>
+
+func (r *RateLimitMiddleware) RecordRateLimitHit(endpoint string) <span class="cov0" title="0">{
+        if r.server.LoggerService != nil &amp;&amp; r.server.LoggerService.GetApplication() != nil </span><span class="cov0" title="0">{
+                r.server.LoggerService.GetApplication().RecordCustomEvent("RateLimitHit", map[string]any{
+                        "endpoint": endpoint,
+                })
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package middleware
+
+import (
+        "github.com/gofiber/fiber/v2"
+        "github.com/google/uuid"
+)
+
+const (
+        RequestIDHeader = "X-Request-ID"
+        RequestIDKey    = "request_id"
+)
+
+func RequestID() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                requestID := c.Get(RequestIDHeader)
+                if requestID == "" </span><span class="cov0" title="0">{
+                        requestID = uuid.New().String()
+                }</span>
+
+                <span class="cov0" title="0">c.Locals(RequestIDKey, requestID)
+                c.Set(RequestIDHeader, requestID)
+
+                return c.Next()</span>
+        }
+}
+
+func GetRequestID(c *fiber.Ctx) string <span class="cov0" title="0">{
+        if requestID, ok := c.Locals(RequestIDKey).(string); ok </span><span class="cov0" title="0">{
+                return requestID
+        }</span>
+        <span class="cov0" title="0">return ""</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package middleware
+
+import (
+        "fmt"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/newrelic/go-agent/v3/integrations/nrpkgerrors"
+        "github.com/newrelic/go-agent/v3/newrelic"
+
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+)
+
+type TracingMiddleware struct {
+        server *server.Server
+        nrApp  *newrelic.Application
+}
+
+func NewTracingMiddleware(s *server.Server, nrApp *newrelic.Application) *TracingMiddleware <span class="cov0" title="0">{
+        return &amp;TracingMiddleware{
+                server: s,
+                nrApp:  nrApp,
+        }
+}</span>
+
+// NewRelicMiddleware instruments fiber requests with New Relic.
+func (tm *TracingMiddleware) NewRelicMiddleware() fiber.Handler <span class="cov0" title="0">{
+        if tm.nrApp == nil </span><span class="cov0" title="0">{
+                return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                        return c.Next()
+                }</span>
+        }
+        <span class="cov0" title="0">return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                routeName := c.Path()
+                if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov0" title="0">{
+                        routeName = c.Route().Path
+                }</span>
+
+                <span class="cov0" title="0">txn := tm.nrApp.StartTransaction(fmt.Sprintf("%s %s", c.Method(), routeName))
+                defer txn.End()
+
+                ctx := newrelic.NewContext(c.UserContext(), txn)
+                c.SetUserContext(ctx)
+
+                err := c.Next()
+
+                txn.AddAttribute("http.method", c.Method())
+                txn.AddAttribute("http.route", routeName)
+                txn.AddAttribute("http.url", c.OriginalURL())
+                txn.AddAttribute("http.real_ip", c.IP())
+                txn.AddAttribute("http.status_code", c.Response().StatusCode())
+
+                if err != nil </span><span class="cov0" title="0">{
+                        txn.NoticeError(nrpkgerrors.Wrap(err))
+                }</span>
+
+                <span class="cov0" title="0">return err</span>
+        }
+}
+
+// EnhanceTracing adds custom attributes to New Relic transactions
+func (tm *TracingMiddleware) EnhanceTracing() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                txn := newrelic.FromContext(c.UserContext())
+                if txn == nil </span><span class="cov0" title="0">{
+                        return c.Next()
+                }</span>
+
+                <span class="cov0" title="0">txn.AddAttribute("http.real_ip", c.IP())
+                txn.AddAttribute("http.user_agent", c.Get(fiber.HeaderUserAgent))
+
+                if requestID := GetRequestID(c); requestID != "" </span><span class="cov0" title="0">{
+                        txn.AddAttribute("request.id", requestID)
+                }</span>
+
+                <span class="cov0" title="0">if userID := c.Locals(UserIDKey); userID != nil </span><span class="cov0" title="0">{
+                        if userIDStr, ok := userID.(string); ok </span><span class="cov0" title="0">{
+                                txn.AddAttribute("user.id", userIDStr)
+                        }</span>
+                }
+
+                <span class="cov0" title="0">err := c.Next()
+                if err != nil </span><span class="cov0" title="0">{
+                        txn.NoticeError(nrpkgerrors.Wrap(err))
+                }</span>
+
+                <span class="cov0" title="0">txn.AddAttribute("http.status_code", c.Response().StatusCode())
+
+                return err</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package repository
+
+import (
+        "context"
+        "strings"
+        "time"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "gorm.io/gorm"
+)
+
+type AuthRepositoryInterface interface {
+        Save(ctx context.Context, user *model.User) error
+        CreateUser(ctx context.Context, user *model.User) error
+        GetByEmail(ctx context.Context, email string) (*model.User, error)
+        GetByUsername(ctx context.Context, username string) (*model.User, error)
+        GetByGoogleID(ctx context.Context, googleID string) (*model.User, error)
+        UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error
+        UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error
+}
+
+type AuthRepository struct {
+        db *gorm.DB
+}
+
+func NewAuthRepository(db *gorm.DB) *AuthRepository <span class="cov8" title="1">{
+        return &amp;AuthRepository{db: db}
+}</span>
+
+func (r *AuthRepository) Save(ctx context.Context, user *model.User) error <span class="cov0" title="0">{
+        return r.db.WithContext(ctx).Save(user).Error
+}</span>
+
+func (r *AuthRepository) CreateUser(ctx context.Context, user *model.User) error <span class="cov8" title="1">{
+        if user.ID == uuid.Nil </span><span class="cov8" title="1">{
+                user.ID = uuid.New()
+        }</span>
+        <span class="cov8" title="1">return r.db.WithContext(ctx).Create(user).Error</span>
+}
+
+func (r *AuthRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) <span class="cov8" title="1">{
+        var user model.User
+        if err := r.db.WithContext(ctx).First(&amp;user, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (r *AuthRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) <span class="cov8" title="1">{
+        var user model.User
+        if err := r.db.WithContext(ctx).First(&amp;user, "LOWER(email) = ?", strings.ToLower(email)).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) <span class="cov8" title="1">{
+        var user model.User
+        if err := r.db.WithContext(ctx).First(&amp;user, "LOWER(username) = ?", strings.ToLower(username)).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (r *AuthRepository) GetByGoogleID(ctx context.Context, googleID string) (*model.User, error) <span class="cov8" title="1">{
+        var user model.User
+        if err := r.db.WithContext(ctx).First(&amp;user, "google_id = ?", googleID).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (r *AuthRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error <span class="cov8" title="1">{
+        return r.db.WithContext(ctx).
+                Model(&amp;model.User{}).
+                Where("id = ?", id).
+                Update("last_login_at", ts).
+                Error
+}</span>
+
+func (r *AuthRepository) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error <span class="cov8" title="1">{
+        return r.db.WithContext(ctx).
+                Model(&amp;model.User{}).
+                Where("id = ?", id).
+                Update("email_verified_at", ts).
+                Error
+}</span>
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package repository
+
+import (
+        "context"
+        "time"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "gorm.io/gorm"
+)
+
+type EmailVerificationRepositoryInterface interface {
+        Create(ctx context.Context, verification *model.EmailVerification) error
+        GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error)
+        ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error
+        MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error
+}
+
+type EmailVerificationRepository struct {
+        db *gorm.DB
+}
+
+func NewEmailVerificationRepository(db *gorm.DB) *EmailVerificationRepository <span class="cov8" title="1">{
+        return &amp;EmailVerificationRepository{db: db}
+}</span>
+
+func (r *EmailVerificationRepository) Create(ctx context.Context, verification *model.EmailVerification) error <span class="cov8" title="1">{
+        if verification.ID == uuid.Nil </span><span class="cov8" title="1">{
+                verification.ID = uuid.New()
+        }</span>
+        <span class="cov8" title="1">return r.db.WithContext(ctx).Create(verification).Error</span>
+}
+
+func (r *EmailVerificationRepository) GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error) <span class="cov8" title="1">{
+        var verification model.EmailVerification
+        err := r.db.WithContext(ctx).
+                Where("user_id = ? AND code_hash = ? AND verified_at IS NULL AND expires_at &gt; ?", userID, codeHash, now).
+                Order("created_at desc").
+                First(&amp;verification).
+                Error
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;verification, nil</span>
+}
+
+func (r *EmailVerificationRepository) ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error <span class="cov0" title="0">{
+        return r.db.WithContext(ctx).
+                Model(&amp;model.EmailVerification{}).
+                Where("user_id = ? AND verified_at IS NULL AND expires_at &gt; ?", userID, now).
+                Update("expires_at", now).
+                Error
+}</span>
+
+func (r *EmailVerificationRepository) MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error <span class="cov8" title="1">{
+        return r.db.WithContext(ctx).
+                Model(&amp;model.EmailVerification{}).
+                Where("id = ?", id).
+                Updates(map[string]any{
+                        "verified_at": verifiedAt,
+                        "updated_at":  verifiedAt,
+                }).
+                Error
+}</span>
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package repository
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+)
+
+type Repositories struct {
+        Auth              *AuthRepository
+        User              *UserRepository
+        EmailVerification *EmailVerificationRepository
+}
+
+func NewRepositories(s *server.Server) *Repositories <span class="cov0" title="0">{
+        return &amp;Repositories{
+                Auth:              NewAuthRepository(s.DB.DB),
+                User:              NewUserRepository(s.DB.DB),
+                EmailVerification: NewEmailVerificationRepository(s.DB.DB),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">package repository
+
+import (
+        "context"
+        "strings"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
+        "gorm.io/gorm"
+)
+
+type ResourceRepositoryInterface[T any] interface {
+        Store(ctx context.Context, entity *T) error
+        GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
+        GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error)
+        Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error)
+        Destroy(ctx context.Context, id uuid.UUID) error
+        Kill(ctx context.Context, id uuid.UUID) error
+        Restore(ctx context.Context, id uuid.UUID) (*T, error)
+}
+
+type ResourceRepository[T any] struct {
+        db *gorm.DB
+}
+
+func NewResourceRepository[T any](db *gorm.DB) *ResourceRepository[T] <span class="cov8" title="1">{
+        return &amp;ResourceRepository[T]{db: db}
+}</span>
+
+func (r *ResourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov8" title="1">{
+        return r.db.WithContext(ctx).Create(entity).Error
+}</span>
+
+func (r *ResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov8" title="1">{
+        var entity T
+        query := applyPreloads(r.db.WithContext(ctx), preloads)
+        if err := query.First(&amp;entity, id).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;entity, nil</span>
+}
+
+func (r *ResourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) <span class="cov8" title="1">{
+        // if the updates are provided, use them to only update specific fields, if not replace the entire entity
+        var err error
+        if len(updates) &gt; 0 </span><span class="cov8" title="1">{
+                err = r.db.WithContext(ctx).Model(&amp;entity).Updates(updates[0]).Error
+        }</span> else<span class="cov0" title="0"> {
+                err = r.db.WithContext(ctx).Save(&amp;entity).Error
+        }</span>
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // updated entity
+        <span class="cov8" title="1">return &amp;entity, nil</span>
+}
+
+func (r *ResourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov8" title="1">{
+        return r.db.WithContext(ctx).Delete(new(T), id).Error
+}</span>
+
+func (r *ResourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        return r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error
+}</span>
+
+func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov8" title="1">{
+        if err := r.db.WithContext(ctx).
+                Unscoped().
+                Model(new(T)).
+                Where("id = ?", id).
+                Update("deleted_at", nil).
+                Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return r.GetByID(ctx, id, nil)</span>
+}
+
+func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov8" title="1">{
+        opts.Normalize()
+
+        var (
+                entities []T
+                total    int64
+        )
+
+        countQuery := r.db.WithContext(ctx).Model(new(T))
+        countQuery = applyJoins(countQuery, opts.Joins)
+        countQuery = applyFilters(countQuery, opts.Filters)
+        countQuery = applyWheres(countQuery, opts.Wheres)
+        if err := countQuery.Count(&amp;total).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, 0, err
+        }</span>
+
+        <span class="cov8" title="1">listQuery := r.db.WithContext(ctx).Model(new(T))
+        listQuery = applyJoins(listQuery, opts.Joins)
+        listQuery = applyFilters(listQuery, opts.Filters)
+        listQuery = applyWheres(listQuery, opts.Wheres)
+        listQuery = applyPreloads(listQuery, opts.Preloads)
+        if err := listQuery.Limit(opts.Limit).Offset(opts.Offset).Order(opts.OrderBy + " " + opts.OrderDirection).Find(&amp;entities).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, 0, err
+        }</span>
+
+        <span class="cov8" title="1">return entities, total, nil</span>
+}
+
+type JoinClause struct {
+        Query string
+        Args  []any
+}
+
+type WhereClause struct {
+        Query string
+        Args  []any
+}
+
+type GetManyOptions struct {
+        Filters        map[string]any
+        Joins          []JoinClause
+        Wheres         []WhereClause
+        Preloads       []string
+        OrderBy        string
+        OrderDirection string
+        Limit          int
+        Offset         int
+}
+
+func NewGetManyOptionsFromRequest(c *fiber.Ctx) GetManyOptions <span class="cov0" title="0">{
+        opts := GetManyOptions{
+                Limit:          utils.ParseQueryInt(c.Query("limit")),
+                Offset:         utils.ParseQueryInt(c.Query("offset")),
+                Preloads:       ParsePreloads(c.Query("preloads")),
+                OrderBy:        c.Query("order_by"),
+                OrderDirection: c.Query("order_direction"),
+        }
+        opts.Normalize()
+        return opts
+}</span>
+
+func (o *GetManyOptions) Normalize() <span class="cov8" title="1">{
+        if o.Limit &lt;= 0 </span><span class="cov0" title="0">{
+                o.Limit = 20
+        }</span>
+
+        <span class="cov8" title="1">o.OrderDirection = strings.ToLower(strings.TrimSpace(o.OrderDirection))
+        if o.OrderDirection == "" || (o.OrderDirection != "asc" &amp;&amp; o.OrderDirection != "desc") </span><span class="cov0" title="0">{
+                o.OrderDirection = "desc"
+        }</span>
+
+        <span class="cov8" title="1">if o.OrderBy == "" </span><span class="cov0" title="0">{
+                o.OrderBy = "created_at"
+        }</span>
+}
+
+func ParsePreloads(raw string) []string <span class="cov0" title="0">{
+        if raw == "" </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">parts := strings.Split(raw, ",")
+        preloads := make([]string, 0, len(parts))
+        for _, part := range parts </span><span class="cov0" title="0">{
+                name := strings.TrimSpace(part)
+                if name == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">preloads = append(preloads, name)</span>
+        }
+
+        <span class="cov0" title="0">if len(preloads) == 0 </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov0" title="0">return preloads</span>
+}
+
+func applyFilters(db *gorm.DB, filters map[string]any) *gorm.DB <span class="cov8" title="1">{
+        if len(filters) &gt; 0 </span><span class="cov0" title="0">{
+                return db.Where(filters)
+        }</span>
+        <span class="cov8" title="1">return db</span>
+}
+
+func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov8" title="1">{
+        for _, where := range wheres </span><span class="cov0" title="0">{
+                query := strings.TrimSpace(where.Query)
+                if query == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">if len(where.Args) &gt; 0 </span><span class="cov0" title="0">{
+                        db = db.Where(query, where.Args...)
+                        continue</span>
+                }
+                <span class="cov0" title="0">db = db.Where(query)</span>
+        }
+        <span class="cov8" title="1">return db</span>
+}
+
+func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov8" title="1">{
+        for _, join := range joins </span><span class="cov0" title="0">{
+                query := strings.TrimSpace(join.Query)
+                if query == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">if len(join.Args) &gt; 0 </span><span class="cov0" title="0">{
+                        db = db.Joins(query, join.Args...)
+                        continue</span>
+                }
+                <span class="cov0" title="0">db = db.Joins(query)</span>
+        }
+        <span class="cov8" title="1">return db</span>
+}
+
+func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov8" title="1">{
+        for _, preload := range preloads </span><span class="cov0" title="0">{
+                name := strings.TrimSpace(preload)
+                if name == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">db = db.Preload(name)</span>
+        }
+        <span class="cov8" title="1">return db</span>
+}
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package repository
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "gorm.io/gorm"
+)
+
+type UserRepository struct {
+        *ResourceRepository[model.User]
+}
+
+func NewUserRepository(db *gorm.DB) *UserRepository <span class="cov8" title="1">{
+        return &amp;UserRepository{
+                ResourceRepository: NewResourceRepository[model.User](db),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file20" style="display: none">package service
+
+import (
+        "context"
+        "crypto/rand"
+        "crypto/sha256"
+        "encoding/hex"
+        "errors"
+        "fmt"
+        "math/big"
+        "regexp"
+        "time"
+
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/google/uuid"
+        "github.com/hibiken/asynq"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/config"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
+        "github.com/rs/zerolog"
+        "golang.org/x/crypto/bcrypt"
+        "google.golang.org/api/idtoken"
+        "gorm.io/gorm"
+)
+
+var (
+        minPasswordLength = 8
+        emailRegex        = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+)
+
+type AuthService struct {
+        repo                 repository.AuthRepositoryInterface
+        verificationRepo     repository.EmailVerificationRepositoryInterface
+        taskEnqueuer         TaskEnqueuer
+        logger               *zerolog.Logger
+        secretKey            []byte
+        accessTokenTTL       time.Duration
+        googleClientID       string
+        emailVerificationTTL time.Duration
+}
+
+type AuthToken struct {
+        Token     string    `json:"token"`
+        ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type AuthResult struct {
+        User  *model.User `json:"user"`
+        Token AuthToken   `json:"token"`
+}
+
+type AuthServiceInterface interface {
+        Register(ctx context.Context, email, username, password string) (*AuthResult, error)
+        Login(ctx context.Context, identifier, password string) (*AuthResult, error)
+        LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error)
+        VerifyEmail(ctx context.Context, email, code string) (*model.User, error)
+}
+
+type TaskEnqueuer interface {
+        EnqueueContext(ctx context.Context, task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+}
+
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService <span class="cov8" title="1">{
+        return &amp;AuthService{
+                repo:                 repo,
+                verificationRepo:     verificationRepo,
+                taskEnqueuer:         taskEnqueuer,
+                logger:               logger,
+                secretKey:            []byte(cfg.SecretKey),
+                accessTokenTTL:       cfg.AccessTokenTTL,
+                googleClientID:       cfg.GoogleClientID,
+                emailVerificationTTL: cfg.EmailVerificationTTL,
+        }
+}</span>
+
+func (s *AuthService) Register(ctx context.Context, email, username, password string) (*AuthResult, error) <span class="cov8" title="1">{
+        if len(password) &lt; minPasswordLength </span><span class="cov8" title="1">{
+                return nil, errs.NewBadRequestError(
+                        fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
+                        true,
+                        nil,
+                        []errs.FieldError{{Field: "password", Error: "too short"}},
+                        nil,
+                )
+        }</span>
+
+        <span class="cov8" title="1">passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov8" title="1">user := &amp;model.User{
+                Email:        email,
+                Username:     username,
+                PasswordHash: string(passwordHash),
+        }
+
+        if err := s.repo.CreateUser(ctx, user); err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov8" title="1">if err := s.queueEmailVerification(ctx, user); err != nil </span><span class="cov0" title="0">{
+                s.logVerificationQueueError(err)
+        }</span>
+
+        <span class="cov8" title="1">token, exp, err := s.generateToken(user)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov8" title="1">return &amp;AuthResult{
+                User:  user,
+                Token: AuthToken{Token: token, ExpiresAt: exp},
+        }, nil</span>
+}
+
+func (s *AuthService) Login(ctx context.Context, identifier, password string) (*AuthResult, error) <span class="cov8" title="1">{
+        user, err := s.lookupUser(ctx, identifier)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return nil, errs.NewUnauthorizedError("Invalid credentials", true)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov8" title="1">if user.PasswordHash == "" </span><span class="cov0" title="0">{
+                return nil, errs.NewUnauthorizedError("Password login not available for this account", true)
+        }</span>
+
+        <span class="cov8" title="1">if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil </span><span class="cov8" title="1">{
+                return nil, errs.NewUnauthorizedError("Invalid credentials", true)
+        }</span>
+
+        <span class="cov8" title="1">now := time.Now().UTC()
+        _ = s.repo.UpdateLoginAt(ctx, user.ID, now)
+
+        token, exp, err := s.generateToken(user)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov8" title="1">return &amp;AuthResult{
+                User:  user,
+                Token: AuthToken{Token: token, ExpiresAt: exp},
+        }, nil</span>
+}
+
+func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error) <span class="cov8" title="1">{
+        if s.googleClientID == "" </span><span class="cov8" title="1">{
+                return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil, nil)
+        }</span>
+
+        <span class="cov0" title="0">payload, err := idtoken.Validate(ctx, idToken, s.googleClientID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+        }</span>
+
+        <span class="cov0" title="0">subject := payload.Subject
+        emailClaim, _ := payload.Claims["email"].(string)
+        emailVerified, _ := payload.Claims["email_verified"].(bool)
+        if emailClaim == "" || !emailVerified </span><span class="cov0" title="0">{
+                return nil, errs.NewUnauthorizedError("Google account email is not verified", true)
+        }</span>
+
+        <span class="cov0" title="0">user, findErr := s.repo.GetByGoogleID(ctx, subject)
+        if findErr != nil &amp;&amp; !errors.Is(findErr, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(findErr)
+        }</span>
+
+        <span class="cov0" title="0">if user == nil </span><span class="cov0" title="0">{
+                // Try to link existing account by email
+                user, findErr = s.repo.GetByEmail(ctx, emailClaim)
+                switch </span>{
+                case findErr == nil:<span class="cov0" title="0">
+                        user.GoogleID = &amp;subject
+                        if err := s.repo.Save(ctx, user); err != nil </span><span class="cov0" title="0">{
+                                return nil, sqlerr.HandleError(err)
+                        }</span>
+                case errors.Is(findErr, gorm.ErrRecordNotFound):<span class="cov0" title="0">
+                        username := deriveUsername(emailClaim)
+                        user = &amp;model.User{
+                                Email:    emailClaim,
+                                Username: username,
+                                GoogleID: &amp;subject,
+                        }
+                        if err := s.repo.CreateUser(ctx, user); err != nil </span><span class="cov0" title="0">{
+                                return nil, sqlerr.HandleError(err)
+                        }</span>
+                default:<span class="cov0" title="0">
+                        return nil, sqlerr.HandleError(findErr)</span>
+                }
+        }
+
+        <span class="cov0" title="0">now := time.Now().UTC()
+        _ = s.repo.UpdateLoginAt(ctx, user.ID, now)
+        if user.EmailVerifiedAt == nil </span><span class="cov0" title="0">{
+                _ = s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now)
+                user.EmailVerifiedAt = &amp;now
+        }</span>
+
+        <span class="cov0" title="0">token, exp, err := s.generateToken(user)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov0" title="0">return &amp;AuthResult{
+                User:  user,
+                Token: AuthToken{Token: token, ExpiresAt: exp},
+        }, nil</span>
+}
+
+func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model.User, error) <span class="cov8" title="1">{
+        if emailRegex.MatchString(identifier) </span><span class="cov8" title="1">{
+                return s.repo.GetByEmail(ctx, identifier)
+        }</span>
+        <span class="cov8" title="1">return s.repo.GetByUsername(ctx, identifier)</span>
+}
+
+func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) <span class="cov8" title="1">{
+        user, err := s.repo.GetByEmail(ctx, email)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                        return nil, invalidVerificationError()
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov8" title="1">if user.EmailVerifiedAt != nil </span><span class="cov0" title="0">{
+                return user, nil
+        }</span>
+
+        <span class="cov8" title="1">if s.verificationRepo == nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov8" title="1">codeHash := hashVerificationCode(code)
+        now := time.Now().UTC()
+        verification, err := s.verificationRepo.GetActiveByUserIDAndCodeHash(ctx, user.ID, codeHash, now)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return nil, invalidVerificationError()
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov8" title="1">if err := s.verificationRepo.MarkVerified(ctx, verification.ID, now); err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov8" title="1">if err := s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now); err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov8" title="1">user.EmailVerifiedAt = &amp;now
+        return user, nil</span>
+}
+
+func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) <span class="cov8" title="1">{
+        if user == nil </span><span class="cov0" title="0">{
+                return "", time.Time{}, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov8" title="1">exp := time.Now().Add(s.accessTokenTTL)
+        claims := model.AuthClaims{
+                RegisteredClaims: jwt.RegisteredClaims{
+                        Subject:   user.ID.String(),
+                        ExpiresAt: jwt.NewNumericDate(exp),
+                        IssuedAt:  jwt.NewNumericDate(time.Now()),
+                },
+                Email:   user.Email,
+                IsAdmin: user.IsAdmin,
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        signed, err := token.SignedString(s.secretKey)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", time.Time{}, err
+        }</span>
+        <span class="cov8" title="1">return signed, exp, nil</span>
+}
+
+func deriveUsername(email string) string <span class="cov0" title="0">{
+        parts := regexp.MustCompile("@").Split(email, 2)
+        if len(parts) &gt; 0 &amp;&amp; parts[0] != "" </span><span class="cov0" title="0">{
+                return parts[0]
+        }</span>
+        <span class="cov0" title="0">return fmt.Sprintf("user-%s", uuid.New().String()[:8])</span>
+}
+
+func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error <span class="cov8" title="1">{
+        if user == nil || user.Email == "" || user.EmailVerifiedAt != nil || s.verificationRepo == nil </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">code, err := generateVerificationCode()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">now := time.Now().UTC()
+        ttl := s.emailVerificationTTL
+        if ttl &lt;= 0 </span><span class="cov0" title="0">{
+                ttl = 24 * time.Hour
+        }</span>
+        <span class="cov0" title="0">if err := s.verificationRepo.ExpireActiveByUserID(ctx, user.ID, now); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">verification := &amp;model.EmailVerification{
+                UserID:    user.ID,
+                Email:     user.Email,
+                CodeHash:  hashVerificationCode(code),
+                ExpiresAt: now.Add(ttl),
+        }
+        if err := s.verificationRepo.Create(ctx, verification); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">if s.taskEnqueuer == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">expiresInMinutes := int(ttl.Minutes())
+        if expiresInMinutes &lt;= 0 </span><span class="cov0" title="0">{
+                expiresInMinutes = 1
+        }</span>
+        <span class="cov0" title="0">task, err := job.NewEmailVerificationTask(job.EmailVerificationPayload{
+                To:               user.Email,
+                Username:         user.Username,
+                Code:             code,
+                ExpiresInMinutes: expiresInMinutes,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">_, err = s.taskEnqueuer.EnqueueContext(ctx, task)
+        return err</span>
+}
+
+func (s *AuthService) logVerificationQueueError(err error) <span class="cov0" title="0">{
+        if err == nil || s.logger == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">s.logger.Error().Err(err).Msg("failed to queue email verification")</span>
+}
+
+func generateVerificationCode() (string, error) <span class="cov0" title="0">{
+        const codeLength = 6
+        const maxDigit = 10
+
+        code := make([]byte, 0, codeLength)
+        for range codeLength </span><span class="cov0" title="0">{
+                n, err := rand.Int(rand.Reader, big.NewInt(maxDigit))
+                if err != nil </span><span class="cov0" title="0">{
+                        return "", err
+                }</span>
+                <span class="cov0" title="0">code = append(code, byte('0'+n.Int64()))</span>
+        }
+
+        <span class="cov0" title="0">return string(code), nil</span>
+}
+
+func hashVerificationCode(code string) string <span class="cov8" title="1">{
+        sum := sha256.Sum256([]byte(code))
+        return hex.EncodeToString(sum[:])
+}</span>
+
+func invalidVerificationError() *errs.HTTPError <span class="cov8" title="1">{
+        return errs.NewBadRequestError(
+                "Invalid or expired verification code",
+                true,
+                nil,
+                []errs.FieldError{{Field: "code", Error: "invalid or expired"}},
+                nil,
+        )
+}</span>
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package service
+
+import (
+        "context"
+        _ "embed"
+        "errors"
+        "fmt"
+
+        "github.com/casbin/casbin/v2"
+        "github.com/casbin/casbin/v2/model"
+        gormadapter "github.com/casbin/gorm-adapter/v3"
+        "github.com/rs/zerolog"
+        "gorm.io/gorm"
+)
+
+//go:embed authorization_model.conf
+var authorizationModelConf string
+
+type AuthorizationSubject struct {
+        ID      string `json:"id"`
+        Email   string `json:"email,omitempty"`
+        IsAdmin bool   `json:"is_admin"`
+}
+
+type AuthorizationObject struct {
+        Route  string            `json:"route"`
+        Path   string            `json:"path,omitempty"`
+        Params map[string]string `json:"params,omitempty"`
+        Query  map[string]string `json:"query,omitempty"`
+}
+
+type AuthorizationEnforcer interface {
+        Enforce(rvals ...any) (bool, error)
+}
+
+type AuthorizationService struct {
+        enforcer AuthorizationEnforcer
+        logger   *zerolog.Logger
+}
+
+func NewAuthorizationService(db *gorm.DB, logger *zerolog.Logger) (*AuthorizationService, error) <span class="cov0" title="0">{
+        if db == nil </span><span class="cov0" title="0">{
+                return nil, errors.New("authorization: db is nil")
+        }</span>
+
+        <span class="cov0" title="0">modelConf, err := model.NewModelFromString(authorizationModelConf)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("authorization: load model: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">adapter, err := gormadapter.NewAdapterByDB(db)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("authorization: init adapter: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">enforcer, err := casbin.NewSyncedEnforcer(modelConf, adapter)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("authorization: init enforcer: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := enforcer.LoadPolicy(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("authorization: load policy: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">enforcer.EnableAutoSave(true)
+
+        return &amp;AuthorizationService{
+                enforcer: enforcer,
+                logger:   logger,
+        }, nil</span>
+}
+
+func NewAuthorizationServiceWithEnforcer(enforcer AuthorizationEnforcer, logger *zerolog.Logger) *AuthorizationService <span class="cov8" title="1">{
+        return &amp;AuthorizationService{
+                enforcer: enforcer,
+                logger:   logger,
+        }
+}</span>
+
+func (a *AuthorizationService) Enforce(ctx context.Context, sub AuthorizationSubject, obj AuthorizationObject, act string) (bool, error) <span class="cov8" title="1">{
+        _ = ctx
+        if a == nil || a.enforcer == nil </span><span class="cov8" title="1">{
+                return false, errors.New("authorization: enforcer not initialized")
+        }</span>
+
+        <span class="cov8" title="1">allowed, err := a.enforcer.Enforce(sub, obj, act)
+        if err != nil &amp;&amp; a.logger != nil </span><span class="cov0" title="0">{
+                a.logger.Error().Err(err).Msg("authorization enforcement failed")
+        }</span>
+        <span class="cov8" title="1">return allowed, err</span>
+}
+</pre>
+		
+		<pre class="file" id="file22" style="display: none">package service
+
+import (
+        "context"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
+        "gorm.io/gorm"
+)
+
+type ResourceServiceInterface[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
+        Store(ctx context.Context, dto S) (*T, error)
+        GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
+        GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error)
+        Destroy(ctx context.Context, id uuid.UUID) error
+        Kill(ctx context.Context, id uuid.UUID) error
+        Update(ctx context.Context, id uuid.UUID, dto U) (*T, error)
+        Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
+}
+
+type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+        repo         repository.ResourceRepositoryInterface[T]
+        resourceName string
+}
+
+func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepositoryInterface[T]) *ResourceService[T, S, U] <span class="cov8" title="1">{
+        return &amp;ResourceService[T, S, U]{resourceName: resourceName, repo: repo}
+}</span>
+
+func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error) <span class="cov0" title="0">{
+        entity := dto.ToModel()
+        if err := s.repo.Store(ctx, entity); err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+        <span class="cov0" title="0">return entity, nil</span>
+}
+
+func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov8" title="1">{
+        entity, err := s.repo.GetByID(ctx, id, preloads)
+        if err != nil </span><span class="cov8" title="1">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov8" title="1">{
+                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+        <span class="cov0" title="0">return entity, nil</span>
+}
+
+func (s *ResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error) <span class="cov0" title="0">{
+        entities, total, err := s.repo.GetMany(ctx, opts)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, 0, sqlerr.HandleError(err)
+        }</span>
+        <span class="cov0" title="0">return entities, total, nil</span>
+}
+
+func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) <span class="cov8" title="1">{
+        updates := dto.ToMap()
+
+        entity, err := s.repo.GetByID(ctx, id, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov8" title="1">if len(updates) == 0 </span><span class="cov8" title="1">{
+                return entity, nil
+        }</span>
+
+        <span class="cov0" title="0">updatedEntity, err := s.repo.Update(ctx, *entity, updates)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov0" title="0">return updatedEntity, nil</span>
+}
+
+func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        if err := s.repo.Destroy(ctx, id); err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return sqlerr.HandleError(err)</span>
+        }
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        if err := s.repo.Kill(ctx, id); err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return sqlerr.HandleError(err)</span>
+        }
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (s *ResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
+        entity, err := s.repo.Restore(ctx, id)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+        <span class="cov0" title="0">if len(preloads) == 0 </span><span class="cov0" title="0">{
+                return entity, nil
+        }</span>
+
+        <span class="cov0" title="0">entity, err = s.repo.GetByID(ctx, id, preloads)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+        <span class="cov0" title="0">return entity, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file23" style="display: none">package service
+
+import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
+)
+
+type Services struct {
+        Auth          *AuthService
+        User          *UserService
+        Authorization *AuthorizationService
+        Job           *job.JobService
+}
+
+func NewServices(s *server.Server, repos *repository.Repositories) (*Services, error) <span class="cov0" title="0">{
+        var enqueuer TaskEnqueuer
+        if s.Job != nil </span><span class="cov0" title="0">{
+                enqueuer = s.Job.Client
+        }</span>
+        <span class="cov0" title="0">authService := NewAuthService(&amp;s.Config.Auth, repos.Auth, repos.EmailVerification, enqueuer, s.Logger)
+        userService := NewUserService(repos.User)
+        authorizationService, err := NewAuthorizationService(s.DB.DB, s.Logger)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;Services{
+                Job:           s.Job,
+                Auth:          authService,
+                User:          userService,
+                Authorization: authorizationService,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file24" style="display: none">package service
+
+import (
+        "context"
+        "fmt"
+        "strings"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
+        "golang.org/x/crypto/bcrypt"
+        "gorm.io/gorm"
+)
+
+type UserService struct {
+        *ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
+}
+
+func NewUserService(repo *repository.UserRepository) *UserService <span class="cov0" title="0">{
+        return &amp;UserService{
+                ResourceService: NewResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]("user", repo),
+        }
+}</span>
+
+func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) <span class="cov8" title="1">{
+        user := dto.ToModel()
+
+        if dto.Password != "" </span><span class="cov8" title="1">{
+                hash, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, errs.NewInternalServerError()
+                }</span>
+                <span class="cov8" title="1">user.PasswordHash = string(hash)</span>
+        }
+
+        <span class="cov8" title="1">if err := s.repo.Store(ctx, user); err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) <span class="cov8" title="1">{
+        if dto == nil </span><span class="cov0" title="0">{
+                return s.GetByID(ctx, id, nil)
+        }</span>
+
+        <span class="cov8" title="1">updates := dto.ToMap()
+
+        if email, ok := updates["email"].(string); ok </span><span class="cov8" title="1">{
+                email = normalizeEmail(email)
+                if email == "" </span><span class="cov8" title="1">{
+                        delete(updates, "email")
+                }</span> else<span class="cov8" title="1"> {
+                        updates["email"] = email
+                }</span>
+        }
+
+        <span class="cov8" title="1">if username, ok := updates["username"].(string); ok </span><span class="cov8" title="1">{
+                username = strings.TrimSpace(username)
+                if username == "" </span><span class="cov0" title="0">{
+                        delete(updates, "username")
+                }</span> else<span class="cov8" title="1"> {
+                        updates["username"] = username
+                }</span>
+        }
+
+        <span class="cov8" title="1">if password, ok := updates["password_hash"].(string); ok </span><span class="cov8" title="1">{
+                if password == "" </span><span class="cov0" title="0">{
+                        delete(updates, "password_hash")
+                }</span> else<span class="cov8" title="1"> {
+                        if len(password) &lt; minPasswordLength </span><span class="cov8" title="1">{
+                                return nil, errs.NewBadRequestError(
+                                        fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
+                                        true,
+                                        nil,
+                                        []errs.FieldError{{Field: "password", Error: "too short"}},
+                                        nil,
+                                )
+                        }</span>
+                        <span class="cov8" title="1">hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, errs.NewInternalServerError()
+                        }</span>
+                        <span class="cov8" title="1">updates["password_hash"] = string(hash)</span>
+                }
+        }
+
+        <span class="cov8" title="1">entity, err := s.repo.GetByID(ctx, id, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return nil, errs.NewNotFoundError("user not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov8" title="1">if len(updates) == 0 </span><span class="cov8" title="1">{
+                return entity, nil
+        }</span>
+
+        <span class="cov8" title="1">updatedUser, err := s.repo.Update(ctx, *entity, updates)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
+                        return nil, errs.NewNotFoundError("user not found", true, nil)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+        <span class="cov8" title="1">return updatedUser, nil</span>
+}
+
+func normalizeEmail(email string) string <span class="cov8" title="1">{
+        return strings.ToLower(strings.TrimSpace(email))
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -1,6 +1,9 @@
 package model
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type RegisterDTO struct {
 	Email    string `json:"email" validate:"required,email"`
@@ -36,4 +39,10 @@ type VerifyEmailDTO struct {
 
 func (d *VerifyEmailDTO) Validate() error {
 	return validator.New().Struct(d)
+}
+
+type AuthClaims struct {
+	jwt.RegisteredClaims
+	Email   string `json:"email,omitempty"`
+	IsAdmin bool   `json:"is_admin"`
 }
