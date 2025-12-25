@@ -57,7 +57,9 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 			},
 		}),
 		cors.New(cors.Config{
-			AllowOrigins: strings.Join(s.Config.Server.CORSAllowedOrigins, ","),
+			AllowOrigins:     strings.Join(s.Config.Server.CORSAllowedOrigins, ","),
+			AllowCredentials: true,
+			AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		}),
 		helmet.New(),
 		middleware.RequestID(),

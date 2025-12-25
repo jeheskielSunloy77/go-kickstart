@@ -7,10 +7,7 @@ export const ZAuthToken = z.object({
 	expiresAt: z.string().datetime(),
 })
 
-export const ZAuthResult = z.object({
-	user: ZUser,
-	token: ZAuthToken,
-})
+export const ZAuthResult = ZUser
 
 export const ZAuthRegisterDTO = ZStoreUserDTO.pick({
 	email: true,

@@ -5,6 +5,9 @@ import {
 	ZAuthResult,
 	ZAuthVerifyEmailDTO,
 	ZAuthVerifyEmailResponse,
+	ZEmpty,
+	ZResponse,
+	ZUser,
 } from '@go-kickstart/zod'
 import { initContract } from '@ts-rest/core'
 import { failResponses } from '../utils.js'
@@ -53,6 +56,60 @@ export const authContract = c.router({
 		body: ZAuthVerifyEmailDTO,
 		responses: {
 			200: ZAuthVerifyEmailResponse,
+			...failResponses,
+		},
+	},
+	refresh: {
+		summary: 'Refresh session',
+		description: 'Refresh access using the refresh cookie',
+		path: '/api/v1/auth/refresh',
+		method: 'POST',
+		body: ZEmpty,
+		responses: {
+			200: ZAuthResult,
+			...failResponses,
+		},
+	},
+	me: {
+		summary: 'Get current user',
+		description: 'Return the current authenticated user',
+		path: '/api/v1/auth/me',
+		method: 'GET',
+		responses: {
+			200: ZUser,
+			...failResponses,
+		},
+	},
+	resendVerification: {
+		summary: 'Resend verification',
+		description: 'Resend the email verification code',
+		path: '/api/v1/auth/resend-verification',
+		method: 'POST',
+		body: ZEmpty,
+		responses: {
+			200: ZResponse,
+			...failResponses,
+		},
+	},
+	logout: {
+		summary: 'Logout',
+		description: 'Logout the current session',
+		path: '/api/v1/auth/logout',
+		method: 'POST',
+		body: ZEmpty,
+		responses: {
+			200: ZResponse,
+			...failResponses,
+		},
+	},
+	logoutAll: {
+		summary: 'Logout all',
+		description: 'Logout from all sessions',
+		path: '/api/v1/auth/logout-all',
+		method: 'POST',
+		body: ZEmpty,
+		responses: {
+			200: ZResponse,
 			...failResponses,
 		},
 	},

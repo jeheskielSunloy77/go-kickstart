@@ -18,29 +18,34 @@ import (
 )
 
 type stubAuthService struct {
-	registerFn    func(ctx context.Context, email, username, password string) (*service.AuthResult, error)
-	loginFn       func(ctx context.Context, identifier, password string) (*service.AuthResult, error)
-	googleLoginFn func(ctx context.Context, idToken string) (*service.AuthResult, error)
-	verifyEmailFn func(ctx context.Context, email, code string) (*model.User, error)
+	registerFn           func(ctx context.Context, email, username, password, userAgent, ipAddress string) (*service.AuthResult, error)
+	loginFn              func(ctx context.Context, identifier, password, userAgent, ipAddress string) (*service.AuthResult, error)
+	googleLoginFn        func(ctx context.Context, idToken, userAgent, ipAddress string) (*service.AuthResult, error)
+	verifyEmailFn        func(ctx context.Context, email, code string) (*model.User, error)
+	refreshFn            func(ctx context.Context, refreshToken, userAgent, ipAddress string) (*service.AuthResult, error)
+	logoutFn             func(ctx context.Context, refreshToken string) error
+	logoutAllFn          func(ctx context.Context, userID uuid.UUID) error
+	currentUserFn        func(ctx context.Context, userID uuid.UUID) (*model.User, error)
+	resendVerificationFn func(ctx context.Context, userID uuid.UUID) error
 }
 
-func (s *stubAuthService) Register(ctx context.Context, email, username, password string) (*service.AuthResult, error) {
+func (s *stubAuthService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*service.AuthResult, error) {
 	if s.registerFn != nil {
-		return s.registerFn(ctx, email, username, password)
+		return s.registerFn(ctx, email, username, password, userAgent, ipAddress)
 	}
 	return nil, nil
 }
 
-func (s *stubAuthService) Login(ctx context.Context, identifier, password string) (*service.AuthResult, error) {
+func (s *stubAuthService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*service.AuthResult, error) {
 	if s.loginFn != nil {
-		return s.loginFn(ctx, identifier, password)
+		return s.loginFn(ctx, identifier, password, userAgent, ipAddress)
 	}
 	return nil, nil
 }
 
-func (s *stubAuthService) LoginWithGoogle(ctx context.Context, idToken string) (*service.AuthResult, error) {
+func (s *stubAuthService) LoginWithGoogle(ctx context.Context, idToken, userAgent, ipAddress string) (*service.AuthResult, error) {
 	if s.googleLoginFn != nil {
-		return s.googleLoginFn(ctx, idToken)
+		return s.googleLoginFn(ctx, idToken, userAgent, ipAddress)
 	}
 	return nil, nil
 }
@@ -52,6 +57,41 @@ func (s *stubAuthService) VerifyEmail(ctx context.Context, email, code string) (
 	return nil, nil
 }
 
+func (s *stubAuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*service.AuthResult, error) {
+	if s.refreshFn != nil {
+		return s.refreshFn(ctx, refreshToken, userAgent, ipAddress)
+	}
+	return nil, nil
+}
+
+func (s *stubAuthService) Logout(ctx context.Context, refreshToken string) error {
+	if s.logoutFn != nil {
+		return s.logoutFn(ctx, refreshToken)
+	}
+	return nil
+}
+
+func (s *stubAuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error {
+	if s.logoutAllFn != nil {
+		return s.logoutAllFn(ctx, userID)
+	}
+	return nil
+}
+
+func (s *stubAuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) {
+	if s.currentUserFn != nil {
+		return s.currentUserFn(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (s *stubAuthService) ResendVerification(ctx context.Context, userID uuid.UUID) error {
+	if s.resendVerificationFn != nil {
+		return s.resendVerificationFn(ctx, userID)
+	}
+	return nil
+}
+
 // Ensures Register returns validation errors without invoking the service.
 func TestAuthHandlerRegister_ValidationError(t *testing.T) {
 	srv := newTestServer()
@@ -59,7 +99,7 @@ func TestAuthHandlerRegister_ValidationError(t *testing.T) {
 
 	called := false
 	authService := &stubAuthService{
-		registerFn: func(ctx context.Context, email, username, password string) (*service.AuthResult, error) {
+		registerFn: func(ctx context.Context, email, username, password, userAgent, ipAddress string) (*service.AuthResult, error) {
 			called = true
 			return nil, nil
 		},
@@ -85,10 +125,11 @@ func TestAuthHandlerRegister_Success(t *testing.T) {
 
 	userID := uuid.New()
 	authService := &stubAuthService{
-		registerFn: func(ctx context.Context, email, username, password string) (*service.AuthResult, error) {
+		registerFn: func(ctx context.Context, email, username, password, userAgent, ipAddress string) (*service.AuthResult, error) {
 			return &service.AuthResult{
-				User:  &model.User{ID: userID, Email: email, Username: username},
-				Token: service.AuthToken{Token: "token", ExpiresAt: time.Now().Add(time.Hour)},
+				User:         &model.User{ID: userID, Email: email, Username: username},
+				Token:        service.AuthToken{Token: "token", ExpiresAt: time.Now().Add(time.Hour)},
+				RefreshToken: service.AuthToken{Token: "refresh", ExpiresAt: time.Now().Add(24 * time.Hour)},
 			}, nil
 		},
 	}
@@ -110,10 +151,10 @@ func TestAuthHandlerRegister_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
-	var got service.AuthResult
+	var got model.User
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&got))
-	require.Equal(t, userID, got.User.ID)
-	require.Equal(t, "user@example.com", got.User.Email)
+	require.Equal(t, userID, got.ID)
+	require.Equal(t, "user@example.com", got.Email)
 }
 
 // Ensures Login normalizes email identifiers and maps auth errors to HTTP responses.
@@ -123,7 +164,7 @@ func TestAuthHandlerLogin_NormalizesEmail(t *testing.T) {
 
 	var gotIdentifier string
 	authService := &stubAuthService{
-		loginFn: func(ctx context.Context, identifier, password string) (*service.AuthResult, error) {
+		loginFn: func(ctx context.Context, identifier, password, userAgent, ipAddress string) (*service.AuthResult, error) {
 			gotIdentifier = identifier
 			return nil, errs.NewUnauthorizedError("Invalid credentials", true)
 		},

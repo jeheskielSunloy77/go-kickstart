@@ -13,7 +13,7 @@ func registerRoutes(
 	middlewares *middleware.Middlewares,
 ) {
 	// system routes
-	r.Get("/status", h.Health.CheckHealth)
+	r.Get("/health", h.Health.GetHealth)
 	r.Static("/static", "static")
 	r.Get("/api/docs", h.OpenAPI.ServeOpenAPIUI)
 
@@ -25,6 +25,13 @@ func registerRoutes(
 	authGroup.Post("/login", h.Auth.Login())
 	authGroup.Post("/google", h.Auth.GoogleLogin())
 	authGroup.Post("/verify-email", h.Auth.VerifyEmail())
+	authGroup.Post("/refresh", h.Auth.Refresh())
+	authGroup.Post("/logout", h.Auth.Logout())
+
+	authProtected := authGroup.Group("", middlewares.Auth.RequireAuth())
+	authProtected.Get("/me", h.Auth.Me())
+	authProtected.Post("/resend-verification", h.Auth.ResendVerification())
+	authProtected.Post("/logout-all", h.Auth.LogoutAll())
 
 	// protected routes
 	protected := api.Group("", middlewares.Auth.RequireAuth())

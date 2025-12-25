@@ -21,7 +21,7 @@ func NewHealthHandler(h Handler) *HealthHandler {
 	}
 }
 
-func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error {
+func (h *HealthHandler) GetHealth(c *fiber.Ctx) error {
 	start := time.Now()
 	logger := middleware.GetLogger(c).With().
 		Str("operation", "health_check").

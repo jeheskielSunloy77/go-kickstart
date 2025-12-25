@@ -89,8 +89,13 @@ type SMTPConfig struct {
 type AuthConfig struct {
 	SecretKey            string        `koanf:"secret_key" validate:"required"`
 	AccessTokenTTL       time.Duration `koanf:"access_token_ttl"`
+	RefreshTokenTTL      time.Duration `koanf:"refresh_token_ttl"`
 	GoogleClientID       string        `koanf:"google_client_id"`
 	EmailVerificationTTL time.Duration `koanf:"email_verification_ttl"`
+	AccessCookieName     string        `koanf:"access_cookie_name"`
+	RefreshCookieName    string        `koanf:"refresh_cookie_name"`
+	CookieDomain         string        `koanf:"cookie_domain"`
+	CookieSameSite       string        `koanf:"cookie_same_site"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -114,6 +119,18 @@ func LoadConfig() (*Config, error) {
 
 	if mainConfig.Auth.EmailVerificationTTL == 0 {
 		mainConfig.Auth.EmailVerificationTTL = 24 * time.Hour
+	}
+	if mainConfig.Auth.RefreshTokenTTL == 0 {
+		mainConfig.Auth.RefreshTokenTTL = 30 * 24 * time.Hour
+	}
+	if mainConfig.Auth.AccessCookieName == "" {
+		mainConfig.Auth.AccessCookieName = "access_token"
+	}
+	if mainConfig.Auth.RefreshCookieName == "" {
+		mainConfig.Auth.RefreshCookieName = "refresh_token"
+	}
+	if mainConfig.Auth.CookieSameSite == "" {
+		mainConfig.Auth.CookieSameSite = "lax"
 	}
 
 	validate := validator.New()

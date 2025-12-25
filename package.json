@@ -17,6 +17,7 @@
 		"api:migrate:fresh": "cd apps/api && make migrate-fresh",
 		"api:tidy": "cd apps/api && go fmt ./... && go mod tidy && go mod verify",
 		"api:test": "cd apps/api && sh -c \"go test -covermode=atomic -coverprofile=coverage.out ./internal/handler ./internal/service ./internal/middleware ./internal/repository && go tool cover -func=coverage.out | tail -n1 && go tool cover -html=coverage.out -o coverage.html\"",
+		"web:shadcn:add": "cd apps/web && bunx --bun shadcn@latest add",
 		"openapi:generate": "cd packages/openapi && bun generate",
 		"emails:generate": "cd packages/emails && bun run generate"
 	},

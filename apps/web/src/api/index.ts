@@ -19,22 +19,9 @@ type Headers = Awaited<
 
 export type TApiClient = ReturnType<typeof useApiClient>;
 
-const getToken = async ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  template,
-}: {
-  template: "custom" | "service";
-}): Promise<string | null> => {
-  // Implement your token retrieval logic here.
-  // This is a placeholder implementation.
-  return null;
-};
-
 const createApiFetcher =
   ({ isBlob = false }: { isBlob?: boolean } = {}) =>
   async ({ path, method, headers, body, fetchOptions }: ApiFetcherArgs) => {
-    const token = await getToken({ template: "custom" });
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const makeRequest = async (retryCount = 0): Promise<any> => {
       try {
@@ -43,10 +30,10 @@ const createApiFetcher =
           url: path,
           headers: {
             ...headers,
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           data: body,
           signal: fetchOptions?.signal ?? undefined,
+          withCredentials: true,
           ...(isBlob ? { responseType: "blob" } : {}),
         });
         return {
@@ -60,9 +47,15 @@ const createApiFetcher =
           const error = e as AxiosError;
           const response = error.response as AxiosResponse;
 
-          // If unauthorized and we haven't retried yet, retry
-          if (response?.status === 401 && retryCount < 2) {
-            return makeRequest(retryCount + 1);
+          const shouldRefresh =
+            response?.status === 401 &&
+            retryCount < 1 &&
+            !path.includes("/api/v1/auth/refresh");
+          if (shouldRefresh) {
+            const refreshed = await attemptRefresh();
+            if (refreshed) {
+              return makeRequest(retryCount + 1);
+            }
           }
 
           return {
@@ -77,6 +70,19 @@ const createApiFetcher =
 
     return makeRequest();
   };
+
+const attemptRefresh = async () => {
+  try {
+    await axios.post(
+      `${API_URL}/api/v1/auth/refresh`,
+      {},
+      { withCredentials: true },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 const createClientArgs = ({
   isBlob = false,

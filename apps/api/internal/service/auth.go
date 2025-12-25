@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -33,11 +34,13 @@ var (
 
 type AuthService struct {
 	repo                 repository.AuthRepositoryInterface
+	sessionRepo          repository.AuthSessionRepositoryInterface
 	verificationRepo     repository.EmailVerificationRepositoryInterface
 	taskEnqueuer         TaskEnqueuer
 	logger               *zerolog.Logger
 	secretKey            []byte
 	accessTokenTTL       time.Duration
+	refreshTokenTTL      time.Duration
 	googleClientID       string
 	emailVerificationTTL time.Duration
 }
@@ -48,35 +51,48 @@ type AuthToken struct {
 }
 
 type AuthResult struct {
-	User  *model.User `json:"user"`
-	Token AuthToken   `json:"token"`
+	User         *model.User `json:"user"`
+	Token        AuthToken   `json:"token"`
+	RefreshToken AuthToken   `json:"refreshToken"`
 }
 
 type AuthServiceInterface interface {
-	Register(ctx context.Context, email, username, password string) (*AuthResult, error)
-	Login(ctx context.Context, identifier, password string) (*AuthResult, error)
-	LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error)
+	Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error)
+	Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error)
+	LoginWithGoogle(ctx context.Context, idToken, userAgent, ipAddress string) (*AuthResult, error)
 	VerifyEmail(ctx context.Context, email, code string) (*model.User, error)
+	Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error)
+	Logout(ctx context.Context, refreshToken string) error
+	LogoutAll(ctx context.Context, userID uuid.UUID) error
+	CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error)
+	ResendVerification(ctx context.Context, userID uuid.UUID) error
 }
 
 type TaskEnqueuer interface {
 	EnqueueContext(ctx context.Context, task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
 }
 
-func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService {
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, sessionRepo repository.AuthSessionRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService {
+	refreshTTL := cfg.RefreshTokenTTL
+	if refreshTTL <= 0 {
+		refreshTTL = 30 * 24 * time.Hour
+	}
+
 	return &AuthService{
 		repo:                 repo,
+		sessionRepo:          sessionRepo,
 		verificationRepo:     verificationRepo,
 		taskEnqueuer:         taskEnqueuer,
 		logger:               logger,
 		secretKey:            []byte(cfg.SecretKey),
 		accessTokenTTL:       cfg.AccessTokenTTL,
+		refreshTokenTTL:      refreshTTL,
 		googleClientID:       cfg.GoogleClientID,
 		emailVerificationTTL: cfg.EmailVerificationTTL,
 	}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, username, password string) (*AuthResult, error) {
+func (s *AuthService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error) {
 	if len(password) < minPasswordLength {
 		return nil, errs.NewBadRequestError(
 			fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
@@ -110,13 +126,19 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
 		return nil, errs.NewInternalServerError()
 	}
 
+	refreshToken, refreshExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AuthResult{
-		User:  user,
-		Token: AuthToken{Token: token, ExpiresAt: exp},
+		User:         user,
+		Token:        AuthToken{Token: token, ExpiresAt: exp},
+		RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
 	}, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, identifier, password string) (*AuthResult, error) {
+func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error) {
 	user, err := s.lookupUser(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -141,13 +163,19 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (*
 		return nil, errs.NewInternalServerError()
 	}
 
+	refreshToken, refreshExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AuthResult{
-		User:  user,
-		Token: AuthToken{Token: token, ExpiresAt: exp},
+		User:         user,
+		Token:        AuthToken{Token: token, ExpiresAt: exp},
+		RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
 	}, nil
 }
 
-func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error) {
+func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken, userAgent, ipAddress string) (*AuthResult, error) {
 	if s.googleClientID == "" {
 		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
 	}
@@ -205,9 +233,15 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*Aut
 		return nil, errs.NewInternalServerError()
 	}
 
+	refreshToken, refreshExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AuthResult{
-		User:  user,
-		Token: AuthToken{Token: token, ExpiresAt: exp},
+		User:         user,
+		Token:        AuthToken{Token: token, ExpiresAt: exp},
+		RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
 	}, nil
 }
 
@@ -257,6 +291,110 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*mod
 	return user, nil
 }
 
+func (s *AuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+	return user, nil
+}
+
+func (s *AuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error) {
+	if refreshToken == "" {
+		return nil, errs.NewUnauthorizedError("Unauthorized", false)
+	}
+	if s.sessionRepo == nil {
+		return nil, errs.NewInternalServerError()
+	}
+
+	tokenHash := hashRefreshToken(refreshToken)
+	session, err := s.sessionRepo.GetByRefreshTokenHash(ctx, tokenHash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.NewUnauthorizedError("Unauthorized", false)
+		}
+		return nil, sqlerr.HandleError(err)
+	}
+
+	now := time.Now().UTC()
+	if session.RevokedAt != nil || session.ExpiresAt.Before(now) {
+		return nil, errs.NewUnauthorizedError("Unauthorized", false)
+	}
+
+	user, err := s.repo.GetByID(ctx, session.UserID)
+	if err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	if err := s.sessionRepo.RevokeByID(ctx, session.ID, now); err != nil {
+		return nil, sqlerr.HandleError(err)
+	}
+
+	rotatedToken, rotatedExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, accessExp, err := s.generateToken(user)
+	if err != nil {
+		return nil, errs.NewInternalServerError()
+	}
+
+	return &AuthResult{
+		User:         user,
+		Token:        AuthToken{Token: accessToken, ExpiresAt: accessExp},
+		RefreshToken: AuthToken{Token: rotatedToken, ExpiresAt: rotatedExp},
+	}, nil
+}
+
+func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
+	if refreshToken == "" || s.sessionRepo == nil {
+		return nil
+	}
+
+	tokenHash := hashRefreshToken(refreshToken)
+	session, err := s.sessionRepo.GetByRefreshTokenHash(ctx, tokenHash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return sqlerr.HandleError(err)
+	}
+
+	if session.RevokedAt != nil {
+		return nil
+	}
+
+	now := time.Now().UTC()
+	return sqlerr.HandleError(s.sessionRepo.RevokeByID(ctx, session.ID, now))
+}
+
+func (s *AuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error {
+	if s.sessionRepo == nil {
+		return nil
+	}
+	now := time.Now().UTC()
+	return sqlerr.HandleError(s.sessionRepo.RevokeByUserID(ctx, userID, now))
+}
+
+func (s *AuthService) ResendVerification(ctx context.Context, userID uuid.UUID) error {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return sqlerr.HandleError(err)
+	}
+
+	if user.EmailVerifiedAt != nil {
+		return nil
+	}
+
+	if err := s.queueEmailVerification(ctx, user); err != nil {
+		s.logVerificationQueueError(err)
+		return errs.NewInternalServerError()
+	}
+
+	return nil
+}
+
 func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) {
 	if user == nil {
 		return "", time.Time{}, errs.NewInternalServerError()
@@ -281,12 +419,62 @@ func (s *AuthService) generateToken(user *model.User) (string, time.Time, error)
 	return signed, exp, nil
 }
 
+func (s *AuthService) createSession(ctx context.Context, user *model.User, userAgent, ipAddress string) (string, time.Time, error) {
+	if s.sessionRepo == nil || user == nil {
+		return "", time.Time{}, errs.NewInternalServerError()
+	}
+
+	refreshToken, err := generateRefreshToken()
+	if err != nil {
+		return "", time.Time{}, errs.NewInternalServerError()
+	}
+
+	expiresAt := time.Now().UTC().Add(s.refreshTokenTTL)
+	var agent *string
+	if strings.TrimSpace(userAgent) != "" {
+		clean := strings.TrimSpace(userAgent)
+		agent = &clean
+	}
+	var ip *string
+	if strings.TrimSpace(ipAddress) != "" {
+		clean := strings.TrimSpace(ipAddress)
+		ip = &clean
+	}
+
+	session := &model.AuthSession{
+		UserID:           user.ID,
+		RefreshTokenHash: hashRefreshToken(refreshToken),
+		UserAgent:        agent,
+		IPAddress:        ip,
+		ExpiresAt:        expiresAt,
+	}
+
+	if err := s.sessionRepo.Create(ctx, session); err != nil {
+		return "", time.Time{}, sqlerr.HandleError(err)
+	}
+
+	return refreshToken, expiresAt, nil
+}
+
 func deriveUsername(email string) string {
 	parts := regexp.MustCompile("@").Split(email, 2)
 	if len(parts) > 0 && parts[0] != "" {
 		return parts[0]
 	}
 	return fmt.Sprintf("user-%s", uuid.New().String()[:8])
+}
+
+func generateRefreshToken() (string, error) {
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(tokenBytes), nil
+}
+
+func hashRefreshToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }
 
 func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error {

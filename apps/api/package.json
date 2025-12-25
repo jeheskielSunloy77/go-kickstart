@@ -1,0 +1,8 @@
+{
+	"name": "@go-kickstart/api",
+	"private": true,
+	"version": "1.0.0",
+	"scripts": {
+		"dev": "go run ./cmd/api"
+	}
+}

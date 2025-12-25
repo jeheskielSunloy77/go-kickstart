@@ -19,6 +19,7 @@ import (
 
 type mockAuthRepo struct {
 	createUserFn            func(ctx context.Context, user *model.User) error
+	getByIDFn               func(ctx context.Context, id uuid.UUID) (*model.User, error)
 	getByEmailFn            func(ctx context.Context, email string) (*model.User, error)
 	getByUsernameFn         func(ctx context.Context, username string) (*model.User, error)
 	getByGoogleIDFn         func(ctx context.Context, googleID string) (*model.User, error)
@@ -34,6 +35,13 @@ type mockVerificationRepo struct {
 	markVerifiedFn func(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error
 }
 
+type mockSessionRepo struct {
+	createFn         func(ctx context.Context, session *model.AuthSession) error
+	getByHashFn      func(ctx context.Context, hash string) (*model.AuthSession, error)
+	revokeByIDFn     func(ctx context.Context, id uuid.UUID, revokedAt time.Time) error
+	revokeByUserIDFn func(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error
+}
+
 func (m *mockAuthRepo) Save(ctx context.Context, user *model.User) error {
 	if m.saveFn != nil {
 		return m.saveFn(ctx, user)
@@ -46,6 +54,13 @@ func (m *mockAuthRepo) CreateUser(ctx context.Context, user *model.User) error {
 		return m.createUserFn(ctx, user)
 	}
 	return nil
+}
+
+func (m *mockAuthRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
+	if m.getByIDFn != nil {
+		return m.getByIDFn(ctx, id)
+	}
+	return nil, gorm.ErrRecordNotFound
 }
 
 func (m *mockAuthRepo) GetByEmail(ctx context.Context, email string) (*model.User, error) {
@@ -111,6 +126,34 @@ func (m *mockVerificationRepo) MarkVerified(ctx context.Context, id uuid.UUID, v
 	return nil
 }
 
+func (m *mockSessionRepo) Create(ctx context.Context, session *model.AuthSession) error {
+	if m.createFn != nil {
+		return m.createFn(ctx, session)
+	}
+	return nil
+}
+
+func (m *mockSessionRepo) GetByRefreshTokenHash(ctx context.Context, hash string) (*model.AuthSession, error) {
+	if m.getByHashFn != nil {
+		return m.getByHashFn(ctx, hash)
+	}
+	return nil, gorm.ErrRecordNotFound
+}
+
+func (m *mockSessionRepo) RevokeByID(ctx context.Context, id uuid.UUID, revokedAt time.Time) error {
+	if m.revokeByIDFn != nil {
+		return m.revokeByIDFn(ctx, id, revokedAt)
+	}
+	return nil
+}
+
+func (m *mockSessionRepo) RevokeByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error {
+	if m.revokeByUserIDFn != nil {
+		return m.revokeByUserIDFn(ctx, userID, revokedAt)
+	}
+	return nil
+}
+
 // Ensures Register hashes passwords and returns a signed token tied to the user ID.
 func TestAuthServiceRegister_HashesPasswordAndReturnsToken(t *testing.T) {
 	secret := "test-secret"
@@ -128,9 +171,18 @@ func TestAuthServiceRegister_HashesPasswordAndReturnsToken(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: ttl}, repo, nil, nil, nil)
+	sessionRepo := &mockSessionRepo{
+		createFn: func(_ context.Context, session *model.AuthSession) error {
+			if session.ID == uuid.Nil {
+				session.ID = uuid.New()
+			}
+			return nil
+		},
+	}
 
-	result, err := svc.Register(ctx, "user@example.com", "user", "password123")
+	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: ttl}, repo, sessionRepo, nil, nil, nil)
+
+	result, err := svc.Register(ctx, "user@example.com", "user", "password123", "agent", "127.0.0.1")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.NotNil(t, createdUser)
@@ -138,6 +190,8 @@ func TestAuthServiceRegister_HashesPasswordAndReturnsToken(t *testing.T) {
 	require.NotEmpty(t, result.User.PasswordHash)
 	require.NotEqual(t, "password123", result.User.PasswordHash)
 	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(result.User.PasswordHash), []byte("password123")))
+	require.NotEmpty(t, result.RefreshToken.Token)
+	require.False(t, result.RefreshToken.ExpiresAt.IsZero())
 
 	claims := &model.AuthClaims{}
 	parsed, err := jwt.ParseWithClaims(result.Token.Token, claims, func(token *jwt.Token) (any, error) {
@@ -162,9 +216,9 @@ func TestAuthServiceRegister_ShortPassword(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil, nil)
 
-	_, err := svc.Register(ctx, "user@example.com", "user", "short")
+	_, err := svc.Register(ctx, "user@example.com", "user", "short", "agent", "127.0.0.1")
 	require.Error(t, err)
 	require.False(t, called)
 
@@ -183,9 +237,9 @@ func TestAuthServiceLogin_UserNotFound(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil, nil)
 
-	_, err := svc.Login(ctx, "user@example.com", "password123")
+	_, err := svc.Login(ctx, "user@example.com", "password123", "agent", "127.0.0.1")
 	require.Error(t, err)
 
 	var httpErr *errs.ErrorResponse
@@ -211,9 +265,9 @@ func TestAuthServiceLogin_PasswordMismatch(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil, nil)
 
-	_, err = svc.Login(ctx, "user", "wrong-password")
+	_, err = svc.Login(ctx, "user", "wrong-password", "agent", "127.0.0.1")
 	require.Error(t, err)
 	require.False(t, called)
 
@@ -242,12 +296,21 @@ func TestAuthServiceLogin_Success(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: time.Minute}, repo, nil, nil, nil)
+	sessionRepo := &mockSessionRepo{
+		createFn: func(_ context.Context, session *model.AuthSession) error {
+			if session.ID == uuid.Nil {
+				session.ID = uuid.New()
+			}
+			return nil
+		},
+	}
+	svc := NewAuthService(&config.AuthConfig{SecretKey: secret, AccessTokenTTL: time.Minute}, repo, sessionRepo, nil, nil, nil)
 
-	result, err := svc.Login(ctx, "user@example.com", "password123")
+	result, err := svc.Login(ctx, "user@example.com", "password123", "agent", "127.0.0.1")
 	require.NoError(t, err)
 	require.True(t, called)
 	require.NotNil(t, result)
+	require.NotEmpty(t, result.RefreshToken.Token)
 
 	claims := &model.AuthClaims{}
 	parsed, err := jwt.ParseWithClaims(result.Token.Token, claims, func(token *jwt.Token) (any, error) {
@@ -264,9 +327,9 @@ func TestAuthServiceLogin_Success(t *testing.T) {
 func TestAuthServiceLoginWithGoogle_ConfigMissing(t *testing.T) {
 	ctx := context.Background()
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, nil, nil, nil)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, nil, nil, nil, nil)
 
-	_, err := svc.LoginWithGoogle(ctx, "token")
+	_, err := svc.LoginWithGoogle(ctx, "token", "agent", "127.0.0.1")
 	require.Error(t, err)
 
 	var httpErr *errs.ErrorResponse
@@ -303,7 +366,7 @@ func TestAuthServiceVerifyEmail_Success(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, verificationRepo, nil, nil)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, verificationRepo, nil, nil)
 
 	user, err := svc.VerifyEmail(ctx, "user@example.com", code)
 	require.NoError(t, err)
@@ -327,7 +390,7 @@ func TestAuthServiceVerifyEmail_InvalidCode(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, verificationRepo, nil, nil)
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, verificationRepo, nil, nil)
 
 	_, err := svc.VerifyEmail(ctx, "user@example.com", "bad-code")
 	require.Error(t, err)

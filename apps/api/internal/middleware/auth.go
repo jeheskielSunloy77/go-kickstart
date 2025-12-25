@@ -13,14 +13,21 @@ import (
 )
 
 type AuthMiddleware struct {
-	server *server.Server
-	secret []byte
+	server           *server.Server
+	secret           []byte
+	accessCookieName string
 }
 
 func NewAuthMiddleware(s *server.Server) *AuthMiddleware {
+	cookieName := s.Config.Auth.AccessCookieName
+	if strings.TrimSpace(cookieName) == "" {
+		cookieName = "access_token"
+	}
+
 	return &AuthMiddleware{
-		server: s,
-		secret: []byte(s.Config.Auth.SecretKey),
+		server:           s,
+		secret:           []byte(s.Config.Auth.SecretKey),
+		accessCookieName: cookieName,
 	}
 }
 
@@ -28,13 +35,18 @@ func (auth *AuthMiddleware) RequireAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 
+		rawToken := ""
 		authHeader := c.Get(fiber.HeaderAuthorization)
-		parts := strings.Fields(authHeader)
-		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			return errs.NewUnauthorizedError("Unauthorized", false)
+		if strings.TrimSpace(authHeader) != "" {
+			parts := strings.Fields(authHeader)
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+				return errs.NewUnauthorizedError("Unauthorized", false)
+			}
+			rawToken = strings.TrimSpace(parts[1])
+		} else {
+			rawToken = strings.TrimSpace(c.Cookies(auth.accessCookieName))
 		}
 
-		rawToken := strings.TrimSpace(parts[1])
 		if rawToken == "" {
 			return errs.NewUnauthorizedError("Unauthorized", false)
 		}

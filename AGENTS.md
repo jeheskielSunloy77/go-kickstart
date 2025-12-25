@@ -2,7 +2,7 @@
 
 - Monorepo managed by Turborepo + Bun workspaces.
 - Go backend lives in `apps/api`; shared TypeScript packages live in `packages/*`.
-- `apps/web` exists (Next.js + Tailwind + shadcn + zod) but is intentionally omitted here.
+- `apps/web` is a Vite + React app with Tailwind, shadcn/ui, zod, ts-rest, and React Query.
 - OpenAPI docs are generated from shared Zod schemas in `packages/zod` and written into `apps/api/static/openapi.json`.
 - Email templates are authored in React Email (`packages/emails`) and exported to Go HTML templates consumed by the API.
 
@@ -20,7 +20,7 @@
 - Request DTOs implement `validation.Validatable` using go-playground/validator tags.
 - Use `validation.BindAndValidate` or the `handler.Handle` wrappers (they call it for you).
 - Use `utils.ParseUUIDParam` for `:id` params to standardize 400s.
-- Services return `errs.HTTPError` for expected failures; wrap DB errors with `sqlerr.HandleError`.
+- Services return `errs.ErrorResponse` for expected failures; wrap DB errors with `sqlerr.HandleError`.
 - Handlers should return errors and let `GlobalErrorHandler` format responses (avoid manual error JSON in handlers).
 
 ### Data & Migrations
@@ -32,9 +32,13 @@
 
 ### Auth, Context, and Logging
 
-- JWT auth via `middleware.Auth.RequireAuth`; sets `user_id` in Fiber locals.
+- Auth uses short-lived JWT access tokens and long-lived refresh tokens.
+- `middleware.Auth.RequireAuth` accepts Bearer tokens or the access cookie and sets `user_id` in Fiber locals.
 - Request ID is set in middleware and injected into logs; use `middleware.GetLogger` in handlers.
 - Context timeouts should use `server.Config.Server.ReadTimeout` / `WriteTimeout`.
+- Auth sessions are stored in `auth_sessions` (see `apps/api/internal/database/migrations/000002_auth_sessions.up.sql`).
+- Cookie config lives under `AuthConfig` (`access_cookie_name`, `refresh_cookie_name`, `cookie_domain`, `cookie_same_site`).
+- Auth routes: `/api/v1/auth/register`, `/login`, `/google`, `/verify-email`, `/refresh`, `/me`, `/resend-verification`, `/logout`, `/logout-all`.
 
 ### Jobs & Emails
 
@@ -85,6 +89,38 @@
 - Prefer table-driven tests.
 - Tests live next to code: `foo.go` -> `foo_test.go` or `foo_integration_test.go`.
 - Use helpers in `apps/api/internal/testing` (`SetupTestDB`, `WithRollbackTransaction`) for integration tests.
+
+## App #2: Web (apps/web)
+
+### Stack & Architecture
+
+- Vite + React + TypeScript.
+- Routing via React Router v7 in `apps/web/src/router.tsx`.
+- Data layer uses `@ts-rest/react-query` with an axios fetcher in `apps/web/src/api/index.ts`.
+- UI uses Tailwind + shadcn/ui; components live in `apps/web/src/components/ui`.
+
+### Auth Flow & Security
+
+- Cookie-based auth only; the frontend must not read, store, or decode JWTs and must not use localStorage/sessionStorage for auth.
+- API client always uses `withCredentials: true` and retries once after `/api/v1/auth/refresh`.
+- Protected routes use `RequireAuth` (`apps/web/src/pages/auth/require-auth.tsx`) which calls `/api/v1/auth/me`.
+- Auth routes under `/auth`: `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/me`.
+- Google login uses `@react-oauth/google` (provider in `apps/web/src/main.tsx`).
+
+### Pages & Components
+
+- use `apps/web/src/pages` for route-based pages.
+- shadcn/ui components in `apps/web/src/components/ui` Use `bun run web:shadcn:add <component name>` to add new components.
+- use `apps/web/src/auth/require-auth.tsx` wrapper component for protected routes.
+
+### UI Design System
+
+- shadcn/ui with Tailwind CSS.
+- use the classes and colors variables on `apps/web/src/index.css` as much as possible for consistency. Avoid using arbitrary values unless absolutely necessary. so use `bg-primary` instead of `bg-[#123456]`.
+
+### Language
+
+- User facing UI texts should always be in English to maintain consistency except for specific use cases where localization is required.
 
 ## Packages (packages/\*)
 

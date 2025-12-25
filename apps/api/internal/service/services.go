@@ -18,7 +18,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 	if s.Job != nil {
 		enqueuer = s.Job.Client
 	}
-	authService := NewAuthService(&s.Config.Auth, repos.Auth, repos.EmailVerification, enqueuer, s.Logger)
+	authService := NewAuthService(&s.Config.Auth, repos.Auth, repos.AuthSession, repos.EmailVerification, enqueuer, s.Logger)
 	userService := NewUserService(repos.User)
 	authorizationService, err := NewAuthorizationService(s.DB.DB, s.Logger)
 	if err != nil {

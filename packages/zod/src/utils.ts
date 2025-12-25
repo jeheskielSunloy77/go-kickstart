@@ -6,6 +6,8 @@ export const ZResponse = z.object({
 	success: z.boolean(),
 })
 
+export const ZEmpty = z.object({}).strict()
+
 export function ZResponseWithData<T>(schema: z.ZodSchema<T>) {
 	return z.object({ data: schema }).extend(ZResponse.shape)
 }

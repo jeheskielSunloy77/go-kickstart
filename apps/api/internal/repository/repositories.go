@@ -6,6 +6,7 @@ import (
 
 type Repositories struct {
 	Auth              *AuthRepository
+	AuthSession       *AuthSessionRepository
 	User              *UserRepository
 	EmailVerification *EmailVerificationRepository
 }
@@ -13,6 +14,7 @@ type Repositories struct {
 func NewRepositories(s *server.Server) *Repositories {
 	return &Repositories{
 		Auth:              NewAuthRepository(s.DB.DB),
+		AuthSession:       NewAuthSessionRepository(s.DB.DB),
 		User:              NewUserRepository(s.DB.DB),
 		EmailVerification: NewEmailVerificationRepository(s.DB.DB),
 	}
