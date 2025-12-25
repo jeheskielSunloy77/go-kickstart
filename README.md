@@ -1,163 +1,105 @@
 # Go Kickstart
 
-A production-ready monorepo template for building scalable web applications with Go backend and TypeScript frontend. Built with modern best practices, clean architecture, and comprehensive tooling.
+A monorepo for a Go API and a Vite + React web app with shared TypeScript packages, managed with Turborepo and Bun workspaces.
 
-## Features
-
-- **Monorepo Structure**: Organized with Turborepo for efficient builds and development
-- **Go Backend**: High-performance REST API with Fiber framework
-- **Authentication**: Integrated Clerk SDK for secure user management
-- **Database**: PostgreSQL with migrations and connection pooling
-- **Background Jobs**: Redis-based async job processing with Asynq
-- **Observability**: New Relic APM integration and structured logging
-- **Email Service**: Transactional emails with Resend and HTML templates
-- **Testing**: Comprehensive test infrastructure with Testcontainers
-- **API Documentation**: OpenAPI/Swagger specification
-- **Security**: Rate limiting, CORS, secure headers, and JWT validation
-
-## Project Structure
+## Repository layout
 
 ```
 go-kickstart/
-├── apps/api/          # Go backend application
-├── packages/         # Frontend packages (React, Vue, etc.)
-├── package.json      # Monorepo configuration
-├── turbo.json        # Turborepo configuration
-└── README.md         # This file
+├── apps/api             # Go API (Fiber)
+├── apps/web             # Vite + React frontend
+├── packages/zod         # Shared Zod schemas
+├── packages/openapi     # OpenAPI generation
+├── packages/emails      # React Email templates
+└── packages/*           # Other shared packages
 ```
 
-## Quick Start
+## Prerequisites
 
-### Prerequisites
-
-- Go 1.24 or higher
-- Node.js 22+ and Bun
+- Go 1.24+
+- Bun 1.2.13 (Node 22+)
 - PostgreSQL 16+
 - Redis 8+
 
-### Installation
-
-1. Clone the repository:
+## Quick start
 
 ```bash
-git clone https://github.com/jeheskielSunloy77/go-kickstart.git
-cd go-kickstart
-```
-
-2. Install dependencies:
-
-```bash
-# Install frontend dependencies
 bun install
-
-# Install backend dependencies
-cd apps/api
-go mod download
-```
-
-3. Set up environment variables:
-
-```bash
 cp apps/api/.env.example apps/api/.env
-# Edit apps/api/.env with your configuration
-```
+# Start PostgreSQL and Redis, then run migrations:
+bun run api:migrate:up
 
-4. Start the database and Redis.
-
-5. Run database migrations:
-
-```bash
-cd apps/api
-task migrations:up
-```
-
-6. Start the development server:
-
-```bash
-# From root directory
+# Start all apps
 bun dev
-
-# Or just the backend
-cd apps/api
-task run
 ```
 
-The API will be available at `http://localhost:8080`
+Run the API only with `bun run api:run`.
 
-## Development
-
-### Available Commands
+## Common commands
 
 ```bash
-# Backend commands (from api/ directory)
-task help              # Show all available tasks
-task run               # Run the application
-task migrations:new    # Create a new migration
-task migrations:up     # Apply migrations
-task test              # Run tests
-task tidy              # Format code and manage dependencies
+# Monorepo
+bun dev
+bun run build
+bun run lint
+bun run typecheck
 
-# Frontend commands (from root directory)
-bun dev                # Start development servers
-bun build              # Build all packages
-bun lint               # Lint all packages
+# API helpers (see apps/api/Makefile for migrate targets)
+bun run api:run
+bun run api:test
+cd apps/api && make migrate-new NAME=add_table
+cd apps/api && make migrate-up
+cd apps/api && make migrate-down
+
+# Contracts and emails
+bun run openapi:generate
+bun run emails:generate
+
+# UI components
+bun run web:shadcn:add <component>
 ```
 
-### Environment Variables
+## API (apps/api)
 
-The backend uses environment variables prefixed with `API_`. Key variables include:
+- Clean layers: handlers -> services -> repositories -> models.
+- Repositories are data access only; services implement business rules and validations.
+- Use `ResourceRepository` / `ResourceService` / `ResourceHandler` for standard CRUD models.
+- Entry points: `apps/api/cmd/api/main.go` (server) and `apps/api/cmd/seed/main.go` (seeder).
+- Routes in `apps/api/internal/router/routes.go`; middleware order in `apps/api/internal/router/router.go`.
+- Prefer `handler.Handle` / `handler.HandleNoContent` / `handler.HandleFile` for new endpoints.
+- Request DTOs implement `validation.Validatable`; use `validation.BindAndValidate` or the handler wrappers.
+- Use `utils.ParseUUIDParam` for `:id` params.
+- Services return `errs.ErrorResponse`; wrap DB errors with `sqlerr.HandleError`. Handlers return errors and let `GlobalErrorHandler` format responses.
+- Request IDs are set in middleware and injected into logs; use `middleware.GetLogger` in handlers.
+- Context timeouts should use `server.Config.Server.ReadTimeout` / `WriteTimeout`.
+- Auth uses short-lived JWT access tokens and long-lived refresh tokens. `middleware.Auth.RequireAuth` sets `user_id` in Fiber locals; sessions live in `auth_sessions`. Cookie config is under `AuthConfig`.
+- Auth routes: `/api/v1/auth/register`, `/login`, `/google`, `/verify-email`, `/refresh`, `/me`, `/resend-verification`, `/logout`, `/logout-all`.
+- Background jobs use Asynq (`apps/api/internal/lib/job`). Define new task payloads in `email_tasks.go`, register them in `JobService.Start`, and wire handlers in `handlers.go`.
+- Email templates live in `apps/api/templates/emails` and are generated from `packages/emails`.
+- OpenAPI docs are written to `apps/api/static/openapi.json` and served at `/api/docs`. Update `packages/zod` and `packages/openapi/src/contracts` when endpoints change.
 
-- `API_DATABASE_*` - PostgreSQL connection settings
-- `API_SERVER_*` - Server configuration
-- `API_AUTH_*` - Authentication settings
-- `API_REDIS_*` - Redis connection
-- `API_EMAIL_*` - Email service configuration
-- `API_OBSERVABILITY_*` - Monitoring settings
+## Web (apps/web)
 
-See `apps/api/.env.example` for a complete list.
+- Vite + React + TypeScript with routing in `apps/web/src/router.tsx`.
+- Route-based pages live in `apps/web/src/pages`.
+- Data layer uses `@ts-rest/react-query` with the axios fetcher in `apps/web/src/api/index.ts`.
+- UI uses Tailwind + shadcn/ui; components live in `apps/web/src/components/ui`.
+- Auth is cookie-based only. The API client uses `withCredentials: true` and retries once after `/api/v1/auth/refresh`.
+- Protected routes use `apps/web/src/auth/require-auth.tsx` (calls `/api/v1/auth/me`).
+- Auth routes under `/auth`: `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/me`.
+- Google login uses `@react-oauth/google` (provider in `apps/web/src/main.tsx`).
+- Prefer classes and variables from `apps/web/src/index.css`; avoid arbitrary values unless necessary. User-facing text stays in English.
 
-## Architecture
+## Packages (packages/*)
 
-This template follows clean architecture principles:
-
-- **Handlers**: HTTP request/response handling
-- **Services**: Business logic implementation
-- **Repositories**: Data access layer
-- **Models**: Domain entities
-- **Infrastructure**: External services (database, cache, email)
+- `@go-kickstart/zod` (`packages/zod`): source of truth for API request/response schemas (exported from `packages/zod/src/index.ts`).
+- `@go-kickstart/openapi` (`packages/openapi`): builds the OpenAPI spec from Zod + ts-rest contracts in `packages/openapi/src/contracts`. Regenerate with `bun run openapi:generate`.
+- `@go-kickstart/emails` (`packages/emails`): React Email templates in `packages/emails/src/templates`. Export HTML to `apps/api/templates/emails` via `bun run emails:generate`.
 
 ## Testing
 
-```bash
-# Run backend tests
-cd apps/api
-go test ./...
-
-# Run with coverage
-go test -cover ./...
-
-# Run integration tests (requires Docker)
-go test -tags=integration ./...
-```
-
-### Production Considerations
-
-1. Use environment-specific configuration
-2. Enable production logging levels
-3. Configure proper database connection pooling
-4. Set up monitoring and alerting
-5. Use a reverse proxy (nginx, Caddy)
-6. Enable rate limiting and security headers
-7. Configure CORS for your domains
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- Services: unit tests only, mock repositories.
+- Repositories: integration tests with real PostgreSQL (Testcontainers), no SQL mocking.
+- Handlers: thin HTTP tests only, mock services.
+- Tests live next to code (`foo.go` -> `foo_test.go` / `foo_integration_test.go`).
+- Use helpers in `apps/api/internal/testing` (`SetupTestDB`, `WithRollbackTransaction`).
