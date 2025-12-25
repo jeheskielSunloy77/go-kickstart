@@ -21,7 +21,7 @@ func PrintJSON(v any) {
 func ParseUUIDParam(raw string) (uuid.UUID, error) {
 	id, err := uuid.Parse(raw)
 	if err != nil {
-		return uuid.Nil, errs.NewBadRequestError("invalid id provided", true, nil, []errs.FieldError{{Field: "id", Error: "must be a valid uuid"}}, nil)
+		return uuid.Nil, errs.NewBadRequestError("invalid id provided", true, []errs.FieldError{{Field: "id", Error: "must be a valid uuid"}}, nil)
 	}
 	return id, nil
 }

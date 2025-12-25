@@ -33,7 +33,7 @@ func (s *stubAuthorizationService) Enforce(_ context.Context, sub service.Author
 func newTestApp() *fiber.App {
 	return fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			var httpErr *errs.HTTPError
+			var httpErr *errs.ErrorResponse
 			if errors.As(err, &httpErr) {
 				return c.SendStatus(httpErr.Status)
 			}

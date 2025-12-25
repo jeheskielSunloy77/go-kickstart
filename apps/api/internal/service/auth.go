@@ -81,7 +81,6 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
 		return nil, errs.NewBadRequestError(
 			fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
 			true,
-			nil,
 			[]errs.FieldError{{Field: "password", Error: "too short"}},
 			nil,
 		)
@@ -150,7 +149,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (*
 
 func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error) {
 	if s.googleClientID == "" {
-		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil, nil)
+		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
 	}
 
 	payload, err := idtoken.Validate(ctx, idToken, s.googleClientID)
@@ -369,11 +368,10 @@ func hashVerificationCode(code string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func invalidVerificationError() *errs.HTTPError {
+func invalidVerificationError() *errs.ErrorResponse {
 	return errs.NewBadRequestError(
 		"Invalid or expired verification code",
 		true,
-		nil,
 		[]errs.FieldError{{Field: "code", Error: "invalid or expired"}},
 		nil,
 	)

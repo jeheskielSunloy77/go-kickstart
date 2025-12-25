@@ -21,10 +21,10 @@ type Action struct {
 	Value   string     `json:"value"`
 }
 
-type HTTPError struct {
-	Code     string `json:"code"`
+type ErrorResponse struct {
 	Message  string `json:"message"`
 	Status   int    `json:"status"`
+	Success  bool   `json:"success"`
 	Override bool   `json:"override"`
 	// field level errors
 	Errors []FieldError `json:"errors"`
@@ -32,19 +32,19 @@ type HTTPError struct {
 	Action *Action `json:"action"`
 }
 
-func (e *HTTPError) Error() string {
+func (e *ErrorResponse) Error() string {
 	return e.Message
 }
 
-func (e *HTTPError) Is(target error) bool {
-	_, ok := target.(*HTTPError)
+func (e *ErrorResponse) Is(target error) bool {
+	_, ok := target.(*ErrorResponse)
 
 	return ok
 }
 
-func (e *HTTPError) WithMessage(message string) *HTTPError {
-	return &HTTPError{
-		Code:     e.Code,
+func (e *ErrorResponse) WithMessage(message string) *ErrorResponse {
+	return &ErrorResponse{
+		Success:  false,
 		Message:  message,
 		Status:   e.Status,
 		Override: e.Override,

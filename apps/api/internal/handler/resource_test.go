@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/server"
 
 	"github.com/stretchr/testify/require"
 )
@@ -86,7 +87,7 @@ func TestResourceHandlerStore_ValidationError(t *testing.T) {
 		},
 	}
 
-	h := NewResourceHandler(NewHandler(srv), service)
+	h := NewResourceHandler("user", NewHandler(srv), service)
 	app.Post("/users", h.Store())
 
 	req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewReader(mustJSON(t, map[string]any{})))
@@ -113,7 +114,7 @@ func TestResourceHandlerStore_Success(t *testing.T) {
 		},
 	}
 
-	h := NewResourceHandler(NewHandler(srv), service)
+	h := NewResourceHandler("user", NewHandler(srv), service)
 	app.Post("/users", h.Store())
 
 	body := mustJSON(t, map[string]any{
@@ -130,11 +131,12 @@ func TestResourceHandlerStore_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
-	var got model.User
+	var got server.Response[model.User]
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&got))
-	require.Equal(t, userID, got.ID)
-	require.Equal(t, "user@example.com", got.Email)
-	require.Equal(t, "user", got.Username)
+	require.NotNil(t, got.Data)
+	require.Equal(t, userID, got.Data.ID)
+	require.Equal(t, "user@example.com", got.Data.Email)
+	require.Equal(t, "user", got.Data.Username)
 }
 
 // Ensures GetMany uses request pagination values and returns computed page metadata.
@@ -150,7 +152,7 @@ func TestResourceHandlerGetMany_Paginates(t *testing.T) {
 		},
 	}
 
-	h := NewResourceHandler(NewHandler(srv), service)
+	h := NewResourceHandler("user", NewHandler(srv), service)
 	app.Get("/users", h.GetMany())
 
 	req, err := http.NewRequest(http.MethodGet, "/users?limit=2&offset=2", nil)
@@ -160,7 +162,7 @@ func TestResourceHandlerGetMany_Paginates(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	var got model.PaginatedResponse[model.User]
+	var got server.PaginatedResponse[model.User]
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&got))
 	require.Equal(t, 2, captured.Limit)
 	require.Equal(t, 2, captured.Offset)

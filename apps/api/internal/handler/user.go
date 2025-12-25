@@ -11,6 +11,6 @@ type UserHandler struct {
 
 func NewUserHandler(h Handler, service *service.UserService) *UserHandler {
 	return &UserHandler{
-		ResourceHandler: NewResourceHandler(h, service),
+		ResourceHandler: NewResourceHandler("user", h, service),
 	}
 }

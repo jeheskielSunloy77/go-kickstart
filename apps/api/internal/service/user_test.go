@@ -208,7 +208,7 @@ func TestUserServiceUpdate_PasswordTooShort(t *testing.T) {
 	require.Error(t, err)
 	require.False(t, getCalled)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusBadRequest, httpErr.Status)
 }

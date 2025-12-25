@@ -48,8 +48,8 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 					Msg("rate limit exceeded")
 
 				return c.Status(http.StatusTooManyRequests).JSON(
-					errs.HTTPError{
-						Code:     http.StatusText(http.StatusTooManyRequests),
+					errs.ErrorResponse{
+						Success:  false,
 						Message:  "Rate limit exceeded",
 						Status:   http.StatusTooManyRequests,
 						Override: false,

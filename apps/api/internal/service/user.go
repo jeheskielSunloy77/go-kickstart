@@ -74,7 +74,6 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.Updat
 				return nil, errs.NewBadRequestError(
 					fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
 					true,
-					nil,
 					[]errs.FieldError{{Field: "password", Error: "too short"}},
 					nil,
 				)
@@ -90,7 +89,7 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.Updat
 	entity, err := s.repo.GetByID(ctx, id, nil)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError("user not found", true, nil)
+			return nil, errs.NewNotFoundError("user not found", true)
 		}
 		return nil, sqlerr.HandleError(err)
 	}
@@ -102,7 +101,7 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.Updat
 	updatedUser, err := s.repo.Update(ctx, *entity, updates)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError("user not found", true, nil)
+			return nil, errs.NewNotFoundError("user not found", true)
 		}
 		return nil, sqlerr.HandleError(err)
 	}

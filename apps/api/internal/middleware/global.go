@@ -34,7 +34,7 @@ func (global *GlobalMiddlewares) RequestLogger() fiber.Handler {
 		}
 
 		if err != nil {
-			var httpErr *errs.HTTPError
+			var httpErr *errs.ErrorResponse
 			var fiberErr *fiber.Error
 			switch {
 			case errors.As(err, &httpErr):
@@ -91,12 +91,12 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) err
 
 	// Try to handle known database errors
 	// Only do this for errors that haven't already been converted to HTTPError
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	if !errors.As(err, &httpErr) {
 		var fiberErr *fiber.Error
 		if errors.As(err, &fiberErr) {
 			if fiberErr.Code == http.StatusNotFound {
-				err = errs.NewNotFoundError("Route not found", false, nil)
+				err = errs.NewNotFoundError("Route not found", false)
 			}
 		} else {
 			// Here we call our sqlerr handler which will convert database errors
@@ -116,7 +116,6 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) err
 	switch {
 	case errors.As(err, &httpErr):
 		status = httpErr.Status
-		code = httpErr.Code
 		message = httpErr.Message
 		fieldErrors = httpErr.Errors
 		action = httpErr.Action
@@ -143,8 +142,8 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) err
 		Str("error_code", code).
 		Msg(message)
 
-	_ = c.Status(status).JSON(errs.HTTPError{
-		Code:     code,
+	_ = c.Status(status).JSON(errs.ErrorResponse{
+		Success:  false,
 		Message:  message,
 		Status:   status,
 		Override: httpErr != nil && httpErr.Override,

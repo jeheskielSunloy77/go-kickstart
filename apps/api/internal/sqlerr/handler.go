@@ -150,7 +150,7 @@ func extractColumnForUniqueViolation(constraintName string) string {
 // HandleError processes a database error into an appropriate application error
 func HandleError(err error) error {
 	// If it's already a custom HTTP error, just return it
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	if errors.As(err, &httpErr) {
 		return err
 	}
@@ -160,20 +160,19 @@ func HandleError(err error) error {
 	if errors.As(err, &pqErr) {
 		sqlErr := ConvertPgError(pqErr)
 
-		// Generate an appropriate error code and message
-		errorCode := generateErrorCode(sqlErr.TableName, sqlErr.Code)
+		// Generate an appropriate message
 		userMessage := formatUserFriendlyMessage(sqlErr)
 
 		switch sqlErr.Code {
 		case ForeignKeyViolation:
-			return errs.NewBadRequestError(userMessage, false, &errorCode, nil, nil)
+			return errs.NewBadRequestError(userMessage, false, nil, nil)
 
 		case UniqueViolation:
 			columnName := extractColumnForUniqueViolation(sqlErr.ConstraintName)
 			if columnName != "" {
 				userMessage = strings.ReplaceAll(userMessage, "identifier", humanizeText(columnName))
 			}
-			return errs.NewBadRequestError(userMessage, true, &errorCode, nil, nil)
+			return errs.NewBadRequestError(userMessage, true, nil, nil)
 
 		case NotNullViolation:
 			fieldErrors := []errs.FieldError{
@@ -182,10 +181,10 @@ func HandleError(err error) error {
 					Error: "is required",
 				},
 			}
-			return errs.NewBadRequestError(userMessage, true, &errorCode, fieldErrors, nil)
+			return errs.NewBadRequestError(userMessage, true, fieldErrors, nil)
 
 		case CheckViolation:
-			return errs.NewBadRequestError(userMessage, true, &errorCode, nil, nil)
+			return errs.NewBadRequestError(userMessage, true, nil, nil)
 
 		default:
 			return errs.NewInternalServerError()
@@ -201,9 +200,9 @@ func HandleError(err error) error {
 			table := strings.Split(strings.Split(errMsg, tablePrefix)[1], ":")[0]
 			entityName := getEntityName(table, "")
 			return errs.NewNotFoundError(fmt.Sprintf("%s not found",
-				entityName), true, nil)
+				entityName), true)
 		}
-		return errs.NewNotFoundError("Resource not found", false, nil)
+		return errs.NewNotFoundError("Resource not found", false)
 	}
 
 	return errs.NewInternalServerError()

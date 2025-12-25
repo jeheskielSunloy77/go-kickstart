@@ -118,7 +118,7 @@ func TestResourceServiceGetByID_NotFound(t *testing.T) {
 	_, err := svc.GetByID(ctx, uuid.New(), nil)
 	require.Error(t, err)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusNotFound, httpErr.Status)
 }

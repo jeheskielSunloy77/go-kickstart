@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT NOT NULL,
     password_hash TEXT,
     google_id TEXT,
-    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     email_verified_at TIMESTAMPTZ,

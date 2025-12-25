@@ -168,7 +168,7 @@ func TestAuthServiceRegister_ShortPassword(t *testing.T) {
 	require.Error(t, err)
 	require.False(t, called)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusBadRequest, httpErr.Status)
 }
@@ -188,7 +188,7 @@ func TestAuthServiceLogin_UserNotFound(t *testing.T) {
 	_, err := svc.Login(ctx, "user@example.com", "password123")
 	require.Error(t, err)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusUnauthorized, httpErr.Status)
 }
@@ -217,7 +217,7 @@ func TestAuthServiceLogin_PasswordMismatch(t *testing.T) {
 	require.Error(t, err)
 	require.False(t, called)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusUnauthorized, httpErr.Status)
 }
@@ -269,7 +269,7 @@ func TestAuthServiceLoginWithGoogle_ConfigMissing(t *testing.T) {
 	_, err := svc.LoginWithGoogle(ctx, "token")
 	require.Error(t, err)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusBadRequest, httpErr.Status)
 }
@@ -332,7 +332,7 @@ func TestAuthServiceVerifyEmail_InvalidCode(t *testing.T) {
 	_, err := svc.VerifyEmail(ctx, "user@example.com", "bad-code")
 	require.Error(t, err)
 
-	var httpErr *errs.HTTPError
+	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusBadRequest, httpErr.Status)
 }
