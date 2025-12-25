@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"time"
@@ -31,36 +32,37 @@ func main() {
 	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
 
 	if cfg.Primary.Env != config.EnvDevelopment {
+		log.Info().Msg(fmt.Sprintf("environment is not %s, running database migrations...", config.EnvDevelopment))
 		if err := database.Migrate(context.Background(), &log, cfg); err != nil {
 			log.Fatal().Err(err).Msg("failed to migrate database")
 		}
 	}
 
-	// Initialize server
-	srv, err := server.NewServer(cfg, &log, loggerService)
+	// Initialize http server
+	httpServer, err := server.NewServer(cfg, &log, loggerService)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize server")
 	}
 
 	// Initialize repositories, services, and handlers
-	repos := repository.NewRepositories(srv)
-	services, serviceErr := service.NewServices(srv, repos)
+	repos := repository.NewRepositories(httpServer)
+	services, serviceErr := service.NewServices(httpServer, repos)
 	if serviceErr != nil {
 		log.Fatal().Err(serviceErr).Msg("could not create services")
 	}
-	handlers := handler.NewHandlers(srv, services)
+	handlers := handler.NewHandlers(httpServer, services)
 
 	// Initialize router
-	r := router.NewRouter(srv, handlers, services)
+	r := router.NewRouter(httpServer, handlers, services)
 
 	// Setup HTTP server
-	srv.SetupFiber(r)
+	httpServer.SetupFiber(r)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 
 	// Start server
 	go func() {
-		if err = srv.Start(); err != nil {
+		if err = httpServer.Start(); err != nil {
 			log.Fatal().Err(err).Msg("failed to start server")
 		}
 	}()
@@ -69,7 +71,7 @@ func main() {
 	<-ctx.Done()
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultContextTimeout*time.Second)
 
-	if err = srv.Shutdown(ctx); err != nil {
+	if err = httpServer.Shutdown(ctx); err != nil {
 		log.Fatal().Err(err).Msg("server forced to shutdown")
 	}
 	stop()
