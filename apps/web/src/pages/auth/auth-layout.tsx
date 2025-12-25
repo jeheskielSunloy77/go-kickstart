@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Lock } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
+import { CheckCircle2, Computer, Lock, Moon, Sun } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const features = [
@@ -9,8 +10,18 @@ const features = [
 ];
 
 export function AuthLayout() {
+  const { theme, setTheme } = useTheme();
+
+  const themeIcons = {
+    dark: Moon,
+    light: Sun,
+    system: Computer,
+  };
+
+  const ThemeIcon = themeIcons[theme];
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(1200px_circle_at_15%_0%,rgba(253,230,138,0.45),transparent_60%),radial-gradient(900px_circle_at_100%_80%,rgba(125,211,252,0.35),transparent_55%)]">
+    <main className="min-h-screen dark:bg-radial dark:bg-background bg-[radial-gradient(1200px_circle_at_15%_0%,rgba(253,230,138,0.45),transparent_60%),radial-gradient(900px_circle_at_100%_80%,rgba(125,211,252,0.35),transparent_55%)]">
       <div className="mx-auto flex min-h-screen w-full items-center px-6 py-12">
         <div className="grid w-full gap-10 lg:grid-cols-2 divide-x">
           <section className="hidden lg:block">

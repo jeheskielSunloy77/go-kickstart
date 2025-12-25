@@ -1,5 +1,7 @@
+import { ThemeDropdown } from "@/components/theme-dropdown";
 import { Button } from "@/components/ui/button";
 import {
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -45,7 +47,10 @@ export function ForgotPasswordPage() {
         </div>
         <CardDescription>
           Enter your email and we will send a reset link.
-        </CardDescription>
+        </CardDescription>{" "}
+        <CardAction>
+          <ThemeDropdown />
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-4">

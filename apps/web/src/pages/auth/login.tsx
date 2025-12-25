@@ -1,6 +1,8 @@
 import { tsr } from "@/api";
+import { ThemeDropdown } from "@/components/theme-dropdown";
 import { Button } from "@/components/ui/button";
 import {
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -75,6 +77,9 @@ export function LoginPage() {
         <CardDescription>
           Access your session without ever touching a token.
         </CardDescription>
+        <CardAction>
+          <ThemeDropdown />
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-4">

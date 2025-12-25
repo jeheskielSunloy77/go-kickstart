@@ -1,6 +1,8 @@
 import { tsr } from "@/api";
+import { ThemeDropdown } from "@/components/theme-dropdown";
 import { Button } from "@/components/ui/button";
 import {
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -78,12 +80,13 @@ export function VerifyEmailPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Verify your email
         </p>
-        <CardTitle className="font-display text-3xl">
-          Enter your code
-        </CardTitle>
+        <CardTitle className="font-display text-3xl">Enter your code</CardTitle>
         <CardDescription>
           We sent a code to your inbox. It expires shortly.
         </CardDescription>
+        <CardAction>
+          <ThemeDropdown />
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -137,7 +140,9 @@ export function VerifyEmailPage() {
           onClick={() => resendMutation.mutate({ body: {} })}
           disabled={resendMutation.isPending}
         >
-          {resendMutation.isPending ? "Sending..." : "Resend verification email"}
+          {resendMutation.isPending
+            ? "Sending..."
+            : "Resend verification email"}
         </button>
         <div>
           Prefer to log in again?{" "}

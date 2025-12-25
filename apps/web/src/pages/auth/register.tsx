@@ -1,6 +1,8 @@
 import { tsr } from "@/api";
+import { ThemeDropdown } from "@/components/theme-dropdown";
 import { Button } from "@/components/ui/button";
 import {
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -61,6 +63,9 @@ export function RegisterPage() {
         <CardDescription>
           We will send a verification code to your email.
         </CardDescription>
+        <CardAction>
+          <ThemeDropdown />
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-4">

@@ -1,8 +1,10 @@
 import { tsr } from "@/api";
 import { useMustUser } from "@/auth/auth-context";
+import { ThemeDropdown } from "@/components/theme-dropdown";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -63,6 +65,9 @@ export function MePage() {
         <CardDescription>
           This profile is backed by your database session and HTTP-only cookies.
         </CardDescription>
+        <CardAction>
+          <ThemeDropdown />
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-4">
