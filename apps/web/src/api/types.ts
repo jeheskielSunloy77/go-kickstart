@@ -48,10 +48,6 @@ export type TAuthLoginResponse = ClientInferResponses<
   typeof apiContract.auth.login,
   200
 >["body"];
-export type TAuthGoogleLoginResponse = ClientInferResponses<
-  typeof apiContract.auth.googleLogin,
-  200
->["body"];
 export type TAuthVerifyEmailResponse = ClientInferResponses<
   typeof apiContract.auth.verifyEmail,
   200

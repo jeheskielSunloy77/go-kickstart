@@ -26,6 +26,11 @@ func newTestServer() *server.Server {
 			IdleTimeout:        time.Second,
 			CORSAllowedOrigins: []string{"*"},
 		},
+		Auth: config.AuthConfig{
+			CookieSameSite:    config.CookieSameSiteLax,
+			AccessCookieName:  "access_token",
+			RefreshCookieName: "refresh_token",
+		},
 	}
 
 	return &server.Server{Config: cfg, Logger: &logger}

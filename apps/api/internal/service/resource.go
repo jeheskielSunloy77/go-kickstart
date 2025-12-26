@@ -41,9 +41,6 @@ func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error)
 func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
 	entity, err := s.repo.GetByID(ctx, id, preloads)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError(s.resourceName+" not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 	return entity, nil
@@ -62,9 +59,6 @@ func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto
 
 	entity, err := s.repo.GetByID(ctx, id, nil)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError(s.resourceName+" not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 
@@ -74,9 +68,6 @@ func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto
 
 	updatedEntity, err := s.repo.Update(ctx, *entity, updates)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError(s.resourceName+" not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 
@@ -106,9 +97,6 @@ func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error
 func (s *ResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
 	entity, err := s.repo.Restore(ctx, id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError(s.resourceName+" not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 	if len(preloads) == 0 {
@@ -117,9 +105,6 @@ func (s *ResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, pr
 
 	entity, err = s.repo.GetByID(ctx, id, preloads)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError(s.resourceName+" not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 	return entity, nil

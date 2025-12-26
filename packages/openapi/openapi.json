@@ -1,12 +1,12 @@
 {
   "openapi": "3.0.2",
   "paths": {
-    "/status": {
+    "/health": {
       "get": {
         "description": "Get health status",
         "summary": "Get health",
         "tags": [
-          "Health"
+          "health"
         ],
         "parameters": [],
         "operationId": "getHealth",
@@ -224,9 +224,10 @@
     },
     "/api/v1/auth/register": {
       "post": {
+        "description": "Register a new user",
         "summary": "Register",
         "tags": [
-          "Auth"
+          "auth"
         ],
         "parameters": [],
         "operationId": "register",
@@ -269,78 +270,53 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "username": {
-                          "type": "string",
-                          "minLength": 3,
-                          "maxLength": 50
-                        },
-                        "googleId": {
-                          "type": "string"
-                        },
-                        "emailVerifiedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "lastLoginAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "isAdmin": {
-                          "default": false,
-                          "type": "boolean"
-                        },
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "deletedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "email",
-                        "username",
-                        "id",
-                        "createdAt",
-                        "updatedAt"
-                      ]
+                    "email": {
+                      "type": "string",
+                      "format": "email"
                     },
-                    "token": {
-                      "type": "object",
-                      "properties": {
-                        "token": {
-                          "type": "string"
-                        },
-                        "expiresAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "token",
-                        "expiresAt"
-                      ]
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "emailVerifiedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "isAdmin": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "user",
-                    "token"
+                    "email",
+                    "username",
+                    "id",
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -455,9 +431,10 @@
     },
     "/api/v1/auth/login": {
       "post": {
+        "description": "Login with email/username and password",
         "summary": "Login",
         "tags": [
-          "Auth"
+          "auth"
         ],
         "parameters": [],
         "operationId": "login",
@@ -491,78 +468,53 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "username": {
-                          "type": "string",
-                          "minLength": 3,
-                          "maxLength": 50
-                        },
-                        "googleId": {
-                          "type": "string"
-                        },
-                        "emailVerifiedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "lastLoginAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "isAdmin": {
-                          "default": false,
-                          "type": "boolean"
-                        },
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "deletedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "email",
-                        "username",
-                        "id",
-                        "createdAt",
-                        "updatedAt"
-                      ]
+                    "email": {
+                      "type": "string",
+                      "format": "email"
                     },
-                    "token": {
-                      "type": "object",
-                      "properties": {
-                        "token": {
-                          "type": "string"
-                        },
-                        "expiresAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "token",
-                        "expiresAt"
-                      ]
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "emailVerifiedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "isAdmin": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [
-                    "user",
-                    "token"
+                    "email",
+                    "username",
+                    "id",
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -676,216 +628,65 @@
       }
     },
     "/api/v1/auth/google": {
-      "post": {
+      "get": {
+        "description": "Redirect to Google OAuth",
         "summary": "Google login",
         "tags": [
-          "Auth"
+          "auth"
         ],
         "parameters": [],
         "operationId": "googleLogin",
-        "requestBody": {
-          "description": "Body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "idToken": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "idToken"
-                ]
+        "responses": {
+          "302": {
+            "description": "302",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/api/v1/auth/google/callback": {
+      "get": {
+        "description": "Handle Google OAuth callback and redirect",
+        "summary": "Google login callback",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "googleCallback",
         "responses": {
-          "200": {
-            "description": "200",
+          "302": {
+            "description": "302",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "username": {
-                          "type": "string",
-                          "minLength": 3,
-                          "maxLength": 50
-                        },
-                        "googleId": {
-                          "type": "string"
-                        },
-                        "emailVerifiedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "lastLoginAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "isAdmin": {
-                          "default": false,
-                          "type": "boolean"
-                        },
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "deletedAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "email",
-                        "username",
-                        "id",
-                        "createdAt",
-                        "updatedAt"
-                      ]
-                    },
-                    "token": {
-                      "type": "object",
-                      "properties": {
-                        "token": {
-                          "type": "string"
-                        },
-                        "expiresAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      },
-                      "required": [
-                        "token",
-                        "expiresAt"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "user",
-                    "token"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "401",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "integer"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message",
-                    "success"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "403",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "integer"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message",
-                    "success"
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "404",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "integer"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message",
-                    "success"
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "500",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "integer"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message",
-                    "success"
-                  ]
+                  "properties": {},
+                  "additionalProperties": false
                 }
               }
             }
@@ -895,9 +696,10 @@
     },
     "/api/v1/auth/verify-email": {
       "post": {
+        "description": "Verify user email using a verification code",
         "summary": "Verify email",
         "tags": [
-          "Auth"
+          "auth"
         ],
         "parameters": [],
         "operationId": "verifyEmail",
@@ -1093,12 +895,841 @@
         }
       }
     },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "description": "Refresh access using the refresh cookie",
+        "summary": "Refresh session",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [],
+        "operationId": "refresh",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "emailVerifiedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "isAdmin": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "username",
+                    "id",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "description": "Return the current authenticated user",
+        "summary": "Get current user",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [],
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "username": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 50
+                    },
+                    "googleId": {
+                      "type": "string"
+                    },
+                    "emailVerifiedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastLoginAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "isAdmin": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "deletedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "username",
+                    "id",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/resend-verification": {
+      "post": {
+        "description": "Resend the email verification code",
+        "summary": "Resend verification",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [],
+        "operationId": "resendVerification",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "Logout the current session",
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [],
+        "operationId": "logout",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "description": "Logout from all sessions",
+        "summary": "Logout all",
+        "tags": [
+          "auth"
+        ],
+        "parameters": [],
+        "operationId": "logoutAll",
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users": {
       "get": {
         "description": "Retrieve a paginated list of Users that can be filtered, sorted, and preloaded.",
         "summary": "Get Many Users",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [
           {
@@ -1360,7 +1991,7 @@
         "description": "Create a new User with the provided data, with validation and will return the created entity.",
         "summary": "Store User",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [],
         "operationId": "store",
@@ -1595,7 +2226,7 @@
         "description": "Retrieve a single User by its unique identifier (ID), with optional preloaded relationships.",
         "summary": "Get User by ID",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [
           {
@@ -1811,7 +2442,7 @@
         "description": "Update an existing User by its ID with the provided data, and return the updated entity.",
         "summary": "Update User",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [
           {
@@ -2045,7 +2676,7 @@
         "description": "Soft delete the specified User by its ID. This action is reversible.",
         "summary": "Destroy User",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [
           {
@@ -2203,7 +2834,7 @@
         "description": "Permanently delete the specified User by its ID. This action is irreversible.",
         "summary": "Kill User",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [
           {
@@ -2361,7 +2992,7 @@
         "description": "Restore a previously soft-deleted User by its ID and then return the restored entity.",
         "summary": "Restore User",
         "tags": [
-          "Users"
+          "user"
         ],
         "parameters": [
           {

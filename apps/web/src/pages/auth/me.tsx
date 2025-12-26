@@ -1,5 +1,5 @@
 import { tsr } from "@/api";
-import { useMustUser } from "@/auth/auth-context";
+import { useAuth } from "@/auth/auth-context";
 import { ThemeDropdown } from "@/components/theme-dropdown";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,7 @@ export function MePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const user = useMustUser();
+  const { user } = useAuth();
 
   const logoutMutation = tsr.auth.logout.useMutation({
     onSuccess: () => {

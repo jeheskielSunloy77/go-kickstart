@@ -1,0 +1,131 @@
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { AlertTriangle, ArrowLeft, Bug, Home, RefreshCw } from "lucide-react";
+import {
+  isRouteErrorResponse,
+  useNavigate,
+  useRouteError,
+} from "react-router-dom";
+
+export function RootErrorBoundary() {
+  const error = useRouteError();
+  const navigate = useNavigate();
+
+  // -------------------------
+  // Route / HTTP Errors
+  // -------------------------
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="space-y-2">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+              <div>
+                <CardTitle className="text-3xl font-bold">
+                  {error.status}
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  {error.statusText}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            {error.data && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Details</AlertTitle>
+                <AlertDescription>{error.data}</AlertDescription>
+              </Alert>
+            )}
+
+            <Separator />
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Back
+              </Button>
+
+              <Button onClick={() => navigate("/", { replace: true })}>
+                <Home className="mr-2 h-4 w-4" />
+                Go Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // -------------------------
+  // Unexpected JS Errors
+  // -------------------------
+  if (error instanceof Error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Bug className="h-8 w-8 text-destructive" />
+              <div>
+                <CardTitle className="text-2xl font-semibold text-destructive">
+                  Something went wrong
+                </CardTitle>
+                <CardDescription>An unexpected error occurred.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <Bug className="h-4 w-4" />
+              <AlertTitle>Error message</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+
+            <details className="rounded-md border bg-muted p-3 text-sm">
+              <summary className="cursor-pointer font-medium">
+                Stack trace
+              </summary>
+              <pre className="mt-2 max-h-48 overflow-auto text-xs">
+                {error.stack}
+              </pre>
+            </details>
+
+            <div className="flex gap-3">
+              <Button onClick={() => navigate(0)}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reload
+              </Button>
+
+              <Button variant="outline" onClick={() => navigate("/")}>
+                <Home className="mr-2 h-4 w-4" />
+                Go Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // -------------------------
+  // Fallback
+  // -------------------------
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="text-muted-foreground">Unknown error</p>
+    </div>
+  );
+}

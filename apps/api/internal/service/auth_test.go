@@ -8,10 +8,14 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/require"
@@ -40,6 +44,35 @@ type mockSessionRepo struct {
 	getByHashFn      func(ctx context.Context, hash string) (*model.AuthSession, error)
 	revokeByIDFn     func(ctx context.Context, id uuid.UUID, revokedAt time.Time) error
 	revokeByUserIDFn func(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error
+}
+
+type mockTaskEnqueuer struct {
+	called bool
+	task   *asynq.Task
+}
+
+type mockOAuthConfig struct {
+	authURL    string
+	state      string
+	exchangeFn func(ctx context.Context, code string) (*oauth2.Token, error)
+}
+
+func (m *mockOAuthConfig) AuthCodeURL(state string, _ ...oauth2.AuthCodeOption) string {
+	m.state = state
+	return m.authURL
+}
+
+func (m *mockOAuthConfig) Exchange(ctx context.Context, code string, _ ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	if m.exchangeFn != nil {
+		return m.exchangeFn(ctx, code)
+	}
+	return nil, nil
+}
+
+func (m *mockTaskEnqueuer) EnqueueContext(ctx context.Context, task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
+	m.called = true
+	m.task = task
+	return &asynq.TaskInfo{ID: "task-id"}, nil
 }
 
 func (m *mockAuthRepo) Save(ctx context.Context, user *model.User) error {
@@ -323,18 +356,125 @@ func TestAuthServiceLogin_Success(t *testing.T) {
 	require.False(t, claims.IsAdmin)
 }
 
-// Ensures LoginWithGoogle fails fast when Google auth is not configured.
-func TestAuthServiceLoginWithGoogle_ConfigMissing(t *testing.T) {
+// Ensures StartGoogleAuth fails fast when Google auth is not configured.
+func TestAuthServiceStartGoogleAuth_ConfigMissing(t *testing.T) {
 	ctx := context.Background()
 
 	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, nil, nil, nil, nil)
 
-	_, err := svc.LoginWithGoogle(ctx, "token", "agent", "127.0.0.1")
+	_, err := svc.StartGoogleAuth(ctx)
 	require.Error(t, err)
 
 	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusBadRequest, httpErr.Status)
+}
+
+// Ensures StartGoogleAuth returns the provider URL and signed state cookie.
+func TestAuthServiceStartGoogleAuth_Success(t *testing.T) {
+	ctx := context.Background()
+	now := time.Date(2024, 10, 1, 12, 0, 0, 0, time.UTC)
+
+	svc := NewAuthService(
+		&config.AuthConfig{
+			SecretKey:          "secret",
+			GoogleClientID:     "client",
+			GoogleClientSecret: "secret",
+			GoogleRedirectURL:  "http://localhost:8080/api/v1/auth/google/callback",
+		},
+		&mockAuthRepo{},
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+
+	mockOAuth := &mockOAuthConfig{authURL: "https://accounts.google.com/o/oauth2/auth"}
+	svc.googleOAuthConfig = mockOAuth
+	svc.now = func() time.Time { return now }
+
+	result, err := svc.StartGoogleAuth(ctx)
+	require.NoError(t, err)
+	require.Equal(t, "https://accounts.google.com/o/oauth2/auth", result.AuthURL)
+	require.NotEmpty(t, result.StateCookie)
+	require.WithinDuration(t, now.Add(googleStateTTL), result.StateExpiresAt, time.Second)
+
+	payload, err := svc.parseGoogleStateCookie(result.StateCookie)
+	require.NoError(t, err)
+	require.Equal(t, mockOAuth.state, payload.State)
+}
+
+// Ensures CompleteGoogleAuth exchanges the code, validates claims, and creates a session.
+func TestAuthServiceCompleteGoogleAuth_Success(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+
+	repo := &mockAuthRepo{
+		getByGoogleIDFn: func(_ context.Context, googleID string) (*model.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+		getByEmailFn: func(_ context.Context, email string) (*model.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+		createUserFn: func(_ context.Context, user *model.User) error {
+			user.ID = userID
+			return nil
+		},
+	}
+
+	sessionRepo := &mockSessionRepo{
+		createFn: func(_ context.Context, session *model.AuthSession) error {
+			session.ID = uuid.New()
+			return nil
+		},
+	}
+
+	svc := NewAuthService(
+		&config.AuthConfig{
+			SecretKey:          "secret",
+			AccessTokenTTL:     time.Minute,
+			GoogleClientID:     "client",
+			GoogleClientSecret: "secret",
+			GoogleRedirectURL:  "http://localhost:8080/api/v1/auth/google/callback",
+		},
+		repo,
+		sessionRepo,
+		nil,
+		nil,
+		nil,
+	)
+
+	oauthConfig := &mockOAuthConfig{
+		exchangeFn: func(_ context.Context, code string) (*oauth2.Token, error) {
+			require.Equal(t, "code", code)
+			token := (&oauth2.Token{AccessToken: "access"}).WithExtra(map[string]interface{}{
+				"id_token": "id-token",
+			})
+			return token, nil
+		},
+	}
+
+	svc.googleOAuthConfig = oauthConfig
+	svc.googleTokenValidator = func(_ context.Context, token, audience string) (*idtoken.Payload, error) {
+		require.Equal(t, "id-token", token)
+		require.Equal(t, "client", audience)
+		return &idtoken.Payload{
+			Subject: "google-sub",
+			Claims: map[string]interface{}{
+				"email":          "user@example.com",
+				"email_verified": true,
+			},
+		}, nil
+	}
+
+	state, cookieValue, _, err := svc.buildGoogleStateCookie()
+	require.NoError(t, err)
+
+	result, err := svc.CompleteGoogleAuth(ctx, "code", state, cookieValue, "agent", "127.0.0.1")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, userID, result.User.ID)
+	require.NotEmpty(t, result.RefreshToken.Token)
 }
 
 // Ensures VerifyEmail marks the user as verified when the code is valid.
@@ -398,4 +538,279 @@ func TestAuthServiceVerifyEmail_InvalidCode(t *testing.T) {
 	var httpErr *errs.ErrorResponse
 	require.ErrorAs(t, err, &httpErr)
 	require.Equal(t, http.StatusBadRequest, httpErr.Status)
+}
+
+// Ensures Refresh rejects missing refresh tokens before hitting repositories.
+func TestAuthServiceRefresh_MissingToken(t *testing.T) {
+	ctx := context.Background()
+	called := false
+
+	sessionRepo := &mockSessionRepo{
+		getByHashFn: func(_ context.Context, hash string) (*model.AuthSession, error) {
+			called = true
+			return nil, nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test", AccessTokenTTL: time.Minute}, &mockAuthRepo{}, sessionRepo, nil, nil, nil)
+
+	_, err := svc.Refresh(ctx, "", "agent", "127.0.0.1")
+	require.Error(t, err)
+	require.False(t, called)
+
+	var httpErr *errs.ErrorResponse
+	require.ErrorAs(t, err, &httpErr)
+	require.Equal(t, http.StatusUnauthorized, httpErr.Status)
+}
+
+// Ensures Refresh rejects missing, revoked, or expired sessions.
+func TestAuthServiceRefresh_InvalidSession(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name    string
+		session *model.AuthSession
+		getErr  error
+	}{
+		{name: "not_found", getErr: gorm.ErrRecordNotFound},
+		{name: "revoked", session: &model.AuthSession{ID: uuid.New(), UserID: uuid.New(), ExpiresAt: now.Add(time.Hour), RevokedAt: &now}},
+		{name: "expired", session: &model.AuthSession{ID: uuid.New(), UserID: uuid.New(), ExpiresAt: now.Add(-time.Hour)}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lookedUp := false
+			repo := &mockAuthRepo{
+				getByIDFn: func(_ context.Context, id uuid.UUID) (*model.User, error) {
+					lookedUp = true
+					return &model.User{ID: id}, nil
+				},
+			}
+			sessionRepo := &mockSessionRepo{
+				getByHashFn: func(_ context.Context, hash string) (*model.AuthSession, error) {
+					return tt.session, tt.getErr
+				},
+			}
+
+			svc := NewAuthService(&config.AuthConfig{SecretKey: "test", AccessTokenTTL: time.Minute}, repo, sessionRepo, nil, nil, nil)
+
+			_, err := svc.Refresh(ctx, "refresh-token", "agent", "127.0.0.1")
+			require.Error(t, err)
+			require.False(t, lookedUp)
+
+			var httpErr *errs.ErrorResponse
+			require.ErrorAs(t, err, &httpErr)
+			require.Equal(t, http.StatusUnauthorized, httpErr.Status)
+		})
+	}
+}
+
+// Ensures Refresh rotates sessions and returns new tokens on success.
+func TestAuthServiceRefresh_Success(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	refreshToken := "refresh-token"
+	expectedHash := hashRefreshToken(refreshToken)
+	sessionID := uuid.New()
+
+	repo := &mockAuthRepo{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*model.User, error) {
+			require.Equal(t, userID, id)
+			return &model.User{ID: userID, Email: "user@example.com"}, nil
+		},
+	}
+
+	revoked := false
+	created := false
+	sessionRepo := &mockSessionRepo{
+		getByHashFn: func(_ context.Context, hash string) (*model.AuthSession, error) {
+			require.Equal(t, expectedHash, hash)
+			return &model.AuthSession{ID: sessionID, UserID: userID, ExpiresAt: time.Now().Add(time.Hour)}, nil
+		},
+		revokeByIDFn: func(_ context.Context, id uuid.UUID, revokedAt time.Time) error {
+			require.Equal(t, sessionID, id)
+			require.False(t, revokedAt.IsZero())
+			revoked = true
+			return nil
+		},
+		createFn: func(_ context.Context, session *model.AuthSession) error {
+			created = true
+			return nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test", AccessTokenTTL: time.Minute}, repo, sessionRepo, nil, nil, nil)
+
+	result, err := svc.Refresh(ctx, refreshToken, "agent", "127.0.0.1")
+	require.NoError(t, err)
+	require.True(t, revoked)
+	require.True(t, created)
+	require.NotNil(t, result)
+	require.Equal(t, userID, result.User.ID)
+	require.NotEmpty(t, result.Token.Token)
+	require.NotEmpty(t, result.RefreshToken.Token)
+}
+
+// Ensures Logout revokes active sessions.
+func TestAuthServiceLogout_RevokesSession(t *testing.T) {
+	ctx := context.Background()
+	refreshToken := "refresh-token"
+	sessionID := uuid.New()
+
+	called := false
+	sessionRepo := &mockSessionRepo{
+		getByHashFn: func(_ context.Context, hash string) (*model.AuthSession, error) {
+			require.Equal(t, hashRefreshToken(refreshToken), hash)
+			return &model.AuthSession{ID: sessionID, ExpiresAt: time.Now().Add(time.Hour)}, nil
+		},
+		revokeByIDFn: func(_ context.Context, id uuid.UUID, revokedAt time.Time) error {
+			require.Equal(t, sessionID, id)
+			called = true
+			return nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, sessionRepo, nil, nil, nil)
+
+	err := svc.Logout(ctx, refreshToken)
+	require.NoError(t, err)
+	require.True(t, called)
+}
+
+// Ensures Logout skips revocation for already revoked sessions.
+func TestAuthServiceLogout_AlreadyRevoked(t *testing.T) {
+	ctx := context.Background()
+	refreshToken := "refresh-token"
+	revokedAt := time.Now().UTC()
+
+	called := false
+	sessionRepo := &mockSessionRepo{
+		getByHashFn: func(_ context.Context, hash string) (*model.AuthSession, error) {
+			return &model.AuthSession{ID: uuid.New(), ExpiresAt: time.Now().Add(time.Hour), RevokedAt: &revokedAt}, nil
+		},
+		revokeByIDFn: func(_ context.Context, id uuid.UUID, revokedAt time.Time) error {
+			called = true
+			return nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, sessionRepo, nil, nil, nil)
+
+	err := svc.Logout(ctx, refreshToken)
+	require.NoError(t, err)
+	require.False(t, called)
+}
+
+// Ensures LogoutAll revokes all sessions for the user.
+func TestAuthServiceLogoutAll(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+
+	called := false
+	sessionRepo := &mockSessionRepo{
+		revokeByUserIDFn: func(_ context.Context, id uuid.UUID, revokedAt time.Time) error {
+			require.Equal(t, userID, id)
+			called = true
+			return nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, &mockAuthRepo{}, sessionRepo, nil, nil, nil)
+
+	err := svc.LogoutAll(ctx, userID)
+	require.NoError(t, err)
+	require.True(t, called)
+}
+
+// Ensures CurrentUser fetches the user by ID.
+func TestAuthServiceCurrentUser(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+
+	repo := &mockAuthRepo{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*model.User, error) {
+			require.Equal(t, userID, id)
+			return &model.User{ID: userID, Email: "user@example.com"}, nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, nil, nil, nil)
+
+	user, err := svc.CurrentUser(ctx, userID)
+	require.NoError(t, err)
+	require.Equal(t, userID, user.ID)
+}
+
+// Ensures ResendVerification is a no-op when the user is already verified.
+func TestAuthServiceResendVerification_AlreadyVerified(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	verifiedAt := time.Now().UTC()
+
+	repo := &mockAuthRepo{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*model.User, error) {
+			return &model.User{ID: userID, Email: "user@example.com", EmailVerifiedAt: &verifiedAt}, nil
+		},
+	}
+
+	expiredCalled := false
+	createdCalled := false
+	verificationRepo := &mockVerificationRepo{
+		expireActiveFn: func(_ context.Context, id uuid.UUID, now time.Time) error {
+			expiredCalled = true
+			return nil
+		},
+		createFn: func(_ context.Context, verification *model.EmailVerification) error {
+			createdCalled = true
+			return nil
+		},
+	}
+
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test"}, repo, nil, verificationRepo, nil, nil)
+
+	err := svc.ResendVerification(ctx, userID)
+	require.NoError(t, err)
+	require.False(t, expiredCalled)
+	require.False(t, createdCalled)
+}
+
+// Ensures ResendVerification queues a new verification for unverified users.
+func TestAuthServiceResendVerification_QueuesVerification(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+
+	repo := &mockAuthRepo{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*model.User, error) {
+			return &model.User{ID: userID, Email: "user@example.com", Username: "user"}, nil
+		},
+	}
+
+	expiredCalled := false
+	createdCalled := false
+	verificationRepo := &mockVerificationRepo{
+		expireActiveFn: func(_ context.Context, id uuid.UUID, now time.Time) error {
+			require.Equal(t, userID, id)
+			expiredCalled = true
+			return nil
+		},
+		createFn: func(_ context.Context, verification *model.EmailVerification) error {
+			require.Equal(t, userID, verification.UserID)
+			require.Equal(t, "user@example.com", verification.Email)
+			require.NotEmpty(t, verification.CodeHash)
+			require.False(t, verification.ExpiresAt.IsZero())
+			createdCalled = true
+			return nil
+		},
+	}
+
+	enqueuer := &mockTaskEnqueuer{}
+	svc := NewAuthService(&config.AuthConfig{SecretKey: "test", EmailVerificationTTL: time.Hour}, repo, nil, verificationRepo, enqueuer, nil)
+
+	err := svc.ResendVerification(ctx, userID)
+	require.NoError(t, err)
+	require.True(t, expiredCalled)
+	require.True(t, createdCalled)
+	require.True(t, enqueuer.called)
+	require.Equal(t, job.TaskEmailVerification, enqueuer.task.Type())
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/jeheskielSunloy77/go-kickstart/internal/repository"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -88,9 +87,6 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.Updat
 
 	entity, err := s.repo.GetByID(ctx, id, nil)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError("user not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 
@@ -100,9 +96,6 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.Updat
 
 	updatedUser, err := s.repo.Update(ctx, *entity, updates)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errs.NewNotFoundError("user not found", true)
-		}
 		return nil, sqlerr.HandleError(err)
 	}
 	return updatedUser, nil

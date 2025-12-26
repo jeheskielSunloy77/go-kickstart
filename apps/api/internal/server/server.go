@@ -47,8 +47,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 	defer cancel()
 
 	if err := redisClient.Ping(ctx).Err(); err != nil {
-		logger.Error().Err(err).Msg("Failed to connect to Redis, continuing without Redis")
-		// Don't fail startup if Redis is unavailable
+		return nil, fmt.Errorf("fail to connect to redis: %w", err)
 	}
 
 	// job service

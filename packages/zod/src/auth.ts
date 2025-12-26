@@ -20,8 +20,9 @@ export const ZAuthLoginDTO = z.object({
 	password: z.string(),
 })
 
-export const ZAuthGoogleLoginDTO = z.object({
-	idToken: z.string(),
+export const ZAuthGoogleCallbackQuery = z.object({
+	code: z.string(),
+	state: z.string(),
 })
 
 export const ZAuthVerifyEmailDTO = z.object({

@@ -55,7 +55,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/jeheskielSunloy77/go-kickstart/internal/handler/auth.go (86.7%)</option>
+				<option value="file0">github.com/jeheskielSunloy77/go-kickstart/internal/handler/auth.go (73.0%)</option>
 				
 				<option value="file1">github.com/jeheskielSunloy77/go-kickstart/internal/handler/base.go (51.3%)</option>
 				
@@ -65,7 +65,7 @@
 				
 				<option value="file4">github.com/jeheskielSunloy77/go-kickstart/internal/handler/openapi.go (0.0%)</option>
 				
-				<option value="file5">github.com/jeheskielSunloy77/go-kickstart/internal/handler/resource.go (24.3%)</option>
+				<option value="file5">github.com/jeheskielSunloy77/go-kickstart/internal/handler/resource.go (22.6%)</option>
 				
 				<option value="file6">github.com/jeheskielSunloy77/go-kickstart/internal/handler/user.go (0.0%)</option>
 				
@@ -87,31 +87,42 @@
 				
 				<option value="file15">github.com/jeheskielSunloy77/go-kickstart/internal/repository/auth.go (78.3%)</option>
 				
-				<option value="file16">github.com/jeheskielSunloy77/go-kickstart/internal/repository/email_verification.go (90.9%)</option>
+				<option value="file16">github.com/jeheskielSunloy77/go-kickstart/internal/repository/auth_session.go (0.0%)</option>
 				
-				<option value="file17">github.com/jeheskielSunloy77/go-kickstart/internal/repository/repositories.go (0.0%)</option>
+				<option value="file17">github.com/jeheskielSunloy77/go-kickstart/internal/repository/email_verification.go (90.9%)</option>
 				
-				<option value="file18">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (48.8%)</option>
+				<option value="file18">github.com/jeheskielSunloy77/go-kickstart/internal/repository/repositories.go (0.0%)</option>
 				
-				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/user.go (100.0%)</option>
+				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (48.8%)</option>
 				
-				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/service/auth.go (38.6%)</option>
+				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/repository/user.go (100.0%)</option>
 				
-				<option value="file21">github.com/jeheskielSunloy77/go-kickstart/internal/service/authorization.go (30.4%)</option>
+				<option value="file21">github.com/jeheskielSunloy77/go-kickstart/internal/service/auth.go (74.3%)</option>
 				
-				<option value="file22">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource.go (19.2%)</option>
+				<option value="file22">github.com/jeheskielSunloy77/go-kickstart/internal/service/authorization.go (30.4%)</option>
 				
-				<option value="file23">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				<option value="file23">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource.go (21.4%)</option>
 				
-				<option value="file24">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (71.7%)</option>
+				<option value="file24">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				
+				<option value="file25">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (78.6%)</option>
 				
 				</select>
 			</div>
 			<div id="legend">
 				<span>not tracked</span>
 			
-				<span class="cov0">not covered</span>
-				<span class="cov8">covered</span>
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
 			
 			</div>
 		</div>
@@ -121,11 +132,18 @@
 
 import (
         "net/http"
+        "net/url"
         "regexp"
         "strings"
+        "time"
 
         "github.com/gofiber/fiber/v2"
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/config"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/middleware"
         "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
         "github.com/jeheskielSunloy77/go-kickstart/internal/service"
 )
 
@@ -134,48 +152,335 @@ type AuthHandler struct {
         authService service.AuthServiceInterface
 }
 
-func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHandler <span class="cov8" title="1">{
+func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHandler <span class="cov10" title="13">{
         return &amp;AuthHandler{
                 Handler:     h,
                 authService: authService,
         }
 }</span>
 
-func (h *AuthHandler) Register() fiber.Handler <span class="cov8" title="1">{
-        return Handle(h.Handler, func(c *fiber.Ctx, req *model.RegisterDTO) (*service.AuthResult, error) </span><span class="cov8" title="1">{
-                return h.authService.Register(c.UserContext(), req.Email, req.Username, req.Password)
-        }</span>, http.StatusCreated, &amp;model.RegisterDTO{})
+func (h *AuthHandler) Register() fiber.Handler <span class="cov3" title="2">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.RegisterDTO) (*model.User, error) </span><span class="cov1" title="1">{
+                result, err := h.authService.Register(c.UserContext(), req.Email, req.Username, req.Password, c.Get(fiber.HeaderUserAgent), c.IP())
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov1" title="1">h.setAuthCookies(c, result)
+                return result.User, nil</span>
+        }, http.StatusCreated, &amp;model.RegisterDTO{})
 }
 
-func (h *AuthHandler) Login() fiber.Handler <span class="cov8" title="1">{
-        return Handle(h.Handler, func(c *fiber.Ctx, req *model.LoginDTO) (*service.AuthResult, error) </span><span class="cov8" title="1">{
+func (h *AuthHandler) Login() fiber.Handler <span class="cov1" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.LoginDTO) (*model.User, error) </span><span class="cov1" title="1">{
                 identifier := req.Identifier
-                if isEmail(identifier) </span><span class="cov8" title="1">{
+                if isEmail(identifier) </span><span class="cov1" title="1">{
                         identifier = normalizeEmail(identifier)
                 }</span>
 
-                <span class="cov8" title="1">return h.authService.Login(c.UserContext(), identifier, req.Password)</span>
+                <span class="cov1" title="1">result, err := h.authService.Login(c.UserContext(), identifier, req.Password, c.Get(fiber.HeaderUserAgent), c.IP())
+                if err != nil </span><span class="cov1" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">h.setAuthCookies(c, result)
+                return result.User, nil</span>
         }, http.StatusOK, &amp;model.LoginDTO{})
 }
 
-func (h *AuthHandler) GoogleLogin() fiber.Handler <span class="cov0" title="0">{
-        return Handle(h.Handler, func(c *fiber.Ctx, req *model.GoogleLoginDTO) (*service.AuthResult, error) </span><span class="cov0" title="0">{
-                return h.authService.LoginWithGoogle(c.UserContext(), req.IDToken)
-        }</span>, http.StatusOK, &amp;model.GoogleLoginDTO{})
+func (h *AuthHandler) GoogleLogin() fiber.Handler <span class="cov1" title="1">{
+        return func(c *fiber.Ctx) error </span><span class="cov1" title="1">{
+                start, err := h.authService.StartGoogleAuth(c.UserContext())
+                if err != nil </span><span class="cov0" title="0">{
+                        return h.redirectGoogleFailure(c, err)
+                }</span>
+
+                <span class="cov1" title="1">h.setGoogleStateCookie(c, start)
+                return c.Redirect(start.AuthURL, http.StatusFound)</span>
+        }
 }
 
-func (h *AuthHandler) VerifyEmail() fiber.Handler <span class="cov8" title="1">{
-        return Handle(h.Handler, func(c *fiber.Ctx, req *model.VerifyEmailDTO) (*model.User, error) </span><span class="cov8" title="1">{
+func (h *AuthHandler) GoogleCallback() fiber.Handler <span class="cov1" title="1">{
+        return func(c *fiber.Ctx) error </span><span class="cov1" title="1">{
+                code := c.Query("code")
+                state := c.Query("state")
+                stateCookie := c.Cookies(googleStateCookieName)
+
+                result, err := h.authService.CompleteGoogleAuth(
+                        c.UserContext(),
+                        code,
+                        state,
+                        stateCookie,
+                        c.Get(fiber.HeaderUserAgent),
+                        c.IP(),
+                )
+
+                h.clearGoogleStateCookie(c)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return h.redirectGoogleFailure(c, err)
+                }</span>
+
+                <span class="cov1" title="1">h.setAuthCookies(c, result)
+
+                return c.Redirect(h.server.Config.Auth.GoogleSuccessRedirectURL, http.StatusFound)</span>
+        }
+}
+
+func (h *AuthHandler) VerifyEmail() fiber.Handler <span class="cov3" title="2">{
+        return Handle(h.Handler, func(c *fiber.Ctx, req *model.VerifyEmailDTO) (*model.User, error) </span><span class="cov1" title="1">{
                 return h.authService.VerifyEmail(c.UserContext(), req.Email, req.Code)
         }</span>, http.StatusOK, &amp;model.VerifyEmailDTO{})
 }
 
-func isEmail(identifier string) bool <span class="cov8" title="1">{
+func (h *AuthHandler) Refresh() fiber.Handler <span class="cov1" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*model.User, error) </span><span class="cov1" title="1">{
+                refreshToken := c.Cookies(h.refreshCookieName())
+                result, err := h.authService.Refresh(c.UserContext(), refreshToken, c.Get(fiber.HeaderUserAgent), c.IP())
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov1" title="1">h.setAuthCookies(c, result)
+                return result.User, nil</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *AuthHandler) Me() fiber.Handler <span class="cov3" title="2">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*model.User, error) </span><span class="cov3" title="2">{
+                userID, err := h.parseUserID(c)
+                if err != nil </span><span class="cov1" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov1" title="1">return h.authService.CurrentUser(c.UserContext(), userID)</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *AuthHandler) ResendVerification() fiber.Handler <span class="cov1" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*server.Response[any], error) </span><span class="cov1" title="1">{
+                userID, err := h.parseUserID(c)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov1" title="1">if err := h.authService.ResendVerification(c.UserContext(), userID); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov1" title="1">resp := server.Response[any]{
+                        Status:  http.StatusOK,
+                        Success: true,
+                        Message: "Verification email sent if needed.",
+                }
+                return &amp;resp, nil</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *AuthHandler) Logout() fiber.Handler <span class="cov1" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*server.Response[any], error) </span><span class="cov1" title="1">{
+                refreshToken := c.Cookies(h.refreshCookieName())
+                if err := h.authService.Logout(c.UserContext(), refreshToken); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov1" title="1">h.clearAuthCookies(c)
+
+                resp := server.Response[any]{
+                        Status:  http.StatusOK,
+                        Success: true,
+                        Message: "Logged out successfully.",
+                }
+                return &amp;resp, nil</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *AuthHandler) LogoutAll() fiber.Handler <span class="cov1" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*server.Response[any], error) </span><span class="cov1" title="1">{
+                userID, err := h.parseUserID(c)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov1" title="1">if err := h.authService.LogoutAll(c.UserContext(), userID); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov1" title="1">h.clearAuthCookies(c)
+
+                resp := server.Response[any]{
+                        Status:  http.StatusOK,
+                        Success: true,
+                        Message: "Logged out from all sessions.",
+                }
+                return &amp;resp, nil</span>
+        }, http.StatusOK, &amp;model.EmptyDTO{})
+}
+
+func (h *AuthHandler) parseUserID(c *fiber.Ctx) (uuid.UUID, error) <span class="cov5" title="4">{
+        raw := middleware.GetUserID(c)
+        if raw == "" </span><span class="cov1" title="1">{
+                return uuid.Nil, errs.NewUnauthorizedError("Unauthorized", false)
+        }</span>
+        <span class="cov4" title="3">userID, err := uuid.Parse(raw)
+        if err != nil </span><span class="cov0" title="0">{
+                return uuid.Nil, errs.NewUnauthorizedError("Unauthorized", false)
+        }</span>
+        <span class="cov4" title="3">return userID, nil</span>
+}
+
+func (h *AuthHandler) setAuthCookies(c *fiber.Ctx, result *service.AuthResult) <span class="cov4" title="3">{
+        if result == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov4" title="3">sameSite := string(h.server.Config.Auth.CookieSameSite)
+        secure := h.server.Config.Primary.Env == config.EnvProduction
+
+        accessCookie := &amp;fiber.Cookie{
+                Name:     h.accessCookieName(),
+                Value:    result.Token.Token,
+                Expires:  result.Token.ExpiresAt,
+                HTTPOnly: true,
+                Secure:   secure,
+                SameSite: sameSite,
+                Path:     "/",
+                Domain:   h.server.Config.Auth.CookieDomain,
+        }
+        refreshCookie := &amp;fiber.Cookie{
+                Name:     h.refreshCookieName(),
+                Value:    result.RefreshToken.Token,
+                Expires:  result.RefreshToken.ExpiresAt,
+                HTTPOnly: true,
+                Secure:   secure,
+                SameSite: sameSite,
+                Path:     "/",
+                Domain:   h.server.Config.Auth.CookieDomain,
+        }
+
+        c.Cookie(accessCookie)
+        c.Cookie(refreshCookie)</span>
+}
+
+func (h *AuthHandler) clearAuthCookies(c *fiber.Ctx) <span class="cov3" title="2">{
+        sameSite := string(h.server.Config.Auth.CookieSameSite)
+        secure := h.server.Config.Primary.Env == config.EnvProduction
+        expired := time.Unix(0, 0)
+
+        c.Cookie(&amp;fiber.Cookie{
+                Name:     h.accessCookieName(),
+                Value:    "",
+                Expires:  expired,
+                MaxAge:   -1,
+                HTTPOnly: true,
+                Secure:   secure,
+                SameSite: sameSite,
+                Path:     "/",
+                Domain:   h.server.Config.Auth.CookieDomain,
+        })
+        c.Cookie(&amp;fiber.Cookie{
+                Name:     h.refreshCookieName(),
+                Value:    "",
+                Expires:  expired,
+                MaxAge:   -1,
+                HTTPOnly: true,
+                Secure:   secure,
+                SameSite: sameSite,
+                Path:     "/",
+                Domain:   h.server.Config.Auth.CookieDomain,
+        })
+}</span>
+
+func (h *AuthHandler) accessCookieName() string <span class="cov6" title="5">{
+        if h.server != nil &amp;&amp; h.server.Config.Auth.AccessCookieName != "" </span><span class="cov6" title="5">{
+                return h.server.Config.Auth.AccessCookieName
+        }</span>
+        <span class="cov0" title="0">return "access_token"</span>
+}
+
+func (h *AuthHandler) refreshCookieName() string <span class="cov7" title="7">{
+        if h.server != nil &amp;&amp; h.server.Config.Auth.RefreshCookieName != "" </span><span class="cov7" title="7">{
+                return h.server.Config.Auth.RefreshCookieName
+        }</span>
+        <span class="cov0" title="0">return "refresh_token"</span>
+}
+
+const googleStateCookieName = "google_auth_state"
+
+func (h *AuthHandler) setGoogleStateCookie(c *fiber.Ctx, start *service.GoogleAuthStart) <span class="cov1" title="1">{
+        if start == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov1" title="1">sameSite := string(h.server.Config.Auth.CookieSameSite)
+        secure := h.server.Config.Primary.Env == config.EnvProduction
+
+        c.Cookie(&amp;fiber.Cookie{
+                Name:     googleStateCookieName,
+                Value:    start.StateCookie,
+                Expires:  start.StateExpiresAt,
+                HTTPOnly: true,
+                Secure:   secure,
+                SameSite: sameSite,
+                Path:     "/api/v1/auth/google",
+                Domain:   h.server.Config.Auth.CookieDomain,
+        })</span>
+}
+
+func (h *AuthHandler) clearGoogleStateCookie(c *fiber.Ctx) <span class="cov1" title="1">{
+        sameSite := string(h.server.Config.Auth.CookieSameSite)
+        secure := h.server.Config.Primary.Env == config.EnvProduction
+        expired := time.Unix(0, 0)
+
+        c.Cookie(&amp;fiber.Cookie{
+                Name:     googleStateCookieName,
+                Value:    "",
+                Expires:  expired,
+                MaxAge:   -1,
+                HTTPOnly: true,
+                Secure:   secure,
+                SameSite: sameSite,
+                Path:     "/api/v1/auth/google",
+                Domain:   h.server.Config.Auth.CookieDomain,
+        })
+}</span>
+
+func (h *AuthHandler) defaultAuthOrigin() string <span class="cov0" title="0">{
+        if h.server == nil || h.server.Config == nil </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">if len(h.server.Config.Server.CORSAllowedOrigins) == 0 </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">origin := strings.TrimSpace(h.server.Config.Server.CORSAllowedOrigins[0])
+        if origin == "" || origin == "*" </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">return origin</span>
+}
+
+func (h *AuthHandler) redirectGoogleFailure(c *fiber.Ctx, err error) error <span class="cov0" title="0">{
+        middleware.GetLogger(c).Warn().Err(err).Msg("google auth failed")
+        redirectURL := appendQueryParam(h.server.Config.Auth.GoogleFailureRedirectURL, "error", "google_auth_failed")
+        return c.Redirect(redirectURL, http.StatusFound)
+}</span>
+
+func appendQueryParam(rawURL, key, value string) string <span class="cov0" title="0">{
+        parsed, err := url.Parse(rawURL)
+        if err != nil </span><span class="cov0" title="0">{
+                return rawURL
+        }</span>
+
+        <span class="cov0" title="0">query := parsed.Query()
+        query.Set(key, value)
+        parsed.RawQuery = query.Encode()
+
+        return parsed.String()</span>
+}
+
+func isEmail(identifier string) bool <span class="cov1" title="1">{
         emailRegex := regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
         return emailRegex.MatchString(identifier)
 }</span>
 
-func normalizeEmail(email string) string <span class="cov8" title="1">{
+func normalizeEmail(email string) string <span class="cov1" title="1">{
         return strings.ToLower(strings.TrimSpace(email))
 }</span>
 </pre>
@@ -199,7 +504,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new base handler
-func NewHandler(s *server.Server) Handler <span class="cov8" title="1">{
+func NewHandler(s *server.Server) Handler <span class="cov10" title="16">{
         return Handler{server: s}
 }</span>
 
@@ -221,11 +526,11 @@ type JSONResponseHandler struct {
         status int
 }
 
-func (h JSONResponseHandler) Handle(c *fiber.Ctx, result any) error <span class="cov8" title="1">{
+func (h JSONResponseHandler) Handle(c *fiber.Ctx, result any) error <span class="cov8" title="9">{
         return c.Status(h.status).JSON(result)
 }</span>
 
-func (h JSONResponseHandler) GetOperation() string <span class="cov8" title="1">{
+func (h JSONResponseHandler) GetOperation() string <span class="cov9" title="14">{
         return "handler"
 }</span>
 
@@ -285,17 +590,17 @@ func handleRequest[Req validation.Validatable](
         req Req,
         handler func(c *fiber.Ctx, req Req) (any, error),
         responseHandler ResponseHandler,
-) error <span class="cov8" title="1">{
+) error <span class="cov9" title="14">{
         start := time.Now()
         method := c.Method()
         path := c.Path()
         route := path
-        if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov8" title="1">{
+        if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov9" title="14">{
                 route = c.Route().Path
         }</span>
 
         // Get New Relic transaction from context
-        <span class="cov8" title="1">txn := newrelic.FromContext(c.UserContext())
+        <span class="cov9" title="14">txn := newrelic.FromContext(c.UserContext())
         if txn != nil </span><span class="cov0" title="0">{
                 txn.AddAttribute("handler.name", route)
                 txn.AddAttribute("http.method", method)
@@ -304,7 +609,7 @@ func handleRequest[Req validation.Validatable](
         }</span>
 
         // Get context-enhanced logger
-        <span class="cov8" title="1">loggerBuilder := middleware.GetLogger(c).With().
+        <span class="cov9" title="14">loggerBuilder := middleware.GetLogger(c).With().
                 Str("operation", responseHandler.GetOperation()).
                 Str("method", method).
                 Str("path", path).
@@ -317,7 +622,7 @@ func handleRequest[Req validation.Validatable](
                         Str("content_type", fileHandler.contentType)
         }</span>
 
-        <span class="cov8" title="1">logger := loggerBuilder.Logger()
+        <span class="cov9" title="14">logger := loggerBuilder.Logger()
 
         // user.id is already set by tracing middleware
 
@@ -325,7 +630,7 @@ func handleRequest[Req validation.Validatable](
 
         // Validation with observability
         validationStart := time.Now()
-        if err := validation.BindAndValidate(c, req); err != nil </span><span class="cov8" title="1">{
+        if err := validation.BindAndValidate(c, req); err != nil </span><span class="cov4" title="3">{
                 validationDuration := time.Since(validationStart)
 
                 logger.Error().
@@ -338,16 +643,16 @@ func handleRequest[Req validation.Validatable](
                         txn.AddAttribute("validation.status", "failed")
                         txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
                 }</span>
-                <span class="cov8" title="1">return err</span>
+                <span class="cov4" title="3">return err</span>
         }
 
-        <span class="cov8" title="1">validationDuration := time.Since(validationStart)
+        <span class="cov8" title="11">validationDuration := time.Since(validationStart)
         if txn != nil </span><span class="cov0" title="0">{
                 txn.AddAttribute("validation.status", "success")
                 txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
         }</span>
 
-        <span class="cov8" title="1">logger.Debug().
+        <span class="cov8" title="11">logger.Debug().
                 Dur("validation_duration", validationDuration).
                 Msg("request validation successful")
 
@@ -356,7 +661,7 @@ func handleRequest[Req validation.Validatable](
         result, err := handler(c, req)
         handlerDuration := time.Since(handlerStart)
 
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov3" title="2">{
                 totalDuration := time.Since(start)
 
                 logger.Error().
@@ -371,10 +676,10 @@ func handleRequest[Req validation.Validatable](
                         txn.AddAttribute("handler.duration_ms", handlerDuration.Milliseconds())
                         txn.AddAttribute("total.duration_ms", totalDuration.Milliseconds())
                 }</span>
-                <span class="cov8" title="1">return err</span>
+                <span class="cov3" title="2">return err</span>
         }
 
-        <span class="cov8" title="1">totalDuration := time.Since(start)
+        <span class="cov8" title="9">totalDuration := time.Since(start)
 
         // Record success metrics and tracing
         if txn != nil </span><span class="cov0" title="0">{
@@ -384,7 +689,7 @@ func handleRequest[Req validation.Validatable](
                 responseHandler.AddAttributes(txn, result)
         }</span>
 
-        <span class="cov8" title="1">logger.Info().
+        <span class="cov8" title="9">logger.Info().
                 Dur("handler_duration", handlerDuration).
                 Dur("validation_duration", validationDuration).
                 Dur("total_duration", totalDuration).
@@ -399,9 +704,9 @@ func Handle[Req validation.Validatable, Res any](
         handler HandlerFunc[Req, Res],
         status int,
         req Req,
-) fiber.Handler <span class="cov8" title="1">{
-        return func(c *fiber.Ctx) error </span><span class="cov8" title="1">{
-                return handleRequest(c, req, func(c *fiber.Ctx, req Req) (any, error) </span><span class="cov8" title="1">{
+) fiber.Handler <span class="cov9" title="14">{
+        return func(c *fiber.Ctx) error </span><span class="cov9" title="14">{
+                return handleRequest(c, req, func(c *fiber.Ctx, req Req) (any, error) </span><span class="cov8" title="11">{
                         return handler(c, req)
                 }</span>, JSONResponseHandler{status: status})
         }
@@ -478,6 +783,7 @@ import (
 
         "github.com/gofiber/fiber/v2"
         "github.com/jeheskielSunloy77/go-kickstart/internal/middleware"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
 )
 
 type HealthHandler struct {
@@ -490,20 +796,20 @@ func NewHealthHandler(h Handler) *HealthHandler <span class="cov0" title="0">{
         }
 }</span>
 
-func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error <span class="cov0" title="0">{
+func (h *HealthHandler) GetHealth(c *fiber.Ctx) error <span class="cov0" title="0">{
         start := time.Now()
         logger := middleware.GetLogger(c).With().
                 Str("operation", "health_check").
                 Logger()
 
-        response := map[string]any{
+        result := map[string]any{
                 "status":      "healthy",
                 "timestamp":   time.Now().UTC(),
                 "environment": h.server.Config.Primary.Env,
                 "checks":      make(map[string]any),
         }
 
-        checks := response["checks"].(map[string]any)
+        checks := result["checks"].(map[string]any)
         isHealthy := true
 
         // Check database connectivity
@@ -578,9 +884,19 @@ func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error <span class="cov0" title
                 }</span>
         }
 
+        <span class="cov0" title="0">response := server.Response[map[string]any]{
+                Message: "Health check completed, all systems operational",
+                Data:    &amp;result,
+                Status:  http.StatusOK,
+                Success: true,
+        }
+
         // Set overall status
-        <span class="cov0" title="0">if !isHealthy </span><span class="cov0" title="0">{
-                response["status"] = "unhealthy"
+        if !isHealthy </span><span class="cov0" title="0">{
+                result["status"] = "unhealthy"
+                response.Message = "Health check completed, some systems are unhealthy"
+                response.Data = &amp;result
+
                 logger.Warn().
                         Dur("total_duration", time.Since(start)).
                         Msg("health check failed")
@@ -593,6 +909,7 @@ func (h *HealthHandler) CheckHealth(c *fiber.Ctx) error <span class="cov0" title
                                         "total_duration_ms": time.Since(start).Milliseconds(),
                                 })
                 }</span>
+
                 <span class="cov0" title="0">return c.Status(http.StatusServiceUnavailable).JSON(response)</span>
         }
 
@@ -665,18 +982,21 @@ import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
         "github.com/jeheskielSunloy77/go-kickstart/internal/model"
         "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/server"
         "github.com/jeheskielSunloy77/go-kickstart/internal/service"
 )
 
 type ResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
         Handler
-        service service.ResourceServiceInterface[T, S, U]
+        resourceName string
+        service      service.ResourceServiceInterface[T, S, U]
 }
 
-func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](base Handler, service service.ResourceServiceInterface[T, S, U]) *ResourceHandler[T, S, U] <span class="cov8" title="1">{
+func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceServiceInterface[T, S, U]) *ResourceHandler[T, S, U] <span class="cov10" title="3">{
         return &amp;ResourceHandler[T, S, U]{
-                Handler: base,
-                service: service,
+                resourceName: resourceName,
+                Handler:      base,
+                service:      service,
         }
 }</span>
 
@@ -703,63 +1023,103 @@ func (h *ResourceHandler[T, S, U]) GetByID() fiber.Handler <span class="cov0" ti
         }, http.StatusOK, &amp;model.EmptyDTO{})
 }
 
-func (h *ResourceHandler[T, S, U]) GetMany() fiber.Handler <span class="cov8" title="1">{
-        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (model.PaginatedResponse[T], error) </span><span class="cov8" title="1">{
+func (h *ResourceHandler[T, S, U]) GetMany() fiber.Handler <span class="cov1" title="1">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (server.PaginatedResponse[T], error) </span><span class="cov1" title="1">{
                 options := repository.NewGetManyOptionsFromRequest(c)
                 entities, total, err := h.service.GetMany(c.UserContext(), options)
                 if err != nil </span><span class="cov0" title="0">{
-                        return model.PaginatedResponse[T]{}, err
+                        return server.PaginatedResponse[T]{}, err
                 }</span>
 
-                <span class="cov8" title="1">resp := model.PaginatedResponse[T]{
-                        Data:       entities,
-                        Page:       options.Offset/options.Limit + 1,
-                        Limit:      options.Limit,
-                        Total:      int(total),
-                        TotalPages: int((total + int64(options.Limit) - 1) / int64(options.Limit)),
-                }
+                <span class="cov1" title="1">resp := server.NewPaginatedResponse("Successfully fetched "+h.resourceName+"s!", entities, total, options.Limit, options.Offset)
                 return resp, nil</span>
         }, http.StatusOK, &amp;model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Destroy() fiber.Handler <span class="cov0" title="0">{
-        return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) error </span><span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*server.Response[T], error) </span><span class="cov0" title="0">{
                 id, err := utils.ParseUUIDParam(c.Params("id"))
                 if err != nil </span><span class="cov0" title="0">{
-                        return err
+                        return nil, err
                 }</span>
 
-                <span class="cov0" title="0">return h.service.Destroy(c.UserContext(), id)</span>
+                <span class="cov0" title="0">err = h.service.Destroy(c.UserContext(), id)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">resp := server.Response[T]{
+                        Status:  http.StatusNoContent,
+                        Success: true,
+                        Message: "Successfully deleted " + h.resourceName + "!",
+                }
+
+                return &amp;resp, nil</span>
         }, http.StatusNoContent, &amp;model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Kill() fiber.Handler <span class="cov0" title="0">{
-        return HandleNoContent(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) error </span><span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*server.Response[T], error) </span><span class="cov0" title="0">{
                 id, err := utils.ParseUUIDParam(c.Params("id"))
                 if err != nil </span><span class="cov0" title="0">{
-                        return err
+                        return nil, err
                 }</span>
 
-                <span class="cov0" title="0">return h.service.Kill(c.UserContext(), id)</span>
+                <span class="cov0" title="0">err = h.service.Kill(c.UserContext(), id)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">resp := server.Response[T]{
+                        Status:  http.StatusNoContent,
+                        Success: true,
+                        Message: "Successfully permanently deleted " + h.resourceName + "!",
+                }
+
+                return &amp;resp, nil</span>
         }, http.StatusNoContent, &amp;model.EmptyDTO{})
 }
 
 func (h *ResourceHandler[T, S, U]) Restore() fiber.Handler <span class="cov0" title="0">{
-        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*T, error) </span><span class="cov0" title="0">{
+        return Handle(h.Handler, func(c *fiber.Ctx, _ *model.EmptyDTO) (*server.Response[T], error) </span><span class="cov0" title="0">{
                 id, err := utils.ParseUUIDParam(c.Params("id"))
                 if err != nil </span><span class="cov0" title="0">{
                         return nil, err
                 }</span>
 
                 <span class="cov0" title="0">preloads := repository.ParsePreloads(c.Query("preloads"))
-                return h.service.Restore(c.UserContext(), id, preloads)</span>
+                entity, err := h.service.Restore(c.UserContext(), id, preloads)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov0" title="0">resp := server.Response[T]{
+                        Status:  http.StatusOK,
+                        Success: true,
+                        Message: "Successfully restored " + h.resourceName + "!",
+                        Data:    entity,
+                }
+
+                return &amp;resp, nil</span>
         }, http.StatusOK, &amp;model.EmptyDTO{})
 }
 
-func (h *ResourceHandler[T, S, U]) Store() fiber.Handler <span class="cov8" title="1">{
-        return Handle(h.Handler, func(c *fiber.Ctx, dto S) (*T, error) </span><span class="cov8" title="1">{
-                return h.service.Store(c.UserContext(), dto)
-        }</span>, http.StatusCreated, model.NewDTO[S]())
+func (h *ResourceHandler[T, S, U]) Store() fiber.Handler <span class="cov6" title="2">{
+        return Handle(h.Handler, func(c *fiber.Ctx, dto S) (*server.Response[T], error) </span><span class="cov1" title="1">{
+                entity, err := h.service.Store(c.UserContext(), dto)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov1" title="1">resp := server.Response[T]{
+                        Status:  http.StatusCreated,
+                        Success: true,
+                        Message: "Successfully created " + h.resourceName + "!",
+                        Data:    entity,
+                }
+
+                return &amp;resp, nil</span>
+        }, http.StatusCreated, model.NewDTO[S]())
 }
 </pre>
 		
@@ -776,7 +1136,7 @@ type UserHandler struct {
 
 func NewUserHandler(h Handler, service *service.UserService) *UserHandler <span class="cov0" title="0">{
         return &amp;UserHandler{
-                ResourceHandler: NewResourceHandler(h, service),
+                ResourceHandler: NewResourceHandler("user", h, service),
         }
 }</span>
 </pre>
@@ -796,29 +1156,41 @@ import (
 )
 
 type AuthMiddleware struct {
-        server *server.Server
-        secret []byte
+        server           *server.Server
+        secret           []byte
+        accessCookieName string
 }
 
 func NewAuthMiddleware(s *server.Server) *AuthMiddleware <span class="cov0" title="0">{
-        return &amp;AuthMiddleware{
-                server: s,
-                secret: []byte(s.Config.Auth.SecretKey),
-        }
-}</span>
+        cookieName := s.Config.Auth.AccessCookieName
+        if strings.TrimSpace(cookieName) == "" </span><span class="cov0" title="0">{
+                cookieName = "access_token"
+        }</span>
+
+        <span class="cov0" title="0">return &amp;AuthMiddleware{
+                server:           s,
+                secret:           []byte(s.Config.Auth.SecretKey),
+                accessCookieName: cookieName,
+        }</span>
+}
 
 func (auth *AuthMiddleware) RequireAuth() fiber.Handler <span class="cov0" title="0">{
         return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
                 start := time.Now()
 
+                rawToken := ""
                 authHeader := c.Get(fiber.HeaderAuthorization)
-                parts := strings.Fields(authHeader)
-                if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov0" title="0">{
-                        return errs.NewUnauthorizedError("Unauthorized", false)
+                if strings.TrimSpace(authHeader) != "" </span><span class="cov0" title="0">{
+                        parts := strings.Fields(authHeader)
+                        if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov0" title="0">{
+                                return errs.NewUnauthorizedError("Unauthorized", false)
+                        }</span>
+                        <span class="cov0" title="0">rawToken = strings.TrimSpace(parts[1])</span>
+                } else<span class="cov0" title="0"> {
+                        rawToken = strings.TrimSpace(c.Cookies(auth.accessCookieName))
                 }</span>
 
-                <span class="cov0" title="0">rawToken := strings.TrimSpace(parts[1])
-                if rawToken == "" </span><span class="cov0" title="0">{
+                <span class="cov0" title="0">if rawToken == "" </span><span class="cov0" title="0">{
                         return errs.NewUnauthorizedError("Unauthorized", false)
                 }</span>
 
@@ -882,27 +1254,27 @@ type AuthorizationEnforcer interface {
         Enforce(ctx context.Context, sub service.AuthorizationSubject, obj service.AuthorizationObject, act string) (bool, error)
 }
 
-func NewAuthorizationMiddleware(authorizer AuthorizationEnforcer) *AuthorizationMiddleware <span class="cov8" title="1">{
+func NewAuthorizationMiddleware(authorizer AuthorizationEnforcer) *AuthorizationMiddleware <span class="cov10" title="5">{
         return &amp;AuthorizationMiddleware{authorizer: authorizer}
 }</span>
 
-func (am *AuthorizationMiddleware) RequireAuthorization() fiber.Handler <span class="cov8" title="1">{
-        return func(c *fiber.Ctx) error </span><span class="cov8" title="1">{
+func (am *AuthorizationMiddleware) RequireAuthorization() fiber.Handler <span class="cov10" title="5">{
+        return func(c *fiber.Ctx) error </span><span class="cov10" title="5">{
                 userID := GetUserID(c)
-                if userID == "" </span><span class="cov8" title="1">{
+                if userID == "" </span><span class="cov1" title="1">{
                         return errs.NewUnauthorizedError("Unauthorized", false)
                 }</span>
 
-                <span class="cov8" title="1">isAdmin := GetUserIsAdmin(c)
-                if isAdmin </span><span class="cov8" title="1">{
+                <span class="cov8" title="4">isAdmin := GetUserIsAdmin(c)
+                if isAdmin </span><span class="cov1" title="1">{
                         return c.Next()
                 }</span>
 
-                <span class="cov8" title="1">if am.authorizer == nil </span><span class="cov0" title="0">{
+                <span class="cov7" title="3">if am.authorizer == nil </span><span class="cov0" title="0">{
                         return errs.NewInternalServerError()
                 }</span>
 
-                <span class="cov8" title="1">subject := service.AuthorizationSubject{
+                <span class="cov7" title="3">subject := service.AuthorizationSubject{
                         ID:      userID,
                         Email:   GetUserEmail(c),
                         IsAdmin: isAdmin,
@@ -915,21 +1287,21 @@ func (am *AuthorizationMiddleware) RequireAuthorization() fiber.Handler <span cl
                 }
 
                 allowed, err := am.authorizer.Enforce(c.UserContext(), subject, obj, c.Method())
-                if err != nil </span><span class="cov8" title="1">{
+                if err != nil </span><span class="cov1" title="1">{
                         logger := GetLogger(c)
                         logger.Error().Err(err).Msg("authorization check failed")
                         return errs.NewInternalServerError()
                 }</span>
-                <span class="cov8" title="1">if !allowed </span><span class="cov8" title="1">{
+                <span class="cov4" title="2">if !allowed </span><span class="cov1" title="1">{
                         return errs.NewForbiddenError("Forbidden", false)
                 }</span>
 
-                <span class="cov8" title="1">return c.Next()</span>
+                <span class="cov1" title="1">return c.Next()</span>
         }
 }
 
-func routePattern(c *fiber.Ctx) string <span class="cov8" title="1">{
-        if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov8" title="1">{
+func routePattern(c *fiber.Ctx) string <span class="cov7" title="3">{
+        if c.Route() != nil &amp;&amp; c.Route().Path != "" </span><span class="cov7" title="3">{
                 return c.Route().Path
         }</span>
         <span class="cov0" title="0">return c.Path()</span>
@@ -1036,32 +1408,32 @@ func (ce *ContextEnhancer) timeoutForMethod(method string) time.Duration <span c
         }
 }
 
-func GetUserID(c *fiber.Ctx) string <span class="cov8" title="1">{
-        if userID, ok := c.Locals(UserIDKey).(string); ok </span><span class="cov8" title="1">{
+func GetUserID(c *fiber.Ctx) string <span class="cov10" title="5">{
+        if userID, ok := c.Locals(UserIDKey).(string); ok </span><span class="cov8" title="4">{
                 return userID
         }</span>
-        <span class="cov8" title="1">return ""</span>
+        <span class="cov1" title="1">return ""</span>
 }
 
-func GetUserEmail(c *fiber.Ctx) string <span class="cov8" title="1">{
-        if email, ok := c.Locals(UserEmailKey).(string); ok </span><span class="cov8" title="1">{
+func GetUserEmail(c *fiber.Ctx) string <span class="cov7" title="3">{
+        if email, ok := c.Locals(UserEmailKey).(string); ok </span><span class="cov1" title="1">{
                 return email
         }</span>
-        <span class="cov8" title="1">return ""</span>
+        <span class="cov4" title="2">return ""</span>
 }
 
-func GetUserIsAdmin(c *fiber.Ctx) bool <span class="cov8" title="1">{
-        if isAdmin, ok := c.Locals(UserIsAdminKey).(bool); ok </span><span class="cov8" title="1">{
+func GetUserIsAdmin(c *fiber.Ctx) bool <span class="cov8" title="4">{
+        if isAdmin, ok := c.Locals(UserIsAdminKey).(bool); ok </span><span class="cov1" title="1">{
                 return isAdmin
         }</span>
-        <span class="cov8" title="1">return false</span>
+        <span class="cov7" title="3">return false</span>
 }
 
-func GetLogger(c *fiber.Ctx) *zerolog.Logger <span class="cov8" title="1">{
+func GetLogger(c *fiber.Ctx) *zerolog.Logger <span class="cov1" title="1">{
         if logger, ok := c.Locals(LoggerKey).(*zerolog.Logger); ok </span><span class="cov0" title="0">{
                 return logger
         }</span>
-        <span class="cov8" title="1">logger := zerolog.Nop()
+        <span class="cov1" title="1">logger := zerolog.Nop()
         return &amp;logger</span>
 }
 </pre>
@@ -1102,7 +1474,7 @@ func (global *GlobalMiddlewares) RequestLogger() fiber.Handler <span class="cov0
                 }</span>
 
                 <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
-                        var httpErr *errs.HTTPError
+                        var httpErr *errs.ErrorResponse
                         var fiberErr *fiber.Error
                         switch </span>{
                         case errors.As(err, &amp;httpErr):<span class="cov0" title="0">
@@ -1159,12 +1531,12 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) err
 
         // Try to handle known database errors
         // Only do this for errors that haven't already been converted to HTTPError
-        var httpErr *errs.HTTPError
+        var httpErr *errs.ErrorResponse
         if !errors.As(err, &amp;httpErr) </span><span class="cov0" title="0">{
                 var fiberErr *fiber.Error
                 if errors.As(err, &amp;fiberErr) </span><span class="cov0" title="0">{
                         if fiberErr.Code == http.StatusNotFound </span><span class="cov0" title="0">{
-                                err = errs.NewNotFoundError("Route not found", false, nil)
+                                err = errs.NewNotFoundError("Route not found", false)
                         }</span>
                 } else<span class="cov0" title="0"> {
                         // Here we call our sqlerr handler which will convert database errors
@@ -1184,7 +1556,6 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) err
         switch </span>{
         case errors.As(err, &amp;httpErr):<span class="cov0" title="0">
                 status = httpErr.Status
-                code = httpErr.Code
                 message = httpErr.Message
                 fieldErrors = httpErr.Errors
                 action = httpErr.Action</span>
@@ -1211,8 +1582,8 @@ func (global *GlobalMiddlewares) GlobalErrorHandler(c *fiber.Ctx, err error) err
                 Str("error_code", code).
                 Msg(message)
 
-        _ = c.Status(status).JSON(errs.HTTPError{
-                Code:     code,
+        _ = c.Status(status).JSON(errs.ErrorResponse{
+                Success:  false,
                 Message:  message,
                 Status:   status,
                 Override: httpErr != nil &amp;&amp; httpErr.Override,
@@ -1430,6 +1801,7 @@ import (
 type AuthRepositoryInterface interface {
         Save(ctx context.Context, user *model.User) error
         CreateUser(ctx context.Context, user *model.User) error
+        GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
         GetByEmail(ctx context.Context, email string) (*model.User, error)
         GetByUsername(ctx context.Context, username string) (*model.User, error)
         GetByGoogleID(ctx context.Context, googleID string) (*model.User, error)
@@ -1516,6 +1888,68 @@ import (
         "gorm.io/gorm"
 )
 
+type AuthSessionRepositoryInterface interface {
+        Create(ctx context.Context, session *model.AuthSession) error
+        GetByRefreshTokenHash(ctx context.Context, hash string) (*model.AuthSession, error)
+        RevokeByID(ctx context.Context, id uuid.UUID, revokedAt time.Time) error
+        RevokeByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error
+}
+
+type AuthSessionRepository struct {
+        db *gorm.DB
+}
+
+func NewAuthSessionRepository(db *gorm.DB) *AuthSessionRepository <span class="cov0" title="0">{
+        return &amp;AuthSessionRepository{db: db}
+}</span>
+
+func (r *AuthSessionRepository) Create(ctx context.Context, session *model.AuthSession) error <span class="cov0" title="0">{
+        if session.ID == uuid.Nil </span><span class="cov0" title="0">{
+                session.ID = uuid.New()
+        }</span>
+        <span class="cov0" title="0">return r.db.WithContext(ctx).Create(session).Error</span>
+}
+
+func (r *AuthSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*model.AuthSession, error) <span class="cov0" title="0">{
+        var session model.AuthSession
+        if err := r.db.WithContext(ctx).First(&amp;session, "refresh_token_hash = ?", hash).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;session, nil</span>
+}
+
+func (r *AuthSessionRepository) RevokeByID(ctx context.Context, id uuid.UUID, revokedAt time.Time) error <span class="cov0" title="0">{
+        return r.db.WithContext(ctx).
+                Model(&amp;model.AuthSession{}).
+                Where("id = ?", id).
+                Updates(map[string]any{
+                        "revoked_at": revokedAt,
+                }).
+                Error
+}</span>
+
+func (r *AuthSessionRepository) RevokeByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error <span class="cov0" title="0">{
+        return r.db.WithContext(ctx).
+                Model(&amp;model.AuthSession{}).
+                Where("user_id = ? AND revoked_at IS NULL", userID).
+                Updates(map[string]any{
+                        "revoked_at": revokedAt,
+                }).
+                Error
+}</span>
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package repository
+
+import (
+        "context"
+        "time"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "gorm.io/gorm"
+)
+
 type EmailVerificationRepositoryInterface interface {
         Create(ctx context.Context, verification *model.EmailVerification) error
         GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error)
@@ -1527,28 +1961,28 @@ type EmailVerificationRepository struct {
         db *gorm.DB
 }
 
-func NewEmailVerificationRepository(db *gorm.DB) *EmailVerificationRepository <span class="cov8" title="1">{
+func NewEmailVerificationRepository(db *gorm.DB) *EmailVerificationRepository <span class="cov1" title="1">{
         return &amp;EmailVerificationRepository{db: db}
 }</span>
 
-func (r *EmailVerificationRepository) Create(ctx context.Context, verification *model.EmailVerification) error <span class="cov8" title="1">{
-        if verification.ID == uuid.Nil </span><span class="cov8" title="1">{
+func (r *EmailVerificationRepository) Create(ctx context.Context, verification *model.EmailVerification) error <span class="cov1" title="1">{
+        if verification.ID == uuid.Nil </span><span class="cov1" title="1">{
                 verification.ID = uuid.New()
         }</span>
-        <span class="cov8" title="1">return r.db.WithContext(ctx).Create(verification).Error</span>
+        <span class="cov1" title="1">return r.db.WithContext(ctx).Create(verification).Error</span>
 }
 
-func (r *EmailVerificationRepository) GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error) <span class="cov8" title="1">{
+func (r *EmailVerificationRepository) GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error) <span class="cov10" title="2">{
         var verification model.EmailVerification
         err := r.db.WithContext(ctx).
                 Where("user_id = ? AND code_hash = ? AND verified_at IS NULL AND expires_at &gt; ?", userID, codeHash, now).
                 Order("created_at desc").
                 First(&amp;verification).
                 Error
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
-        <span class="cov8" title="1">return &amp;verification, nil</span>
+        <span class="cov1" title="1">return &amp;verification, nil</span>
 }
 
 func (r *EmailVerificationRepository) ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error <span class="cov0" title="0">{
@@ -1559,7 +1993,7 @@ func (r *EmailVerificationRepository) ExpireActiveByUserID(ctx context.Context, 
                 Error
 }</span>
 
-func (r *EmailVerificationRepository) MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error <span class="cov8" title="1">{
+func (r *EmailVerificationRepository) MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error <span class="cov1" title="1">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.EmailVerification{}).
                 Where("id = ?", id).
@@ -1571,7 +2005,7 @@ func (r *EmailVerificationRepository) MarkVerified(ctx context.Context, id uuid.
 }</span>
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package repository
+		<pre class="file" id="file18" style="display: none">package repository
 
 import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/server"
@@ -1579,6 +2013,7 @@ import (
 
 type Repositories struct {
         Auth              *AuthRepository
+        AuthSession       *AuthSessionRepository
         User              *UserRepository
         EmailVerification *EmailVerificationRepository
 }
@@ -1586,13 +2021,14 @@ type Repositories struct {
 func NewRepositories(s *server.Server) *Repositories <span class="cov0" title="0">{
         return &amp;Repositories{
                 Auth:              NewAuthRepository(s.DB.DB),
+                AuthSession:       NewAuthSessionRepository(s.DB.DB),
                 User:              NewUserRepository(s.DB.DB),
                 EmailVerification: NewEmailVerificationRepository(s.DB.DB),
         }
 }</span>
 </pre>
 		
-		<pre class="file" id="file18" style="display: none">package repository
+		<pre class="file" id="file19" style="display: none">package repository
 
 import (
         "context"
@@ -1618,40 +2054,40 @@ type ResourceRepository[T any] struct {
         db *gorm.DB
 }
 
-func NewResourceRepository[T any](db *gorm.DB) *ResourceRepository[T] <span class="cov8" title="1">{
+func NewResourceRepository[T any](db *gorm.DB) *ResourceRepository[T] <span class="cov4" title="2">{
         return &amp;ResourceRepository[T]{db: db}
 }</span>
 
-func (r *ResourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov8" title="1">{
+func (r *ResourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov7" title="3">{
         return r.db.WithContext(ctx).Create(entity).Error
 }</span>
 
-func (r *ResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov8" title="1">{
+func (r *ResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov8" title="4">{
         var entity T
         query := applyPreloads(r.db.WithContext(ctx), preloads)
-        if err := query.First(&amp;entity, id).Error; err != nil </span><span class="cov8" title="1">{
+        if err := query.First(&amp;entity, id).Error; err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
-        <span class="cov8" title="1">return &amp;entity, nil</span>
+        <span class="cov7" title="3">return &amp;entity, nil</span>
 }
 
-func (r *ResourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) <span class="cov8" title="1">{
+func (r *ResourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) <span class="cov1" title="1">{
         // if the updates are provided, use them to only update specific fields, if not replace the entire entity
         var err error
-        if len(updates) &gt; 0 </span><span class="cov8" title="1">{
+        if len(updates) &gt; 0 </span><span class="cov1" title="1">{
                 err = r.db.WithContext(ctx).Model(&amp;entity).Updates(updates[0]).Error
         }</span> else<span class="cov0" title="0"> {
                 err = r.db.WithContext(ctx).Save(&amp;entity).Error
         }</span>
-        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
 
         // updated entity
-        <span class="cov8" title="1">return &amp;entity, nil</span>
+        <span class="cov1" title="1">return &amp;entity, nil</span>
 }
 
-func (r *ResourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov8" title="1">{
+func (r *ResourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov1" title="1">{
         return r.db.WithContext(ctx).Delete(new(T), id).Error
 }</span>
 
@@ -1659,7 +2095,7 @@ func (r *ResourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <s
         return r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error
 }</span>
 
-func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov8" title="1">{
+func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov1" title="1">{
         if err := r.db.WithContext(ctx).
                 Unscoped().
                 Model(new(T)).
@@ -1669,10 +2105,10 @@ func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
                 return nil, err
         }</span>
 
-        <span class="cov8" title="1">return r.GetByID(ctx, id, nil)</span>
+        <span class="cov1" title="1">return r.GetByID(ctx, id, nil)</span>
 }
 
-func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov8" title="1">{
+func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov1" title="1">{
         opts.Normalize()
 
         var (
@@ -1688,7 +2124,7 @@ func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions
                 return nil, 0, err
         }</span>
 
-        <span class="cov8" title="1">listQuery := r.db.WithContext(ctx).Model(new(T))
+        <span class="cov1" title="1">listQuery := r.db.WithContext(ctx).Model(new(T))
         listQuery = applyJoins(listQuery, opts.Joins)
         listQuery = applyFilters(listQuery, opts.Filters)
         listQuery = applyWheres(listQuery, opts.Wheres)
@@ -1697,7 +2133,7 @@ func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions
                 return nil, 0, err
         }</span>
 
-        <span class="cov8" title="1">return entities, total, nil</span>
+        <span class="cov1" title="1">return entities, total, nil</span>
 }
 
 type JoinClause struct {
@@ -1726,24 +2162,24 @@ func NewGetManyOptionsFromRequest(c *fiber.Ctx) GetManyOptions <span class="cov0
                 Limit:          utils.ParseQueryInt(c.Query("limit")),
                 Offset:         utils.ParseQueryInt(c.Query("offset")),
                 Preloads:       ParsePreloads(c.Query("preloads")),
-                OrderBy:        c.Query("order_by"),
-                OrderDirection: c.Query("order_direction"),
+                OrderBy:        c.Query("orderBy"),
+                OrderDirection: c.Query("orderDirection"),
         }
         opts.Normalize()
         return opts
 }</span>
 
-func (o *GetManyOptions) Normalize() <span class="cov8" title="1">{
+func (o *GetManyOptions) Normalize() <span class="cov1" title="1">{
         if o.Limit &lt;= 0 </span><span class="cov0" title="0">{
                 o.Limit = 20
         }</span>
 
-        <span class="cov8" title="1">o.OrderDirection = strings.ToLower(strings.TrimSpace(o.OrderDirection))
+        <span class="cov1" title="1">o.OrderDirection = strings.ToLower(strings.TrimSpace(o.OrderDirection))
         if o.OrderDirection == "" || (o.OrderDirection != "asc" &amp;&amp; o.OrderDirection != "desc") </span><span class="cov0" title="0">{
                 o.OrderDirection = "desc"
         }</span>
 
-        <span class="cov8" title="1">if o.OrderBy == "" </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if o.OrderBy == "" </span><span class="cov0" title="0">{
                 o.OrderBy = "created_at"
         }</span>
 }
@@ -1769,14 +2205,14 @@ func ParsePreloads(raw string) []string <span class="cov0" title="0">{
         <span class="cov0" title="0">return preloads</span>
 }
 
-func applyFilters(db *gorm.DB, filters map[string]any) *gorm.DB <span class="cov8" title="1">{
+func applyFilters(db *gorm.DB, filters map[string]any) *gorm.DB <span class="cov4" title="2">{
         if len(filters) &gt; 0 </span><span class="cov0" title="0">{
                 return db.Where(filters)
         }</span>
-        <span class="cov8" title="1">return db</span>
+        <span class="cov4" title="2">return db</span>
 }
 
-func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov8" title="1">{
+func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov4" title="2">{
         for _, where := range wheres </span><span class="cov0" title="0">{
                 query := strings.TrimSpace(where.Query)
                 if query == "" </span><span class="cov0" title="0">{
@@ -1788,10 +2224,10 @@ func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov8" 
                 }
                 <span class="cov0" title="0">db = db.Where(query)</span>
         }
-        <span class="cov8" title="1">return db</span>
+        <span class="cov4" title="2">return db</span>
 }
 
-func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov8" title="1">{
+func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov4" title="2">{
         for _, join := range joins </span><span class="cov0" title="0">{
                 query := strings.TrimSpace(join.Query)
                 if query == "" </span><span class="cov0" title="0">{
@@ -1803,10 +2239,10 @@ func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov8" tit
                 }
                 <span class="cov0" title="0">db = db.Joins(query)</span>
         }
-        <span class="cov8" title="1">return db</span>
+        <span class="cov4" title="2">return db</span>
 }
 
-func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov8" title="1">{
+func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov10" title="5">{
         for _, preload := range preloads </span><span class="cov0" title="0">{
                 name := strings.TrimSpace(preload)
                 if name == "" </span><span class="cov0" title="0">{
@@ -1814,11 +2250,11 @@ func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov8" t
                 }
                 <span class="cov0" title="0">db = db.Preload(name)</span>
         }
-        <span class="cov8" title="1">return db</span>
+        <span class="cov10" title="5">return db</span>
 }
 </pre>
 		
-		<pre class="file" id="file19" style="display: none">package repository
+		<pre class="file" id="file20" style="display: none">package repository
 
 import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/model"
@@ -1829,24 +2265,28 @@ type UserRepository struct {
         *ResourceRepository[model.User]
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository <span class="cov8" title="1">{
+func NewUserRepository(db *gorm.DB) *UserRepository <span class="cov10" title="2">{
         return &amp;UserRepository{
                 ResourceRepository: NewResourceRepository[model.User](db),
         }
 }</span>
 </pre>
 		
-		<pre class="file" id="file20" style="display: none">package service
+		<pre class="file" id="file21" style="display: none">package service
 
 import (
         "context"
+        "crypto/hmac"
         "crypto/rand"
         "crypto/sha256"
+        "encoding/base64"
         "encoding/hex"
+        "encoding/json"
         "errors"
         "fmt"
         "math/big"
         "regexp"
+        "strings"
         "time"
 
         "github.com/golang-jwt/jwt/v5"
@@ -1860,6 +2300,8 @@ import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
         "github.com/rs/zerolog"
         "golang.org/x/crypto/bcrypt"
+        "golang.org/x/oauth2"
+        googleoauth "golang.org/x/oauth2/google"
         "google.golang.org/api/idtoken"
         "gorm.io/gorm"
 )
@@ -1869,15 +2311,36 @@ var (
         emailRegex        = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 )
 
+const googleStateTTL = 10 * time.Minute
+
+type googleOAuthConfig interface {
+        AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
+        Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
+}
+
+type googleTokenValidator func(ctx context.Context, idToken, audience string) (*idtoken.Payload, error)
+
+type googleStatePayload struct {
+        State     string    `json:"state"`
+        ExpiresAt time.Time `json:"expiresAt"`
+}
+
 type AuthService struct {
         repo                 repository.AuthRepositoryInterface
+        sessionRepo          repository.AuthSessionRepositoryInterface
         verificationRepo     repository.EmailVerificationRepositoryInterface
         taskEnqueuer         TaskEnqueuer
         logger               *zerolog.Logger
         secretKey            []byte
         accessTokenTTL       time.Duration
+        refreshTokenTTL      time.Duration
         googleClientID       string
+        googleClientSecret   string
+        googleRedirectURL    string
+        googleOAuthConfig    googleOAuthConfig
+        googleTokenValidator googleTokenValidator
         emailVerificationTTL time.Duration
+        now                  func() time.Time
 }
 
 type AuthToken struct {
@@ -1886,51 +2349,83 @@ type AuthToken struct {
 }
 
 type AuthResult struct {
-        User  *model.User `json:"user"`
-        Token AuthToken   `json:"token"`
+        User         *model.User `json:"user"`
+        Token        AuthToken   `json:"token"`
+        RefreshToken AuthToken   `json:"refreshToken"`
 }
 
 type AuthServiceInterface interface {
-        Register(ctx context.Context, email, username, password string) (*AuthResult, error)
-        Login(ctx context.Context, identifier, password string) (*AuthResult, error)
-        LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error)
+        Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error)
+        Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error)
+        StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error)
+        CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error)
         VerifyEmail(ctx context.Context, email, code string) (*model.User, error)
+        Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error)
+        Logout(ctx context.Context, refreshToken string) error
+        LogoutAll(ctx context.Context, userID uuid.UUID) error
+        CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error)
+        ResendVerification(ctx context.Context, userID uuid.UUID) error
 }
 
 type TaskEnqueuer interface {
         EnqueueContext(ctx context.Context, task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
 }
 
-func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService <span class="cov8" title="1">{
+type GoogleAuthStart struct {
+        AuthURL        string
+        StateCookie    string
+        StateExpiresAt time.Time
+}
+
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, sessionRepo repository.AuthSessionRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService <span class="cov10" title="21">{
+        refreshTTL := cfg.RefreshTokenTTL
+        if refreshTTL &lt;= 0 </span><span class="cov10" title="21">{
+                refreshTTL = 30 * 24 * time.Hour
+        }</span>
+
+        <span class="cov10" title="21">oauthConfig := &amp;oauth2.Config{
+                ClientID:     cfg.GoogleClientID,
+                ClientSecret: cfg.GoogleClientSecret,
+                RedirectURL:  cfg.GoogleRedirectURL,
+                Scopes:       []string{"openid", "email", "profile"},
+                Endpoint:     googleoauth.Endpoint,
+        }
+
         return &amp;AuthService{
                 repo:                 repo,
+                sessionRepo:          sessionRepo,
                 verificationRepo:     verificationRepo,
                 taskEnqueuer:         taskEnqueuer,
                 logger:               logger,
                 secretKey:            []byte(cfg.SecretKey),
                 accessTokenTTL:       cfg.AccessTokenTTL,
+                refreshTokenTTL:      refreshTTL,
                 googleClientID:       cfg.GoogleClientID,
+                googleClientSecret:   cfg.GoogleClientSecret,
+                googleRedirectURL:    cfg.GoogleRedirectURL,
+                googleOAuthConfig:    oauthConfig,
+                googleTokenValidator: idtoken.Validate,
                 emailVerificationTTL: cfg.EmailVerificationTTL,
-        }
-}</span>
+                now:                  time.Now,
+        }</span>
+}
 
-func (s *AuthService) Register(ctx context.Context, email, username, password string) (*AuthResult, error) <span class="cov8" title="1">{
-        if len(password) &lt; minPasswordLength </span><span class="cov8" title="1">{
+func (s *AuthService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error) <span class="cov3" title="2">{
+        if len(password) &lt; minPasswordLength </span><span class="cov1" title="1">{
                 return nil, errs.NewBadRequestError(
                         fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
                         true,
-                        nil,
                         []errs.FieldError{{Field: "password", Error: "too short"}},
                         nil,
                 )
         }</span>
 
-        <span class="cov8" title="1">passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        <span class="cov1" title="1">passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, errs.NewInternalServerError()
         }</span>
 
-        <span class="cov8" title="1">user := &amp;model.User{
+        <span class="cov1" title="1">user := &amp;model.User{
                 Email:        email,
                 Username:     username,
                 PasswordHash: string(passwordHash),
@@ -1940,39 +2435,45 @@ func (s *AuthService) Register(ctx context.Context, email, username, password st
                 return nil, sqlerr.HandleError(err)
         }</span>
 
-        <span class="cov8" title="1">if err := s.queueEmailVerification(ctx, user); err != nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if err := s.queueEmailVerification(ctx, user); err != nil </span><span class="cov0" title="0">{
                 s.logVerificationQueueError(err)
         }</span>
 
-        <span class="cov8" title="1">token, exp, err := s.generateToken(user)
+        <span class="cov1" title="1">token, exp, err := s.generateToken(user)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, errs.NewInternalServerError()
         }</span>
 
-        <span class="cov8" title="1">return &amp;AuthResult{
-                User:  user,
-                Token: AuthToken{Token: token, ExpiresAt: exp},
+        <span class="cov1" title="1">refreshToken, refreshExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov1" title="1">return &amp;AuthResult{
+                User:         user,
+                Token:        AuthToken{Token: token, ExpiresAt: exp},
+                RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
         }, nil</span>
 }
 
-func (s *AuthService) Login(ctx context.Context, identifier, password string) (*AuthResult, error) <span class="cov8" title="1">{
+func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error) <span class="cov4" title="3">{
         user, err := s.lookupUser(ctx, identifier)
-        if err != nil </span><span class="cov8" title="1">{
-                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov1" title="1">{
                         return nil, errs.NewUnauthorizedError("Invalid credentials", true)
                 }</span>
                 <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
         }
 
-        <span class="cov8" title="1">if user.PasswordHash == "" </span><span class="cov0" title="0">{
+        <span class="cov3" title="2">if user.PasswordHash == "" </span><span class="cov0" title="0">{
                 return nil, errs.NewUnauthorizedError("Password login not available for this account", true)
         }</span>
 
-        <span class="cov8" title="1">if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil </span><span class="cov8" title="1">{
+        <span class="cov3" title="2">if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil </span><span class="cov1" title="1">{
                 return nil, errs.NewUnauthorizedError("Invalid credentials", true)
         }</span>
 
-        <span class="cov8" title="1">now := time.Now().UTC()
+        <span class="cov1" title="1">now := time.Now().UTC()
         _ = s.repo.UpdateLoginAt(ctx, user.ID, now)
 
         token, exp, err := s.generateToken(user)
@@ -1980,35 +2481,89 @@ func (s *AuthService) Login(ctx context.Context, identifier, password string) (*
                 return nil, errs.NewInternalServerError()
         }</span>
 
-        <span class="cov8" title="1">return &amp;AuthResult{
-                User:  user,
-                Token: AuthToken{Token: token, ExpiresAt: exp},
+        <span class="cov1" title="1">refreshToken, refreshExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov1" title="1">return &amp;AuthResult{
+                User:         user,
+                Token:        AuthToken{Token: token, ExpiresAt: exp},
+                RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
         }, nil</span>
 }
 
-func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*AuthResult, error) <span class="cov8" title="1">{
-        if s.googleClientID == "" </span><span class="cov8" title="1">{
-                return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil, nil)
+func (s *AuthService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error) <span class="cov3" title="2">{
+        if !s.googleConfigReady() </span><span class="cov1" title="1">{
+                return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
         }</span>
 
-        <span class="cov0" title="0">payload, err := idtoken.Validate(ctx, idToken, s.googleClientID)
+        <span class="cov1" title="1">state, cookieValue, expiresAt, err := s.buildGoogleStateCookie()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov1" title="1">authURL := s.googleOAuthConfig.AuthCodeURL(state)
+
+        return &amp;GoogleAuthStart{
+                AuthURL:        authURL,
+                StateCookie:    cookieValue,
+                StateExpiresAt: expiresAt,
+        }, nil</span>
+}
+
+func (s *AuthService) CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error) <span class="cov1" title="1">{
+        if !s.googleConfigReady() </span><span class="cov0" title="0">{
+                return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
+        }</span>
+        <span class="cov1" title="1">if strings.TrimSpace(code) == "" || strings.TrimSpace(state) == "" || strings.TrimSpace(stateCookie) == "" </span><span class="cov0" title="0">{
+                return nil, errs.NewBadRequestError("Invalid Google login request", false, nil, nil)
+        }</span>
+
+        <span class="cov1" title="1">cookiePayload, err := s.parseGoogleStateCookie(stateCookie)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewBadRequestError("Invalid Google login state", false, nil, nil)
+        }</span>
+        <span class="cov1" title="1">if cookiePayload.State != state </span><span class="cov0" title="0">{
+                return nil, errs.NewBadRequestError("Invalid Google login state", false, nil, nil)
+        }</span>
+
+        <span class="cov1" title="1">token, err := s.googleOAuthConfig.Exchange(ctx, code)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, errs.NewUnauthorizedError("Invalid Google token", false)
         }</span>
 
-        <span class="cov0" title="0">subject := payload.Subject
-        emailClaim, _ := payload.Claims["email"].(string)
-        emailVerified, _ := payload.Claims["email_verified"].(bool)
-        if emailClaim == "" || !emailVerified </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">rawIDToken, ok := token.Extra("id_token").(string)
+        if !ok || strings.TrimSpace(rawIDToken) == "" </span><span class="cov0" title="0">{
+                return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+        }</span>
+
+        <span class="cov1" title="1">claims, err := s.googleTokenValidator(ctx, rawIDToken, s.googleClientID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+        }</span>
+
+        <span class="cov1" title="1">subject := claims.Subject
+        emailClaim, _ := claims.Claims["email"].(string)
+        emailVerified, _ := claims.Claims["email_verified"].(bool)
+
+        return s.loginWithGoogleClaims(ctx, subject, emailClaim, emailVerified, userAgent, ipAddress)</span>
+}
+
+func (s *AuthService) loginWithGoogleClaims(ctx context.Context, subject, emailClaim string, emailVerified bool, userAgent, ipAddress string) (*AuthResult, error) <span class="cov1" title="1">{
+        if subject == "" </span><span class="cov0" title="0">{
+                return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+        }</span>
+        <span class="cov1" title="1">if emailClaim == "" || !emailVerified </span><span class="cov0" title="0">{
                 return nil, errs.NewUnauthorizedError("Google account email is not verified", true)
         }</span>
 
-        <span class="cov0" title="0">user, findErr := s.repo.GetByGoogleID(ctx, subject)
+        <span class="cov1" title="1">user, findErr := s.repo.GetByGoogleID(ctx, subject)
         if findErr != nil &amp;&amp; !errors.Is(findErr, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(findErr)
         }</span>
 
-        <span class="cov0" title="0">if user == nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if user == nil </span><span class="cov1" title="1">{
                 // Try to link existing account by email
                 user, findErr = s.repo.GetByEmail(ctx, emailClaim)
                 switch </span>{
@@ -2017,7 +2572,7 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*Aut
                         if err := s.repo.Save(ctx, user); err != nil </span><span class="cov0" title="0">{
                                 return nil, sqlerr.HandleError(err)
                         }</span>
-                case errors.Is(findErr, gorm.ErrRecordNotFound):<span class="cov0" title="0">
+                case errors.Is(findErr, gorm.ErrRecordNotFound):<span class="cov1" title="1">
                         username := deriveUsername(emailClaim)
                         user = &amp;model.User{
                                 Email:    emailClaim,
@@ -2032,32 +2587,118 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken string) (*Aut
                 }
         }
 
-        <span class="cov0" title="0">now := time.Now().UTC()
+        <span class="cov1" title="1">now := time.Now().UTC()
         _ = s.repo.UpdateLoginAt(ctx, user.ID, now)
-        if user.EmailVerifiedAt == nil </span><span class="cov0" title="0">{
+        if user.EmailVerifiedAt == nil </span><span class="cov1" title="1">{
                 _ = s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now)
                 user.EmailVerifiedAt = &amp;now
         }</span>
 
-        <span class="cov0" title="0">token, exp, err := s.generateToken(user)
+        <span class="cov1" title="1">token, exp, err := s.generateToken(user)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, errs.NewInternalServerError()
         }</span>
 
-        <span class="cov0" title="0">return &amp;AuthResult{
-                User:  user,
-                Token: AuthToken{Token: token, ExpiresAt: exp},
+        <span class="cov1" title="1">refreshToken, refreshExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov1" title="1">return &amp;AuthResult{
+                User:         user,
+                Token:        AuthToken{Token: token, ExpiresAt: exp},
+                RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
         }, nil</span>
 }
 
-func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model.User, error) <span class="cov8" title="1">{
-        if emailRegex.MatchString(identifier) </span><span class="cov8" title="1">{
-                return s.repo.GetByEmail(ctx, identifier)
+func (s *AuthService) googleConfigReady() bool <span class="cov4" title="3">{
+        return s.googleClientID != "" &amp;&amp; s.googleClientSecret != "" &amp;&amp; s.googleRedirectURL != "" &amp;&amp; s.googleOAuthConfig != nil
+}</span>
+
+func (s *AuthService) buildGoogleStateCookie() (string, string, time.Time, error) <span class="cov3" title="2">{
+        state, err := generateStateToken()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", "", time.Time{}, err
         }</span>
-        <span class="cov8" title="1">return s.repo.GetByUsername(ctx, identifier)</span>
+
+        <span class="cov3" title="2">now := time.Now
+        if s.now != nil </span><span class="cov3" title="2">{
+                now = s.now
+        }</span>
+
+        <span class="cov3" title="2">expiresAt := now().UTC().Add(googleStateTTL)
+        payload := googleStatePayload{State: state, ExpiresAt: expiresAt}
+        rawPayload, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", "", time.Time{}, err
+        }</span>
+
+        <span class="cov3" title="2">encoded := base64.RawURLEncoding.EncodeToString(rawPayload)
+        signature := s.signGoogleState(encoded)
+        cookieValue := encoded + "." + hex.EncodeToString(signature)
+
+        return state, cookieValue, expiresAt, nil</span>
 }
 
-func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) <span class="cov8" title="1">{
+func (s *AuthService) parseGoogleStateCookie(cookieValue string) (*googleStatePayload, error) <span class="cov3" title="2">{
+        parts := strings.SplitN(cookieValue, ".", 2)
+        if len(parts) != 2 </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid state cookie format")
+        }</span>
+
+        <span class="cov3" title="2">payloadPart := parts[0]
+        signaturePart := parts[1]
+
+        signature, err := hex.DecodeString(signaturePart)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid state cookie signature")
+        }</span>
+
+        <span class="cov3" title="2">expectedSignature := s.signGoogleState(payloadPart)
+        if !hmac.Equal(signature, expectedSignature) </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid state cookie signature")
+        }</span>
+
+        <span class="cov3" title="2">payloadBytes, err := base64.RawURLEncoding.DecodeString(payloadPart)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid state cookie payload")
+        }</span>
+
+        <span class="cov3" title="2">var payload googleStatePayload
+        if err := json.Unmarshal(payloadBytes, &amp;payload); err != nil </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid state cookie payload")
+        }</span>
+
+        <span class="cov3" title="2">if payload.State == "" </span><span class="cov0" title="0">{
+                return nil, errors.New("invalid state cookie payload")
+        }</span>
+
+        <span class="cov3" title="2">now := time.Now
+        if s.now != nil </span><span class="cov3" title="2">{
+                now = s.now
+        }</span>
+
+        <span class="cov3" title="2">if payload.ExpiresAt.Before(now().UTC()) </span><span class="cov0" title="0">{
+                return nil, errors.New("state cookie expired")
+        }</span>
+
+        <span class="cov3" title="2">return &amp;payload, nil</span>
+}
+
+func (s *AuthService) signGoogleState(payload string) []byte <span class="cov5" title="4">{
+        mac := hmac.New(sha256.New, s.secretKey)
+        _, _ = mac.Write([]byte(payload))
+        return mac.Sum(nil)
+}</span>
+
+func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model.User, error) <span class="cov4" title="3">{
+        if emailRegex.MatchString(identifier) </span><span class="cov3" title="2">{
+                return s.repo.GetByEmail(ctx, identifier)
+        }</span>
+        <span class="cov1" title="1">return s.repo.GetByUsername(ctx, identifier)</span>
+}
+
+func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) <span class="cov3" title="2">{
         user, err := s.repo.GetByEmail(ctx, email)
         if err != nil </span><span class="cov0" title="0">{
                 if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
@@ -2066,42 +2707,146 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*mod
                 <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
         }
 
-        <span class="cov8" title="1">if user.EmailVerifiedAt != nil </span><span class="cov0" title="0">{
+        <span class="cov3" title="2">if user.EmailVerifiedAt != nil </span><span class="cov0" title="0">{
                 return user, nil
         }</span>
 
-        <span class="cov8" title="1">if s.verificationRepo == nil </span><span class="cov0" title="0">{
+        <span class="cov3" title="2">if s.verificationRepo == nil </span><span class="cov0" title="0">{
                 return nil, errs.NewInternalServerError()
         }</span>
 
-        <span class="cov8" title="1">codeHash := hashVerificationCode(code)
+        <span class="cov3" title="2">codeHash := hashVerificationCode(code)
         now := time.Now().UTC()
         verification, err := s.verificationRepo.GetActiveByUserIDAndCodeHash(ctx, user.ID, codeHash, now)
-        if err != nil </span><span class="cov8" title="1">{
-                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov1" title="1">{
                         return nil, invalidVerificationError()
                 }</span>
                 <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
         }
 
-        <span class="cov8" title="1">if err := s.verificationRepo.MarkVerified(ctx, verification.ID, now); err != nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if err := s.verificationRepo.MarkVerified(ctx, verification.ID, now); err != nil </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(err)
         }</span>
 
-        <span class="cov8" title="1">if err := s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now); err != nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if err := s.repo.UpdateEmailVerifiedAt(ctx, user.ID, now); err != nil </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(err)
         }</span>
 
-        <span class="cov8" title="1">user.EmailVerifiedAt = &amp;now
+        <span class="cov1" title="1">user.EmailVerifiedAt = &amp;now
         return user, nil</span>
 }
 
-func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) <span class="cov8" title="1">{
+func (s *AuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) <span class="cov1" title="1">{
+        user, err := s.repo.GetByID(ctx, userID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+        <span class="cov1" title="1">return user, nil</span>
+}
+
+func (s *AuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error) <span class="cov5" title="5">{
+        if refreshToken == "" </span><span class="cov1" title="1">{
+                return nil, errs.NewUnauthorizedError("Unauthorized", false)
+        }</span>
+        <span class="cov5" title="4">if s.sessionRepo == nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov5" title="4">tokenHash := hashRefreshToken(refreshToken)
+        session, err := s.sessionRepo.GetByRefreshTokenHash(ctx, tokenHash)
+        if err != nil </span><span class="cov1" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov1" title="1">{
+                        return nil, errs.NewUnauthorizedError("Unauthorized", false)
+                }</span>
+                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov4" title="3">now := time.Now().UTC()
+        if session.RevokedAt != nil || session.ExpiresAt.Before(now) </span><span class="cov3" title="2">{
+                return nil, errs.NewUnauthorizedError("Unauthorized", false)
+        }</span>
+
+        <span class="cov1" title="1">user, err := s.repo.GetByID(ctx, session.UserID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov1" title="1">if err := s.sessionRepo.RevokeByID(ctx, session.ID, now); err != nil </span><span class="cov0" title="0">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov1" title="1">rotatedToken, rotatedExp, err := s.createSession(ctx, user, userAgent, ipAddress)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov1" title="1">accessToken, accessExp, err := s.generateToken(user)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov1" title="1">return &amp;AuthResult{
+                User:         user,
+                Token:        AuthToken{Token: accessToken, ExpiresAt: accessExp},
+                RefreshToken: AuthToken{Token: rotatedToken, ExpiresAt: rotatedExp},
+        }, nil</span>
+}
+
+func (s *AuthService) Logout(ctx context.Context, refreshToken string) error <span class="cov3" title="2">{
+        if refreshToken == "" || s.sessionRepo == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov3" title="2">tokenHash := hashRefreshToken(refreshToken)
+        session, err := s.sessionRepo.GetByRefreshTokenHash(ctx, tokenHash)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                        return nil
+                }</span>
+                <span class="cov0" title="0">return sqlerr.HandleError(err)</span>
+        }
+
+        <span class="cov3" title="2">if session.RevokedAt != nil </span><span class="cov1" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov1" title="1">now := time.Now().UTC()
+        return sqlerr.HandleError(s.sessionRepo.RevokeByID(ctx, session.ID, now))</span>
+}
+
+func (s *AuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error <span class="cov1" title="1">{
+        if s.sessionRepo == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov1" title="1">now := time.Now().UTC()
+        return sqlerr.HandleError(s.sessionRepo.RevokeByUserID(ctx, userID, now))</span>
+}
+
+func (s *AuthService) ResendVerification(ctx context.Context, userID uuid.UUID) error <span class="cov3" title="2">{
+        user, err := s.repo.GetByID(ctx, userID)
+        if err != nil </span><span class="cov0" title="0">{
+                return sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov3" title="2">if user.EmailVerifiedAt != nil </span><span class="cov1" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov1" title="1">if err := s.queueEmailVerification(ctx, user); err != nil </span><span class="cov0" title="0">{
+                s.logVerificationQueueError(err)
+                return errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov1" title="1">return nil</span>
+}
+
+func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) <span class="cov5" title="4">{
         if user == nil </span><span class="cov0" title="0">{
                 return "", time.Time{}, errs.NewInternalServerError()
         }</span>
 
-        <span class="cov8" title="1">exp := time.Now().Add(s.accessTokenTTL)
+        <span class="cov5" title="4">exp := time.Now().Add(s.accessTokenTTL)
         claims := model.AuthClaims{
                 RegisteredClaims: jwt.RegisteredClaims{
                         Subject:   user.ID.String(),
@@ -2117,37 +2862,92 @@ func (s *AuthService) generateToken(user *model.User) (string, time.Time, error)
         if err != nil </span><span class="cov0" title="0">{
                 return "", time.Time{}, err
         }</span>
-        <span class="cov8" title="1">return signed, exp, nil</span>
+        <span class="cov5" title="4">return signed, exp, nil</span>
 }
 
-func deriveUsername(email string) string <span class="cov0" title="0">{
+func (s *AuthService) createSession(ctx context.Context, user *model.User, userAgent, ipAddress string) (string, time.Time, error) <span class="cov5" title="4">{
+        if s.sessionRepo == nil || user == nil </span><span class="cov0" title="0">{
+                return "", time.Time{}, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov5" title="4">refreshToken, err := generateRefreshToken()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", time.Time{}, errs.NewInternalServerError()
+        }</span>
+
+        <span class="cov5" title="4">expiresAt := time.Now().UTC().Add(s.refreshTokenTTL)
+        var agent *string
+        if strings.TrimSpace(userAgent) != "" </span><span class="cov5" title="4">{
+                clean := strings.TrimSpace(userAgent)
+                agent = &amp;clean
+        }</span>
+        <span class="cov5" title="4">var ip *string
+        if strings.TrimSpace(ipAddress) != "" </span><span class="cov5" title="4">{
+                clean := strings.TrimSpace(ipAddress)
+                ip = &amp;clean
+        }</span>
+
+        <span class="cov5" title="4">session := &amp;model.AuthSession{
+                UserID:           user.ID,
+                RefreshTokenHash: hashRefreshToken(refreshToken),
+                UserAgent:        agent,
+                IPAddress:        ip,
+                ExpiresAt:        expiresAt,
+        }
+
+        if err := s.sessionRepo.Create(ctx, session); err != nil </span><span class="cov0" title="0">{
+                return "", time.Time{}, sqlerr.HandleError(err)
+        }</span>
+
+        <span class="cov5" title="4">return refreshToken, expiresAt, nil</span>
+}
+
+func deriveUsername(email string) string <span class="cov1" title="1">{
         parts := regexp.MustCompile("@").Split(email, 2)
-        if len(parts) &gt; 0 &amp;&amp; parts[0] != "" </span><span class="cov0" title="0">{
+        if len(parts) &gt; 0 &amp;&amp; parts[0] != "" </span><span class="cov1" title="1">{
                 return parts[0]
         }</span>
         <span class="cov0" title="0">return fmt.Sprintf("user-%s", uuid.New().String()[:8])</span>
 }
 
-func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error <span class="cov8" title="1">{
-        if user == nil || user.Email == "" || user.EmailVerifiedAt != nil || s.verificationRepo == nil </span><span class="cov8" title="1">{
+func generateStateToken() (string, error) <span class="cov3" title="2">{
+        tokenBytes := make([]byte, 32)
+        if _, err := rand.Read(tokenBytes); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov3" title="2">return hex.EncodeToString(tokenBytes), nil</span>
+}
+
+func generateRefreshToken() (string, error) <span class="cov5" title="4">{
+        tokenBytes := make([]byte, 32)
+        if _, err := rand.Read(tokenBytes); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov5" title="4">return hex.EncodeToString(tokenBytes), nil</span>
+}
+
+func hashRefreshToken(token string) string <span class="cov8" title="12">{
+        sum := sha256.Sum256([]byte(token))
+        return hex.EncodeToString(sum[:])
+}</span>
+
+func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error <span class="cov3" title="2">{
+        if user == nil || user.Email == "" || user.EmailVerifiedAt != nil || s.verificationRepo == nil </span><span class="cov1" title="1">{
                 return nil
         }</span>
 
-        <span class="cov0" title="0">code, err := generateVerificationCode()
+        <span class="cov1" title="1">code, err := generateVerificationCode()
         if err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
 
-        <span class="cov0" title="0">now := time.Now().UTC()
+        <span class="cov1" title="1">now := time.Now().UTC()
         ttl := s.emailVerificationTTL
-        if ttl &lt;= 0 </span><span class="cov0" title="0">{
-                ttl = 24 * time.Hour
-        }</span>
-        <span class="cov0" title="0">if err := s.verificationRepo.ExpireActiveByUserID(ctx, user.ID, now); err != nil </span><span class="cov0" title="0">{
+        if err := s.verificationRepo.ExpireActiveByUserID(ctx, user.ID, now); err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
 
-        <span class="cov0" title="0">verification := &amp;model.EmailVerification{
+        <span class="cov1" title="1">verification := &amp;model.EmailVerification{
                 UserID:    user.ID,
                 Email:     user.Email,
                 CodeHash:  hashVerificationCode(code),
@@ -2157,15 +2957,15 @@ func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.Us
                 return err
         }</span>
 
-        <span class="cov0" title="0">if s.taskEnqueuer == nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if s.taskEnqueuer == nil </span><span class="cov0" title="0">{
                 return nil
         }</span>
 
-        <span class="cov0" title="0">expiresInMinutes := int(ttl.Minutes())
+        <span class="cov1" title="1">expiresInMinutes := int(ttl.Minutes())
         if expiresInMinutes &lt;= 0 </span><span class="cov0" title="0">{
                 expiresInMinutes = 1
         }</span>
-        <span class="cov0" title="0">task, err := job.NewEmailVerificationTask(job.EmailVerificationPayload{
+        <span class="cov1" title="1">task, err := job.NewEmailVerificationTask(job.EmailVerificationPayload{
                 To:               user.Email,
                 Username:         user.Username,
                 Code:             code,
@@ -2175,7 +2975,7 @@ func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.Us
                 return err
         }</span>
 
-        <span class="cov0" title="0">_, err = s.taskEnqueuer.EnqueueContext(ctx, task)
+        <span class="cov1" title="1">_, err = s.taskEnqueuer.EnqueueContext(ctx, task)
         return err</span>
 }
 
@@ -2186,39 +2986,38 @@ func (s *AuthService) logVerificationQueueError(err error) <span class="cov0" ti
         <span class="cov0" title="0">s.logger.Error().Err(err).Msg("failed to queue email verification")</span>
 }
 
-func generateVerificationCode() (string, error) <span class="cov0" title="0">{
+func generateVerificationCode() (string, error) <span class="cov1" title="1">{
         const codeLength = 6
         const maxDigit = 10
 
         code := make([]byte, 0, codeLength)
-        for range codeLength </span><span class="cov0" title="0">{
+        for range codeLength </span><span class="cov6" title="6">{
                 n, err := rand.Int(rand.Reader, big.NewInt(maxDigit))
                 if err != nil </span><span class="cov0" title="0">{
                         return "", err
                 }</span>
-                <span class="cov0" title="0">code = append(code, byte('0'+n.Int64()))</span>
+                <span class="cov6" title="6">code = append(code, byte('0'+n.Int64()))</span>
         }
 
-        <span class="cov0" title="0">return string(code), nil</span>
+        <span class="cov1" title="1">return string(code), nil</span>
 }
 
-func hashVerificationCode(code string) string <span class="cov8" title="1">{
+func hashVerificationCode(code string) string <span class="cov5" title="4">{
         sum := sha256.Sum256([]byte(code))
         return hex.EncodeToString(sum[:])
 }</span>
 
-func invalidVerificationError() *errs.HTTPError <span class="cov8" title="1">{
+func invalidVerificationError() *errs.ErrorResponse <span class="cov1" title="1">{
         return errs.NewBadRequestError(
                 "Invalid or expired verification code",
                 true,
-                nil,
                 []errs.FieldError{{Field: "code", Error: "invalid or expired"}},
                 nil,
         )
 }</span>
 </pre>
 		
-		<pre class="file" id="file21" style="display: none">package service
+		<pre class="file" id="file22" style="display: none">package service
 
 import (
         "context"
@@ -2290,28 +3089,28 @@ func NewAuthorizationService(db *gorm.DB, logger *zerolog.Logger) (*Authorizatio
         }, nil</span>
 }
 
-func NewAuthorizationServiceWithEnforcer(enforcer AuthorizationEnforcer, logger *zerolog.Logger) *AuthorizationService <span class="cov8" title="1">{
+func NewAuthorizationServiceWithEnforcer(enforcer AuthorizationEnforcer, logger *zerolog.Logger) *AuthorizationService <span class="cov6" title="2">{
         return &amp;AuthorizationService{
                 enforcer: enforcer,
                 logger:   logger,
         }
 }</span>
 
-func (a *AuthorizationService) Enforce(ctx context.Context, sub AuthorizationSubject, obj AuthorizationObject, act string) (bool, error) <span class="cov8" title="1">{
+func (a *AuthorizationService) Enforce(ctx context.Context, sub AuthorizationSubject, obj AuthorizationObject, act string) (bool, error) <span class="cov10" title="3">{
         _ = ctx
-        if a == nil || a.enforcer == nil </span><span class="cov8" title="1">{
+        if a == nil || a.enforcer == nil </span><span class="cov1" title="1">{
                 return false, errors.New("authorization: enforcer not initialized")
         }</span>
 
-        <span class="cov8" title="1">allowed, err := a.enforcer.Enforce(sub, obj, act)
+        <span class="cov6" title="2">allowed, err := a.enforcer.Enforce(sub, obj, act)
         if err != nil &amp;&amp; a.logger != nil </span><span class="cov0" title="0">{
                 a.logger.Error().Err(err).Msg("authorization enforcement failed")
         }</span>
-        <span class="cov8" title="1">return allowed, err</span>
+        <span class="cov6" title="2">return allowed, err</span>
 }
 </pre>
 		
-		<pre class="file" id="file22" style="display: none">package service
+		<pre class="file" id="file23" style="display: none">package service
 
 import (
         "context"
@@ -2339,7 +3138,7 @@ type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
         resourceName string
 }
 
-func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepositoryInterface[T]) *ResourceService[T, S, U] <span class="cov8" title="1">{
+func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepositoryInterface[T]) *ResourceService[T, S, U] <span class="cov10" title="2">{
         return &amp;ResourceService[T, S, U]{resourceName: resourceName, repo: repo}
 }</span>
 
@@ -2351,14 +3150,11 @@ func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error)
         <span class="cov0" title="0">return entity, nil</span>
 }
 
-func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov8" title="1">{
+func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov1" title="1">{
         entity, err := s.repo.GetByID(ctx, id, preloads)
-        if err != nil </span><span class="cov8" title="1">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov8" title="1">{
-                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
+        if err != nil </span><span class="cov1" title="1">{
+                return nil, sqlerr.HandleError(err)
+        }</span>
         <span class="cov0" title="0">return entity, nil</span>
 }
 
@@ -2370,28 +3166,22 @@ func (s *ResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.
         <span class="cov0" title="0">return entities, total, nil</span>
 }
 
-func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) <span class="cov8" title="1">{
+func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) <span class="cov1" title="1">{
         updates := dto.ToMap()
 
         entity, err := s.repo.GetByID(ctx, id, nil)
         if err != nil </span><span class="cov0" title="0">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
+                return nil, sqlerr.HandleError(err)
+        }</span>
 
-        <span class="cov8" title="1">if len(updates) == 0 </span><span class="cov8" title="1">{
+        <span class="cov1" title="1">if len(updates) == 0 </span><span class="cov1" title="1">{
                 return entity, nil
         }</span>
 
         <span class="cov0" title="0">updatedEntity, err := s.repo.Update(ctx, *entity, updates)
         if err != nil </span><span class="cov0" title="0">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
+                return nil, sqlerr.HandleError(err)
+        }</span>
 
         <span class="cov0" title="0">return updatedEntity, nil</span>
 }
@@ -2399,7 +3189,7 @@ func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto
 func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
         if err := s.repo.Destroy(ctx, id); err != nil </span><span class="cov0" title="0">{
                 if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                        return errs.NewNotFoundError(s.resourceName+" not found", true)
                 }</span>
                 <span class="cov0" title="0">return sqlerr.HandleError(err)</span>
         }
@@ -2409,7 +3199,7 @@ func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) er
 func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
         if err := s.repo.Kill(ctx, id); err != nil </span><span class="cov0" title="0">{
                 if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return errs.NewNotFoundError(s.resourceName+" not found", true, nil)
+                        return errs.NewNotFoundError(s.resourceName+" not found", true)
                 }</span>
                 <span class="cov0" title="0">return sqlerr.HandleError(err)</span>
         }
@@ -2419,27 +3209,21 @@ func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error
 func (s *ResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
         entity, err := s.repo.Restore(ctx, id)
         if err != nil </span><span class="cov0" title="0">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
+                return nil, sqlerr.HandleError(err)
+        }</span>
         <span class="cov0" title="0">if len(preloads) == 0 </span><span class="cov0" title="0">{
                 return entity, nil
         }</span>
 
         <span class="cov0" title="0">entity, err = s.repo.GetByID(ctx, id, preloads)
         if err != nil </span><span class="cov0" title="0">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return nil, errs.NewNotFoundError(s.resourceName+" not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
+                return nil, sqlerr.HandleError(err)
+        }</span>
         <span class="cov0" title="0">return entity, nil</span>
 }
 </pre>
 		
-		<pre class="file" id="file23" style="display: none">package service
+		<pre class="file" id="file24" style="display: none">package service
 
 import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
@@ -2459,7 +3243,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
         if s.Job != nil </span><span class="cov0" title="0">{
                 enqueuer = s.Job.Client
         }</span>
-        <span class="cov0" title="0">authService := NewAuthService(&amp;s.Config.Auth, repos.Auth, repos.EmailVerification, enqueuer, s.Logger)
+        <span class="cov0" title="0">authService := NewAuthService(&amp;s.Config.Auth, repos.Auth, repos.AuthSession, repos.EmailVerification, enqueuer, s.Logger)
         userService := NewUserService(repos.User)
         authorizationService, err := NewAuthorizationService(s.DB.DB, s.Logger)
         if err != nil </span><span class="cov0" title="0">{
@@ -2475,7 +3259,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 }
 </pre>
 		
-		<pre class="file" id="file24" style="display: none">package service
+		<pre class="file" id="file25" style="display: none">package service
 
 import (
         "context"
@@ -2488,7 +3272,6 @@ import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
         "github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
         "golang.org/x/crypto/bcrypt"
-        "gorm.io/gorm"
 )
 
 type UserService struct {
@@ -2501,92 +3284,85 @@ func NewUserService(repo *repository.UserRepository) *UserService <span class="c
         }
 }</span>
 
-func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) <span class="cov8" title="1">{
+func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) <span class="cov1" title="1">{
         user := dto.ToModel()
 
-        if dto.Password != "" </span><span class="cov8" title="1">{
+        if dto.Password != "" </span><span class="cov1" title="1">{
                 hash, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
                 if err != nil </span><span class="cov0" title="0">{
                         return nil, errs.NewInternalServerError()
                 }</span>
-                <span class="cov8" title="1">user.PasswordHash = string(hash)</span>
+                <span class="cov1" title="1">user.PasswordHash = string(hash)</span>
         }
 
-        <span class="cov8" title="1">if err := s.repo.Store(ctx, user); err != nil </span><span class="cov0" title="0">{
+        <span class="cov1" title="1">if err := s.repo.Store(ctx, user); err != nil </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(err)
         }</span>
-        <span class="cov8" title="1">return user, nil</span>
+        <span class="cov1" title="1">return user, nil</span>
 }
 
-func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) <span class="cov8" title="1">{
+func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) <span class="cov10" title="3">{
         if dto == nil </span><span class="cov0" title="0">{
                 return s.GetByID(ctx, id, nil)
         }</span>
 
-        <span class="cov8" title="1">updates := dto.ToMap()
+        <span class="cov10" title="3">updates := dto.ToMap()
 
-        if email, ok := updates["email"].(string); ok </span><span class="cov8" title="1">{
+        if email, ok := updates["email"].(string); ok </span><span class="cov6" title="2">{
                 email = normalizeEmail(email)
-                if email == "" </span><span class="cov8" title="1">{
+                if email == "" </span><span class="cov1" title="1">{
                         delete(updates, "email")
-                }</span> else<span class="cov8" title="1"> {
+                }</span> else<span class="cov1" title="1"> {
                         updates["email"] = email
                 }</span>
         }
 
-        <span class="cov8" title="1">if username, ok := updates["username"].(string); ok </span><span class="cov8" title="1">{
+        <span class="cov10" title="3">if username, ok := updates["username"].(string); ok </span><span class="cov1" title="1">{
                 username = strings.TrimSpace(username)
                 if username == "" </span><span class="cov0" title="0">{
                         delete(updates, "username")
-                }</span> else<span class="cov8" title="1"> {
+                }</span> else<span class="cov1" title="1"> {
                         updates["username"] = username
                 }</span>
         }
 
-        <span class="cov8" title="1">if password, ok := updates["password_hash"].(string); ok </span><span class="cov8" title="1">{
+        <span class="cov10" title="3">if password, ok := updates["password_hash"].(string); ok </span><span class="cov6" title="2">{
                 if password == "" </span><span class="cov0" title="0">{
                         delete(updates, "password_hash")
-                }</span> else<span class="cov8" title="1"> {
-                        if len(password) &lt; minPasswordLength </span><span class="cov8" title="1">{
+                }</span> else<span class="cov6" title="2"> {
+                        if len(password) &lt; minPasswordLength </span><span class="cov1" title="1">{
                                 return nil, errs.NewBadRequestError(
                                         fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
                                         true,
-                                        nil,
                                         []errs.FieldError{{Field: "password", Error: "too short"}},
                                         nil,
                                 )
                         }</span>
-                        <span class="cov8" title="1">hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+                        <span class="cov1" title="1">hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
                         if err != nil </span><span class="cov0" title="0">{
                                 return nil, errs.NewInternalServerError()
                         }</span>
-                        <span class="cov8" title="1">updates["password_hash"] = string(hash)</span>
+                        <span class="cov1" title="1">updates["password_hash"] = string(hash)</span>
                 }
         }
 
-        <span class="cov8" title="1">entity, err := s.repo.GetByID(ctx, id, nil)
+        <span class="cov6" title="2">entity, err := s.repo.GetByID(ctx, id, nil)
         if err != nil </span><span class="cov0" title="0">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return nil, errs.NewNotFoundError("user not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
+                return nil, sqlerr.HandleError(err)
+        }</span>
 
-        <span class="cov8" title="1">if len(updates) == 0 </span><span class="cov8" title="1">{
+        <span class="cov6" title="2">if len(updates) == 0 </span><span class="cov1" title="1">{
                 return entity, nil
         }</span>
 
-        <span class="cov8" title="1">updatedUser, err := s.repo.Update(ctx, *entity, updates)
+        <span class="cov1" title="1">updatedUser, err := s.repo.Update(ctx, *entity, updates)
         if err != nil </span><span class="cov0" title="0">{
-                if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
-                        return nil, errs.NewNotFoundError("user not found", true, nil)
-                }</span>
-                <span class="cov0" title="0">return nil, sqlerr.HandleError(err)</span>
-        }
-        <span class="cov8" title="1">return updatedUser, nil</span>
+                return nil, sqlerr.HandleError(err)
+        }</span>
+        <span class="cov1" title="1">return updatedUser, nil</span>
 }
 
-func normalizeEmail(email string) string <span class="cov8" title="1">{
+func normalizeEmail(email string) string <span class="cov6" title="2">{
         return strings.ToLower(strings.TrimSpace(email))
 }</span>
 </pre>

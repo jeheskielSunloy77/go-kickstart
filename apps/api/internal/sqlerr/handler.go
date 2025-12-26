@@ -149,6 +149,9 @@ func extractColumnForUniqueViolation(constraintName string) string {
 
 // HandleError processes a database error into an appropriate application error
 func HandleError(err error) error {
+	if err == nil {
+		return nil
+	}
 	// If it's already a custom HTTP error, just return it
 	var httpErr *errs.ErrorResponse
 	if errors.As(err, &httpErr) {

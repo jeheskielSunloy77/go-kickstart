@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -56,14 +57,42 @@ func (h *AuthHandler) Login() fiber.Handler {
 }
 
 func (h *AuthHandler) GoogleLogin() fiber.Handler {
-	return Handle(h.Handler, func(c *fiber.Ctx, req *model.GoogleLoginDTO) (*model.User, error) {
-		result, err := h.authService.LoginWithGoogle(c.UserContext(), req.IDToken, c.Get(fiber.HeaderUserAgent), c.IP())
+	return func(c *fiber.Ctx) error {
+		start, err := h.authService.StartGoogleAuth(c.UserContext())
 		if err != nil {
-			return nil, err
+			return h.redirectGoogleFailure(c, err)
 		}
+
+		h.setGoogleStateCookie(c, start)
+		return c.Redirect(start.AuthURL, http.StatusFound)
+	}
+}
+
+func (h *AuthHandler) GoogleCallback() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		code := c.Query("code")
+		state := c.Query("state")
+		stateCookie := c.Cookies(googleStateCookieName)
+
+		result, err := h.authService.CompleteGoogleAuth(
+			c.UserContext(),
+			code,
+			state,
+			stateCookie,
+			c.Get(fiber.HeaderUserAgent),
+			c.IP(),
+		)
+
+		h.clearGoogleStateCookie(c)
+
+		if err != nil {
+			return h.redirectGoogleFailure(c, err)
+		}
+
 		h.setAuthCookies(c, result)
-		return result.User, nil
-	}, http.StatusOK, &model.GoogleLoginDTO{})
+
+		return c.Redirect(h.server.Config.Auth.GoogleSuccessRedirectURL, http.StatusFound)
+	}
 }
 
 func (h *AuthHandler) VerifyEmail() fiber.Handler {
@@ -169,7 +198,7 @@ func (h *AuthHandler) setAuthCookies(c *fiber.Ctx, result *service.AuthResult) {
 		return
 	}
 
-	sameSite := cookieSameSiteMode(h.server.Config.Auth.CookieSameSite)
+	sameSite := string(h.server.Config.Auth.CookieSameSite)
 	secure := h.server.Config.Primary.Env == config.EnvProduction
 
 	accessCookie := &fiber.Cookie{
@@ -198,7 +227,7 @@ func (h *AuthHandler) setAuthCookies(c *fiber.Ctx, result *service.AuthResult) {
 }
 
 func (h *AuthHandler) clearAuthCookies(c *fiber.Ctx) {
-	sameSite := cookieSameSiteMode(h.server.Config.Auth.CookieSameSite)
+	sameSite := string(h.server.Config.Auth.CookieSameSite)
 	secure := h.server.Config.Primary.Env == config.EnvProduction
 	expired := time.Unix(0, 0)
 
@@ -240,15 +269,80 @@ func (h *AuthHandler) refreshCookieName() string {
 	return "refresh_token"
 }
 
-func cookieSameSiteMode(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
-	case "strict":
-		return fiber.CookieSameSiteStrictMode
-	case "none":
-		return fiber.CookieSameSiteNoneMode
-	default:
-		return fiber.CookieSameSiteLaxMode
+const googleStateCookieName = "google_auth_state"
+
+func (h *AuthHandler) setGoogleStateCookie(c *fiber.Ctx, start *service.GoogleAuthStart) {
+	if start == nil {
+		return
 	}
+
+	sameSite := string(h.server.Config.Auth.CookieSameSite)
+	secure := h.server.Config.Primary.Env == config.EnvProduction
+
+	c.Cookie(&fiber.Cookie{
+		Name:     googleStateCookieName,
+		Value:    start.StateCookie,
+		Expires:  start.StateExpiresAt,
+		HTTPOnly: true,
+		Secure:   secure,
+		SameSite: sameSite,
+		Path:     "/api/v1/auth/google",
+		Domain:   h.server.Config.Auth.CookieDomain,
+	})
+}
+
+func (h *AuthHandler) clearGoogleStateCookie(c *fiber.Ctx) {
+	sameSite := string(h.server.Config.Auth.CookieSameSite)
+	secure := h.server.Config.Primary.Env == config.EnvProduction
+	expired := time.Unix(0, 0)
+
+	c.Cookie(&fiber.Cookie{
+		Name:     googleStateCookieName,
+		Value:    "",
+		Expires:  expired,
+		MaxAge:   -1,
+		HTTPOnly: true,
+		Secure:   secure,
+		SameSite: sameSite,
+		Path:     "/api/v1/auth/google",
+		Domain:   h.server.Config.Auth.CookieDomain,
+	})
+}
+
+func (h *AuthHandler) defaultAuthOrigin() string {
+	if h.server == nil || h.server.Config == nil {
+		return ""
+	}
+
+	if len(h.server.Config.Server.CORSAllowedOrigins) == 0 {
+		return ""
+	}
+
+	origin := strings.TrimSpace(h.server.Config.Server.CORSAllowedOrigins[0])
+	if origin == "" || origin == "*" {
+		return ""
+	}
+
+	return origin
+}
+
+func (h *AuthHandler) redirectGoogleFailure(c *fiber.Ctx, err error) error {
+	middleware.GetLogger(c).Warn().Err(err).Msg("google auth failed")
+	redirectURL := appendQueryParam(h.server.Config.Auth.GoogleFailureRedirectURL, "error", "google_auth_failed")
+	return c.Redirect(redirectURL, http.StatusFound)
+}
+
+func appendQueryParam(rawURL, key, value string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	query := parsed.Query()
+	query.Set(key, value)
+	parsed.RawQuery = query.Encode()
+
+	return parsed.String()
 }
 
 func isEmail(identifier string) bool {

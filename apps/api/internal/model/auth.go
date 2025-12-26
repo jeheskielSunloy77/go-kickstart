@@ -24,14 +24,6 @@ func (d *LoginDTO) Validate() error {
 	return validator.New().Struct(d)
 }
 
-type GoogleLoginDTO struct {
-	IDToken string `json:"idToken" validate:"required"`
-}
-
-func (d *GoogleLoginDTO) Validate() error {
-	return validator.New().Struct(d)
-}
-
 type VerifyEmailDTO struct {
 	Email string `json:"email" validate:"required,email"`
 	Code  string `json:"code" validate:"required,min=4,max=10"`

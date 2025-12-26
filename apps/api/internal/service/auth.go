@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -23,6 +26,8 @@ import (
 	"github.com/jeheskielSunloy77/go-kickstart/internal/sqlerr"
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
 )
@@ -31,6 +36,20 @@ var (
 	minPasswordLength = 8
 	emailRegex        = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 )
+
+const googleStateTTL = 10 * time.Minute
+
+type googleOAuthConfig interface {
+	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
+	Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
+}
+
+type googleTokenValidator func(ctx context.Context, idToken, audience string) (*idtoken.Payload, error)
+
+type googleStatePayload struct {
+	State     string    `json:"state"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
 
 type AuthService struct {
 	repo                 repository.AuthRepositoryInterface
@@ -42,7 +61,12 @@ type AuthService struct {
 	accessTokenTTL       time.Duration
 	refreshTokenTTL      time.Duration
 	googleClientID       string
+	googleClientSecret   string
+	googleRedirectURL    string
+	googleOAuthConfig    googleOAuthConfig
+	googleTokenValidator googleTokenValidator
 	emailVerificationTTL time.Duration
+	now                  func() time.Time
 }
 
 type AuthToken struct {
@@ -59,7 +83,8 @@ type AuthResult struct {
 type AuthServiceInterface interface {
 	Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error)
 	Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error)
-	LoginWithGoogle(ctx context.Context, idToken, userAgent, ipAddress string) (*AuthResult, error)
+	StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error)
+	CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error)
 	VerifyEmail(ctx context.Context, email, code string) (*model.User, error)
 	Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error)
 	Logout(ctx context.Context, refreshToken string) error
@@ -72,10 +97,24 @@ type TaskEnqueuer interface {
 	EnqueueContext(ctx context.Context, task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
 }
 
+type GoogleAuthStart struct {
+	AuthURL        string
+	StateCookie    string
+	StateExpiresAt time.Time
+}
+
 func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, sessionRepo repository.AuthSessionRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService {
 	refreshTTL := cfg.RefreshTokenTTL
 	if refreshTTL <= 0 {
 		refreshTTL = 30 * 24 * time.Hour
+	}
+
+	oauthConfig := &oauth2.Config{
+		ClientID:     cfg.GoogleClientID,
+		ClientSecret: cfg.GoogleClientSecret,
+		RedirectURL:  cfg.GoogleRedirectURL,
+		Scopes:       []string{"openid", "email", "profile"},
+		Endpoint:     googleoauth.Endpoint,
 	}
 
 	return &AuthService{
@@ -88,7 +127,12 @@ func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterf
 		accessTokenTTL:       cfg.AccessTokenTTL,
 		refreshTokenTTL:      refreshTTL,
 		googleClientID:       cfg.GoogleClientID,
+		googleClientSecret:   cfg.GoogleClientSecret,
+		googleRedirectURL:    cfg.GoogleRedirectURL,
+		googleOAuthConfig:    oauthConfig,
+		googleTokenValidator: idtoken.Validate,
 		emailVerificationTTL: cfg.EmailVerificationTTL,
+		now:                  time.Now,
 	}
 }
 
@@ -175,19 +219,67 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent
 	}, nil
 }
 
-func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken, userAgent, ipAddress string) (*AuthResult, error) {
-	if s.googleClientID == "" {
+func (s *AuthService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error) {
+	if !s.googleConfigReady() {
 		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
 	}
 
-	payload, err := idtoken.Validate(ctx, idToken, s.googleClientID)
+	state, cookieValue, expiresAt, err := s.buildGoogleStateCookie()
+	if err != nil {
+		return nil, errs.NewInternalServerError()
+	}
+
+	authURL := s.googleOAuthConfig.AuthCodeURL(state)
+
+	return &GoogleAuthStart{
+		AuthURL:        authURL,
+		StateCookie:    cookieValue,
+		StateExpiresAt: expiresAt,
+	}, nil
+}
+
+func (s *AuthService) CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error) {
+	if !s.googleConfigReady() {
+		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
+	}
+	if strings.TrimSpace(code) == "" || strings.TrimSpace(state) == "" || strings.TrimSpace(stateCookie) == "" {
+		return nil, errs.NewBadRequestError("Invalid Google login request", false, nil, nil)
+	}
+
+	cookiePayload, err := s.parseGoogleStateCookie(stateCookie)
+	if err != nil {
+		return nil, errs.NewBadRequestError("Invalid Google login state", false, nil, nil)
+	}
+	if cookiePayload.State != state {
+		return nil, errs.NewBadRequestError("Invalid Google login state", false, nil, nil)
+	}
+
+	token, err := s.googleOAuthConfig.Exchange(ctx, code)
 	if err != nil {
 		return nil, errs.NewUnauthorizedError("Invalid Google token", false)
 	}
 
-	subject := payload.Subject
-	emailClaim, _ := payload.Claims["email"].(string)
-	emailVerified, _ := payload.Claims["email_verified"].(bool)
+	rawIDToken, ok := token.Extra("id_token").(string)
+	if !ok || strings.TrimSpace(rawIDToken) == "" {
+		return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+	}
+
+	claims, err := s.googleTokenValidator(ctx, rawIDToken, s.googleClientID)
+	if err != nil {
+		return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+	}
+
+	subject := claims.Subject
+	emailClaim, _ := claims.Claims["email"].(string)
+	emailVerified, _ := claims.Claims["email_verified"].(bool)
+
+	return s.loginWithGoogleClaims(ctx, subject, emailClaim, emailVerified, userAgent, ipAddress)
+}
+
+func (s *AuthService) loginWithGoogleClaims(ctx context.Context, subject, emailClaim string, emailVerified bool, userAgent, ipAddress string) (*AuthResult, error) {
+	if subject == "" {
+		return nil, errs.NewUnauthorizedError("Invalid Google token", false)
+	}
 	if emailClaim == "" || !emailVerified {
 		return nil, errs.NewUnauthorizedError("Google account email is not verified", true)
 	}
@@ -243,6 +335,86 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, idToken, userAgent, i
 		Token:        AuthToken{Token: token, ExpiresAt: exp},
 		RefreshToken: AuthToken{Token: refreshToken, ExpiresAt: refreshExp},
 	}, nil
+}
+
+func (s *AuthService) googleConfigReady() bool {
+	return s.googleClientID != "" && s.googleClientSecret != "" && s.googleRedirectURL != "" && s.googleOAuthConfig != nil
+}
+
+func (s *AuthService) buildGoogleStateCookie() (string, string, time.Time, error) {
+	state, err := generateStateToken()
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
+	now := time.Now
+	if s.now != nil {
+		now = s.now
+	}
+
+	expiresAt := now().UTC().Add(googleStateTTL)
+	payload := googleStatePayload{State: state, ExpiresAt: expiresAt}
+	rawPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
+	encoded := base64.RawURLEncoding.EncodeToString(rawPayload)
+	signature := s.signGoogleState(encoded)
+	cookieValue := encoded + "." + hex.EncodeToString(signature)
+
+	return state, cookieValue, expiresAt, nil
+}
+
+func (s *AuthService) parseGoogleStateCookie(cookieValue string) (*googleStatePayload, error) {
+	parts := strings.SplitN(cookieValue, ".", 2)
+	if len(parts) != 2 {
+		return nil, errors.New("invalid state cookie format")
+	}
+
+	payloadPart := parts[0]
+	signaturePart := parts[1]
+
+	signature, err := hex.DecodeString(signaturePart)
+	if err != nil {
+		return nil, errors.New("invalid state cookie signature")
+	}
+
+	expectedSignature := s.signGoogleState(payloadPart)
+	if !hmac.Equal(signature, expectedSignature) {
+		return nil, errors.New("invalid state cookie signature")
+	}
+
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(payloadPart)
+	if err != nil {
+		return nil, errors.New("invalid state cookie payload")
+	}
+
+	var payload googleStatePayload
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		return nil, errors.New("invalid state cookie payload")
+	}
+
+	if payload.State == "" {
+		return nil, errors.New("invalid state cookie payload")
+	}
+
+	now := time.Now
+	if s.now != nil {
+		now = s.now
+	}
+
+	if payload.ExpiresAt.Before(now().UTC()) {
+		return nil, errors.New("state cookie expired")
+	}
+
+	return &payload, nil
+}
+
+func (s *AuthService) signGoogleState(payload string) []byte {
+	mac := hmac.New(sha256.New, s.secretKey)
+	_, _ = mac.Write([]byte(payload))
+	return mac.Sum(nil)
 }
 
 func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model.User, error) {
@@ -464,6 +636,14 @@ func deriveUsername(email string) string {
 	return fmt.Sprintf("user-%s", uuid.New().String()[:8])
 }
 
+func generateStateToken() (string, error) {
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(tokenBytes), nil
+}
+
 func generateRefreshToken() (string, error) {
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
@@ -489,9 +669,6 @@ func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.Us
 
 	now := time.Now().UTC()
 	ttl := s.emailVerificationTTL
-	if ttl <= 0 {
-		ttl = 24 * time.Hour
-	}
 	if err := s.verificationRepo.ExpireActiveByUserID(ctx, user.ID, now); err != nil {
 		return err
 	}

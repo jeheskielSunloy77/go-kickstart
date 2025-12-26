@@ -1,5 +1,5 @@
 import {
-	ZAuthGoogleLoginDTO,
+	ZAuthGoogleCallbackQuery,
 	ZAuthLoginDTO,
 	ZAuthRegisterDTO,
 	ZAuthResult,
@@ -39,13 +39,21 @@ export const authContract = c.router({
 	},
 	googleLogin: {
 		summary: 'Google login',
-		description: 'Login or register using Google OAuth',
+		description: 'Redirect to Google OAuth',
 		path: '/api/v1/auth/google',
-		method: 'POST',
-		body: ZAuthGoogleLoginDTO,
+		method: 'GET',
 		responses: {
-			200: ZAuthResult,
-			...failResponses,
+			302: ZEmpty,
+		},
+	},
+	googleCallback: {
+		summary: 'Google login callback',
+		description: 'Handle Google OAuth callback and redirect',
+		path: '/api/v1/auth/google/callback',
+		method: 'GET',
+		query: ZAuthGoogleCallbackQuery,
+		responses: {
+			302: ZEmpty,
 		},
 	},
 	verifyEmail: {
