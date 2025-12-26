@@ -1,5 +1,4 @@
 import { ZResponse } from '@go-kickstart/zod'
-import { match } from 'ts-pattern'
 
 export const getSecurityMetadata = ({
 	security = true,
@@ -8,18 +7,17 @@ export const getSecurityMetadata = ({
 	security?: boolean
 	securityType?: 'bearer' | 'service'
 } = {}) => {
-	const openApiSecurity = match(securityType)
-		.with('bearer', () => [
-			{
-				bearerAuth: [],
-			},
-		])
-		.with('service', () => [
-			{
-				'x-service-token': [],
-			},
-		])
-		.exhaustive()
+	const openApiSecurity = (() => {
+		switch (securityType) {
+			case 'bearer':
+				return [{ bearerAuth: [] }]
+			case 'service':
+				return [{ 'x-service-token': [] }]
+			default:
+				const _exhaustive: never = securityType
+				throw new Error(`Unhandled securityType: ${_exhaustive}`)
+		}
+	})()
 
 	return {
 		...(security && { openApiSecurity }),
