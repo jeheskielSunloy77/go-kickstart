@@ -97,8 +97,9 @@ func SetupTestDB(t *testing.T) (*TestDB, func()) {
 			FromName:  "go-kickstart",
 		},
 
-		Redis: config.RedisConfig{
-			Address: "localhost:6379",
+		Cache: config.CacheConfig{
+			TTL:          5 * time.Minute,
+			RedisAddress: "localhost:6379",
 		},
 		Auth: config.AuthConfig{
 			SecretKey: "test-secret",

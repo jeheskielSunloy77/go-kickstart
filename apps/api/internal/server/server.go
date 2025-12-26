@@ -34,7 +34,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 
 	// Redis client with New Relic integration
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: cfg.Redis.Address,
+		Addr: cfg.Cache.RedisAddress,
 	})
 
 	// Add New Relic Redis hooks if available

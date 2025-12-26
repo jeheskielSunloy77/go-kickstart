@@ -13,7 +13,7 @@ type JobService struct {
 }
 
 func NewJobService(logger *zerolog.Logger, cfg *config.Config) *JobService {
-	redisAddr := cfg.Redis.Address
+	redisAddr := cfg.Cache.RedisAddress
 
 	client := asynq.NewClient(asynq.RedisClientOpt{
 		Addr: redisAddr,

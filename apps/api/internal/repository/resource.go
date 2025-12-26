@@ -2,10 +2,15 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
 	"gorm.io/gorm"
 )
@@ -21,23 +26,39 @@ type ResourceRepository[T any] interface {
 }
 
 type resourceRepository[T any] struct {
-	db *gorm.DB
+	db       *gorm.DB
+	cache    cache.Cache
+	cacheTTL time.Duration
 }
 
-func NewResourceRepository[T any](db *gorm.DB) ResourceRepository[T] {
-	return &resourceRepository[T]{db: db}
+func NewResourceRepository[T any](db *gorm.DB, cacheClient cache.Cache, cacheTTL time.Duration) ResourceRepository[T] {
+	if cacheTTL <= 0 {
+		cacheClient = nil
+	}
+	return &resourceRepository[T]{db: db, cache: cacheClient, cacheTTL: cacheTTL}
 }
 
 func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error {
-	return r.db.WithContext(ctx).Create(entity).Error
+	if err := r.db.WithContext(ctx).Create(entity).Error; err != nil {
+		return err
+	}
+	r.setCacheFromEntity(ctx, entity)
+	return nil
 }
 
 func (r *resourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
+	if r.cacheEnabled() && len(preloads) == 0 {
+		if cached, ok := r.getCachedByID(ctx, id); ok {
+			return cached, nil
+		}
+	}
+
 	var entity T
 	query := applyPreloads(r.db.WithContext(ctx), preloads)
 	if err := query.First(&entity, id).Error; err != nil {
 		return nil, err
 	}
+	r.setCache(ctx, id, &entity, preloads)
 	return &entity, nil
 }
 
@@ -54,15 +75,24 @@ func (r *resourceRepository[T]) Update(ctx context.Context, entity T, updates ..
 	}
 
 	// updated entity
+	r.evictCacheFromEntity(ctx, entity)
 	return &entity, nil
 }
 
 func (r *resourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Delete(new(T), id).Error
+	if err := r.db.WithContext(ctx).Delete(new(T), id).Error; err != nil {
+		return err
+	}
+	r.evictCache(ctx, id)
+	return nil
 }
 
 func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error
+	if err := r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error; err != nil {
+		return err
+	}
+	r.evictCache(ctx, id)
+	return nil
 }
 
 func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) {
@@ -75,6 +105,7 @@ func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
 		return nil, err
 	}
 
+	r.evictCache(ctx, id)
 	return r.GetByID(ctx, id, nil)
 }
 
@@ -221,4 +252,118 @@ func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB {
 		db = db.Preload(name)
 	}
 	return db
+}
+
+func (r *resourceRepository[T]) cacheEnabled() bool {
+	return r.cache != nil && r.cacheTTL > 0
+}
+
+func (r *resourceRepository[T]) getCachedByID(ctx context.Context, id uuid.UUID) (*T, bool) {
+	if !r.cacheEnabled() {
+		return nil, false
+	}
+	key := r.cacheKey(id)
+	data, err := r.cache.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, cache.ErrCacheMiss) {
+			return nil, false
+		}
+		return nil, false
+	}
+
+	var entity T
+	if err := json.Unmarshal(data, &entity); err != nil {
+		_ = r.cache.Delete(ctx, key)
+		return nil, false
+	}
+	return &entity, true
+}
+
+func (r *resourceRepository[T]) setCache(ctx context.Context, id uuid.UUID, entity *T, preloads []string) {
+	if !r.cacheEnabled() || entity == nil || len(preloads) != 0 {
+		return
+	}
+
+	payload, err := json.Marshal(entity)
+	if err != nil {
+		return
+	}
+	_ = r.cache.Set(ctx, r.cacheKey(id), payload, r.cacheTTL)
+}
+
+func (r *resourceRepository[T]) setCacheFromEntity(ctx context.Context, entity *T) {
+	if !r.cacheEnabled() || entity == nil {
+		return
+	}
+	id, ok := extractEntityID(entity)
+	if !ok {
+		return
+	}
+	r.setCache(ctx, id, entity, nil)
+}
+
+func (r *resourceRepository[T]) evictCacheFromEntity(ctx context.Context, entity T) {
+	if !r.cacheEnabled() {
+		return
+	}
+	id, ok := extractEntityID(entity)
+	if !ok {
+		return
+	}
+	r.evictCache(ctx, id)
+}
+
+func (r *resourceRepository[T]) evictCache(ctx context.Context, id uuid.UUID) {
+	if !r.cacheEnabled() {
+		return
+	}
+	_ = r.cache.Delete(ctx, r.cacheKey(id))
+}
+
+func (r *resourceRepository[T]) cacheKey(id uuid.UUID) string {
+	return "resource:" + resourceTypeName[T]() + ":id:" + id.String()
+}
+
+func resourceTypeName[T any]() string {
+	t := reflect.TypeOf((*T)(nil)).Elem()
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	name := t.Name()
+	pkg := strings.ReplaceAll(t.PkgPath(), "/", ".")
+	if pkg == "" {
+		return name
+	}
+	return pkg + "." + name
+}
+
+func extractEntityID(entity any) (uuid.UUID, bool) {
+	if entity == nil {
+		return uuid.Nil, false
+	}
+
+	val := reflect.ValueOf(entity)
+	if val.Kind() == reflect.Pointer {
+		if val.IsNil() {
+			return uuid.Nil, false
+		}
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return uuid.Nil, false
+	}
+
+	field := val.FieldByName("ID")
+	if !field.IsValid() {
+		return uuid.Nil, false
+	}
+	if field.Type() != reflect.TypeOf(uuid.UUID{}) {
+		return uuid.Nil, false
+	}
+
+	id, ok := field.Interface().(uuid.UUID)
+	if !ok || id == uuid.Nil {
+		return uuid.Nil, false
+	}
+	return id, true
 }

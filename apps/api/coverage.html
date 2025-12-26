@@ -93,7 +93,7 @@
 				
 				<option value="file18">github.com/jeheskielSunloy77/go-kickstart/internal/repository/repositories.go (0.0%)</option>
 				
-				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (48.8%)</option>
+				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (60.1%)</option>
 				
 				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/repository/user.go (100.0%)</option>
 				
@@ -149,10 +149,10 @@ import (
 
 type AuthHandler struct {
         Handler
-        authService service.AuthServiceInterface
+        authService service.AuthService
 }
 
-func NewAuthHandler(h Handler, authService service.AuthServiceInterface) *AuthHandler <span class="cov10" title="13">{
+func NewAuthHandler(h Handler, authService service.AuthService) *AuthHandler <span class="cov10" title="13">{
         return &amp;AuthHandler{
                 Handler:     h,
                 authService: authService,
@@ -989,10 +989,10 @@ import (
 type ResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
         Handler
         resourceName string
-        service      service.ResourceServiceInterface[T, S, U]
+        service      service.ResourceService[T, S, U]
 }
 
-func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceServiceInterface[T, S, U]) *ResourceHandler[T, S, U] <span class="cov10" title="3">{
+func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceService[T, S, U]) *ResourceHandler[T, S, U] <span class="cov10" title="3">{
         return &amp;ResourceHandler[T, S, U]{
                 resourceName: resourceName,
                 Handler:      base,
@@ -1134,7 +1134,7 @@ type UserHandler struct {
         *ResourceHandler[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
 }
 
-func NewUserHandler(h Handler, service *service.UserService) *UserHandler <span class="cov0" title="0">{
+func NewUserHandler(h Handler, service service.UserService) *UserHandler <span class="cov0" title="0">{
         return &amp;UserHandler{
                 ResourceHandler: NewResourceHandler("user", h, service),
         }
@@ -1798,7 +1798,7 @@ import (
         "gorm.io/gorm"
 )
 
-type AuthRepositoryInterface interface {
+type AuthRepository interface {
         Save(ctx context.Context, user *model.User) error
         CreateUser(ctx context.Context, user *model.User) error
         GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
@@ -1809,26 +1809,26 @@ type AuthRepositoryInterface interface {
         UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error
 }
 
-type AuthRepository struct {
+type authRepository struct {
         db *gorm.DB
 }
 
-func NewAuthRepository(db *gorm.DB) *AuthRepository <span class="cov8" title="1">{
-        return &amp;AuthRepository{db: db}
+func NewAuthRepository(db *gorm.DB) AuthRepository <span class="cov8" title="1">{
+        return &amp;authRepository{db: db}
 }</span>
 
-func (r *AuthRepository) Save(ctx context.Context, user *model.User) error <span class="cov0" title="0">{
+func (r *authRepository) Save(ctx context.Context, user *model.User) error <span class="cov0" title="0">{
         return r.db.WithContext(ctx).Save(user).Error
 }</span>
 
-func (r *AuthRepository) CreateUser(ctx context.Context, user *model.User) error <span class="cov8" title="1">{
+func (r *authRepository) CreateUser(ctx context.Context, user *model.User) error <span class="cov8" title="1">{
         if user.ID == uuid.Nil </span><span class="cov8" title="1">{
                 user.ID = uuid.New()
         }</span>
         <span class="cov8" title="1">return r.db.WithContext(ctx).Create(user).Error</span>
 }
 
-func (r *AuthRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) <span class="cov8" title="1">{
+func (r *authRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) <span class="cov8" title="1">{
         var user model.User
         if err := r.db.WithContext(ctx).First(&amp;user, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1836,7 +1836,7 @@ func (r *AuthRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 
-func (r *AuthRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) <span class="cov8" title="1">{
+func (r *authRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) <span class="cov8" title="1">{
         var user model.User
         if err := r.db.WithContext(ctx).First(&amp;user, "LOWER(email) = ?", strings.ToLower(email)).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1844,7 +1844,7 @@ func (r *AuthRepository) GetByEmail(ctx context.Context, email string) (*model.U
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 
-func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) <span class="cov8" title="1">{
+func (r *authRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) <span class="cov8" title="1">{
         var user model.User
         if err := r.db.WithContext(ctx).First(&amp;user, "LOWER(username) = ?", strings.ToLower(username)).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1852,7 +1852,7 @@ func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (*m
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 
-func (r *AuthRepository) GetByGoogleID(ctx context.Context, googleID string) (*model.User, error) <span class="cov8" title="1">{
+func (r *authRepository) GetByGoogleID(ctx context.Context, googleID string) (*model.User, error) <span class="cov8" title="1">{
         var user model.User
         if err := r.db.WithContext(ctx).First(&amp;user, "google_id = ?", googleID).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1860,7 +1860,7 @@ func (r *AuthRepository) GetByGoogleID(ctx context.Context, googleID string) (*m
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 
-func (r *AuthRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error <span class="cov8" title="1">{
+func (r *authRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error <span class="cov8" title="1">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.User{}).
                 Where("id = ?", id).
@@ -1868,7 +1868,7 @@ func (r *AuthRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts tim
                 Error
 }</span>
 
-func (r *AuthRepository) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error <span class="cov8" title="1">{
+func (r *authRepository) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error <span class="cov8" title="1">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.User{}).
                 Where("id = ?", id).
@@ -1888,29 +1888,29 @@ import (
         "gorm.io/gorm"
 )
 
-type AuthSessionRepositoryInterface interface {
+type AuthSessionRepository interface {
         Create(ctx context.Context, session *model.AuthSession) error
         GetByRefreshTokenHash(ctx context.Context, hash string) (*model.AuthSession, error)
         RevokeByID(ctx context.Context, id uuid.UUID, revokedAt time.Time) error
         RevokeByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error
 }
 
-type AuthSessionRepository struct {
+type authSessionRepository struct {
         db *gorm.DB
 }
 
-func NewAuthSessionRepository(db *gorm.DB) *AuthSessionRepository <span class="cov0" title="0">{
-        return &amp;AuthSessionRepository{db: db}
+func NewAuthSessionRepository(db *gorm.DB) AuthSessionRepository <span class="cov0" title="0">{
+        return &amp;authSessionRepository{db: db}
 }</span>
 
-func (r *AuthSessionRepository) Create(ctx context.Context, session *model.AuthSession) error <span class="cov0" title="0">{
+func (r *authSessionRepository) Create(ctx context.Context, session *model.AuthSession) error <span class="cov0" title="0">{
         if session.ID == uuid.Nil </span><span class="cov0" title="0">{
                 session.ID = uuid.New()
         }</span>
         <span class="cov0" title="0">return r.db.WithContext(ctx).Create(session).Error</span>
 }
 
-func (r *AuthSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*model.AuthSession, error) <span class="cov0" title="0">{
+func (r *authSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*model.AuthSession, error) <span class="cov0" title="0">{
         var session model.AuthSession
         if err := r.db.WithContext(ctx).First(&amp;session, "refresh_token_hash = ?", hash).Error; err != nil </span><span class="cov0" title="0">{
                 return nil, err
@@ -1918,7 +1918,7 @@ func (r *AuthSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash 
         <span class="cov0" title="0">return &amp;session, nil</span>
 }
 
-func (r *AuthSessionRepository) RevokeByID(ctx context.Context, id uuid.UUID, revokedAt time.Time) error <span class="cov0" title="0">{
+func (r *authSessionRepository) RevokeByID(ctx context.Context, id uuid.UUID, revokedAt time.Time) error <span class="cov0" title="0">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.AuthSession{}).
                 Where("id = ?", id).
@@ -1928,7 +1928,7 @@ func (r *AuthSessionRepository) RevokeByID(ctx context.Context, id uuid.UUID, re
                 Error
 }</span>
 
-func (r *AuthSessionRepository) RevokeByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error <span class="cov0" title="0">{
+func (r *authSessionRepository) RevokeByUserID(ctx context.Context, userID uuid.UUID, revokedAt time.Time) error <span class="cov0" title="0">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.AuthSession{}).
                 Where("user_id = ? AND revoked_at IS NULL", userID).
@@ -1950,29 +1950,29 @@ import (
         "gorm.io/gorm"
 )
 
-type EmailVerificationRepositoryInterface interface {
+type EmailVerificationRepository interface {
         Create(ctx context.Context, verification *model.EmailVerification) error
         GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error)
         ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error
         MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error
 }
 
-type EmailVerificationRepository struct {
+type emailVerificationRepository struct {
         db *gorm.DB
 }
 
-func NewEmailVerificationRepository(db *gorm.DB) *EmailVerificationRepository <span class="cov1" title="1">{
-        return &amp;EmailVerificationRepository{db: db}
+func NewEmailVerificationRepository(db *gorm.DB) EmailVerificationRepository <span class="cov1" title="1">{
+        return &amp;emailVerificationRepository{db: db}
 }</span>
 
-func (r *EmailVerificationRepository) Create(ctx context.Context, verification *model.EmailVerification) error <span class="cov1" title="1">{
+func (r *emailVerificationRepository) Create(ctx context.Context, verification *model.EmailVerification) error <span class="cov1" title="1">{
         if verification.ID == uuid.Nil </span><span class="cov1" title="1">{
                 verification.ID = uuid.New()
         }</span>
         <span class="cov1" title="1">return r.db.WithContext(ctx).Create(verification).Error</span>
 }
 
-func (r *EmailVerificationRepository) GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error) <span class="cov10" title="2">{
+func (r *emailVerificationRepository) GetActiveByUserIDAndCodeHash(ctx context.Context, userID uuid.UUID, codeHash string, now time.Time) (*model.EmailVerification, error) <span class="cov10" title="2">{
         var verification model.EmailVerification
         err := r.db.WithContext(ctx).
                 Where("user_id = ? AND code_hash = ? AND verified_at IS NULL AND expires_at &gt; ?", userID, codeHash, now).
@@ -1985,7 +1985,7 @@ func (r *EmailVerificationRepository) GetActiveByUserIDAndCodeHash(ctx context.C
         <span class="cov1" title="1">return &amp;verification, nil</span>
 }
 
-func (r *EmailVerificationRepository) ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error <span class="cov0" title="0">{
+func (r *emailVerificationRepository) ExpireActiveByUserID(ctx context.Context, userID uuid.UUID, now time.Time) error <span class="cov0" title="0">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.EmailVerification{}).
                 Where("user_id = ? AND verified_at IS NULL AND expires_at &gt; ?", userID, now).
@@ -1993,7 +1993,7 @@ func (r *EmailVerificationRepository) ExpireActiveByUserID(ctx context.Context, 
                 Error
 }</span>
 
-func (r *EmailVerificationRepository) MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error <span class="cov1" title="1">{
+func (r *emailVerificationRepository) MarkVerified(ctx context.Context, id uuid.UUID, verifiedAt time.Time) error <span class="cov1" title="1">{
         return r.db.WithContext(ctx).
                 Model(&amp;model.EmailVerification{}).
                 Where("id = ?", id).
@@ -2008,39 +2008,49 @@ func (r *EmailVerificationRepository) MarkVerified(ctx context.Context, id uuid.
 		<pre class="file" id="file18" style="display: none">package repository
 
 import (
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
         "github.com/jeheskielSunloy77/go-kickstart/internal/server"
 )
 
 type Repositories struct {
-        Auth              *AuthRepository
-        AuthSession       *AuthSessionRepository
-        User              *UserRepository
-        EmailVerification *EmailVerificationRepository
+        Auth              AuthRepository
+        AuthSession       AuthSessionRepository
+        User              UserRepository
+        EmailVerification EmailVerificationRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories <span class="cov0" title="0">{
-        return &amp;Repositories{
+        var cacheClient cache.Cache
+        if s.Redis != nil &amp;&amp; s.Config.Cache.TTL &gt; 0 </span><span class="cov0" title="0">{
+                cacheClient = cache.NewRedisCache(s.Redis, &amp;s.Config.Cache)
+        }</span>
+        <span class="cov0" title="0">return &amp;Repositories{
                 Auth:              NewAuthRepository(s.DB.DB),
                 AuthSession:       NewAuthSessionRepository(s.DB.DB),
-                User:              NewUserRepository(s.DB.DB),
+                User:              NewUserRepository(s.DB.DB, cacheClient, s.Config.Cache.TTL),
                 EmailVerification: NewEmailVerificationRepository(s.DB.DB),
-        }
-}</span>
+        }</span>
+}
 </pre>
 		
 		<pre class="file" id="file19" style="display: none">package repository
 
 import (
         "context"
+        "encoding/json"
+        "errors"
+        "reflect"
         "strings"
+        "time"
 
         "github.com/gofiber/fiber/v2"
         "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
         "github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
         "gorm.io/gorm"
 )
 
-type ResourceRepositoryInterface[T any] interface {
+type ResourceRepository[T any] interface {
         Store(ctx context.Context, entity *T) error
         GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
         GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error)
@@ -2050,52 +2060,77 @@ type ResourceRepositoryInterface[T any] interface {
         Restore(ctx context.Context, id uuid.UUID) (*T, error)
 }
 
-type ResourceRepository[T any] struct {
-        db *gorm.DB
+type resourceRepository[T any] struct {
+        db       *gorm.DB
+        cache    cache.Cache
+        cacheTTL time.Duration
 }
 
-func NewResourceRepository[T any](db *gorm.DB) *ResourceRepository[T] <span class="cov4" title="2">{
-        return &amp;ResourceRepository[T]{db: db}
-}</span>
+func NewResourceRepository[T any](db *gorm.DB, cacheClient cache.Cache, cacheTTL time.Duration) ResourceRepository[T] <span class="cov4" title="3">{
+        if cacheTTL &lt;= 0 </span><span class="cov2" title="2">{
+                cacheClient = nil
+        }</span>
+        <span class="cov4" title="3">return &amp;resourceRepository[T]{db: db, cache: cacheClient, cacheTTL: cacheTTL}</span>
+}
 
-func (r *ResourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov7" title="3">{
-        return r.db.WithContext(ctx).Create(entity).Error
-}</span>
+func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov5" title="6">{
+        if err := r.db.WithContext(ctx).Create(entity).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov5" title="6">r.setCacheFromEntity(ctx, entity)
+        return nil</span>
+}
 
-func (r *ResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov8" title="4">{
-        var entity T
+func (r *resourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov5" title="6">{
+        if r.cacheEnabled() &amp;&amp; len(preloads) == 0 </span><span class="cov2" title="2">{
+                if cached, ok := r.getCachedByID(ctx, id); ok </span><span class="cov2" title="2">{
+                        return cached, nil
+                }</span>
+        }
+
+        <span class="cov4" title="4">var entity T
         query := applyPreloads(r.db.WithContext(ctx), preloads)
         if err := query.First(&amp;entity, id).Error; err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
-        <span class="cov7" title="3">return &amp;entity, nil</span>
+        <span class="cov4" title="3">r.setCache(ctx, id, &amp;entity, preloads)
+        return &amp;entity, nil</span>
 }
 
-func (r *ResourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) <span class="cov1" title="1">{
+func (r *resourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) <span class="cov2" title="2">{
         // if the updates are provided, use them to only update specific fields, if not replace the entire entity
         var err error
-        if len(updates) &gt; 0 </span><span class="cov1" title="1">{
+        if len(updates) &gt; 0 </span><span class="cov2" title="2">{
                 err = r.db.WithContext(ctx).Model(&amp;entity).Updates(updates[0]).Error
         }</span> else<span class="cov0" title="0"> {
                 err = r.db.WithContext(ctx).Save(&amp;entity).Error
         }</span>
-        <span class="cov1" title="1">if err != nil </span><span class="cov0" title="0">{
+        <span class="cov2" title="2">if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
 
         // updated entity
-        <span class="cov1" title="1">return &amp;entity, nil</span>
+        <span class="cov2" title="2">r.evictCacheFromEntity(ctx, entity)
+        return &amp;entity, nil</span>
 }
 
-func (r *ResourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov1" title="1">{
-        return r.db.WithContext(ctx).Delete(new(T), id).Error
-}</span>
+func (r *resourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov2" title="2">{
+        if err := r.db.WithContext(ctx).Delete(new(T), id).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov2" title="2">r.evictCache(ctx, id)
+        return nil</span>
+}
 
-func (r *ResourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
-        return r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error
-}</span>
+func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        if err := r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">r.evictCache(ctx, id)
+        return nil</span>
+}
 
-func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov1" title="1">{
+func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov1" title="1">{
         if err := r.db.WithContext(ctx).
                 Unscoped().
                 Model(new(T)).
@@ -2105,10 +2140,11 @@ func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
                 return nil, err
         }</span>
 
-        <span class="cov1" title="1">return r.GetByID(ctx, id, nil)</span>
+        <span class="cov1" title="1">r.evictCache(ctx, id)
+        return r.GetByID(ctx, id, nil)</span>
 }
 
-func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov1" title="1">{
+func (r *resourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov1" title="1">{
         opts.Normalize()
 
         var (
@@ -2205,14 +2241,14 @@ func ParsePreloads(raw string) []string <span class="cov0" title="0">{
         <span class="cov0" title="0">return preloads</span>
 }
 
-func applyFilters(db *gorm.DB, filters map[string]any) *gorm.DB <span class="cov4" title="2">{
+func applyFilters(db *gorm.DB, filters map[string]any) *gorm.DB <span class="cov2" title="2">{
         if len(filters) &gt; 0 </span><span class="cov0" title="0">{
                 return db.Where(filters)
         }</span>
-        <span class="cov4" title="2">return db</span>
+        <span class="cov2" title="2">return db</span>
 }
 
-func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov4" title="2">{
+func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov2" title="2">{
         for _, where := range wheres </span><span class="cov0" title="0">{
                 query := strings.TrimSpace(where.Query)
                 if query == "" </span><span class="cov0" title="0">{
@@ -2224,10 +2260,10 @@ func applyWheres(db *gorm.DB, wheres []WhereClause) *gorm.DB <span class="cov4" 
                 }
                 <span class="cov0" title="0">db = db.Where(query)</span>
         }
-        <span class="cov4" title="2">return db</span>
+        <span class="cov2" title="2">return db</span>
 }
 
-func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov4" title="2">{
+func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov2" title="2">{
         for _, join := range joins </span><span class="cov0" title="0">{
                 query := strings.TrimSpace(join.Query)
                 if query == "" </span><span class="cov0" title="0">{
@@ -2239,10 +2275,10 @@ func applyJoins(db *gorm.DB, joins []JoinClause) *gorm.DB <span class="cov4" tit
                 }
                 <span class="cov0" title="0">db = db.Joins(query)</span>
         }
-        <span class="cov4" title="2">return db</span>
+        <span class="cov2" title="2">return db</span>
 }
 
-func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov10" title="5">{
+func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov5" title="5">{
         for _, preload := range preloads </span><span class="cov0" title="0">{
                 name := strings.TrimSpace(preload)
                 if name == "" </span><span class="cov0" title="0">{
@@ -2250,24 +2286,145 @@ func applyPreloads(db *gorm.DB, preloads []string) *gorm.DB <span class="cov10" 
                 }
                 <span class="cov0" title="0">db = db.Preload(name)</span>
         }
-        <span class="cov10" title="5">return db</span>
+        <span class="cov5" title="5">return db</span>
+}
+
+func (r *resourceRepository[T]) cacheEnabled() bool <span class="cov10" title="26">{
+        return r.cache != nil &amp;&amp; r.cacheTTL &gt; 0
+}</span>
+
+func (r *resourceRepository[T]) getCachedByID(ctx context.Context, id uuid.UUID) (*T, bool) <span class="cov2" title="2">{
+        if !r.cacheEnabled() </span><span class="cov0" title="0">{
+                return nil, false
+        }</span>
+        <span class="cov2" title="2">key := r.cacheKey(id)
+        data, err := r.cache.Get(ctx, key)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, cache.ErrCacheMiss) </span><span class="cov0" title="0">{
+                        return nil, false
+                }</span>
+                <span class="cov0" title="0">return nil, false</span>
+        }
+
+        <span class="cov2" title="2">var entity T
+        if err := json.Unmarshal(data, &amp;entity); err != nil </span><span class="cov0" title="0">{
+                _ = r.cache.Delete(ctx, key)
+                return nil, false
+        }</span>
+        <span class="cov2" title="2">return &amp;entity, true</span>
+}
+
+func (r *resourceRepository[T]) setCache(ctx context.Context, id uuid.UUID, entity *T, preloads []string) <span class="cov5" title="6">{
+        if !r.cacheEnabled() || entity == nil || len(preloads) != 0 </span><span class="cov4" title="3">{
+                return
+        }</span>
+
+        <span class="cov4" title="3">payload, err := json.Marshal(entity)
+        if err != nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov4" title="3">_ = r.cache.Set(ctx, r.cacheKey(id), payload, r.cacheTTL)</span>
+}
+
+func (r *resourceRepository[T]) setCacheFromEntity(ctx context.Context, entity *T) <span class="cov5" title="6">{
+        if !r.cacheEnabled() || entity == nil </span><span class="cov4" title="3">{
+                return
+        }</span>
+        <span class="cov4" title="3">id, ok := extractEntityID(entity)
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov4" title="3">r.setCache(ctx, id, entity, nil)</span>
+}
+
+func (r *resourceRepository[T]) evictCacheFromEntity(ctx context.Context, entity T) <span class="cov2" title="2">{
+        if !r.cacheEnabled() </span><span class="cov1" title="1">{
+                return
+        }</span>
+        <span class="cov1" title="1">id, ok := extractEntityID(entity)
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov1" title="1">r.evictCache(ctx, id)</span>
+}
+
+func (r *resourceRepository[T]) evictCache(ctx context.Context, id uuid.UUID) <span class="cov4" title="4">{
+        if !r.cacheEnabled() </span><span class="cov2" title="2">{
+                return
+        }</span>
+        <span class="cov2" title="2">_ = r.cache.Delete(ctx, r.cacheKey(id))</span>
+}
+
+func (r *resourceRepository[T]) cacheKey(id uuid.UUID) string <span class="cov6" title="7">{
+        return "resource:" + resourceTypeName[T]() + ":id:" + id.String()
+}</span>
+
+func resourceTypeName[T any]() string <span class="cov7" title="10">{
+        t := reflect.TypeOf((*T)(nil)).Elem()
+        if t.Kind() == reflect.Pointer </span><span class="cov0" title="0">{
+                t = t.Elem()
+        }</span>
+        <span class="cov7" title="10">name := t.Name()
+        pkg := strings.ReplaceAll(t.PkgPath(), "/", ".")
+        if pkg == "" </span><span class="cov0" title="0">{
+                return name
+        }</span>
+        <span class="cov7" title="10">return pkg + "." + name</span>
+}
+
+func extractEntityID(entity any) (uuid.UUID, bool) <span class="cov4" title="4">{
+        if entity == nil </span><span class="cov0" title="0">{
+                return uuid.Nil, false
+        }</span>
+
+        <span class="cov4" title="4">val := reflect.ValueOf(entity)
+        if val.Kind() == reflect.Pointer </span><span class="cov4" title="3">{
+                if val.IsNil() </span><span class="cov0" title="0">{
+                        return uuid.Nil, false
+                }</span>
+                <span class="cov4" title="3">val = val.Elem()</span>
+        }
+        <span class="cov4" title="4">if val.Kind() != reflect.Struct </span><span class="cov0" title="0">{
+                return uuid.Nil, false
+        }</span>
+
+        <span class="cov4" title="4">field := val.FieldByName("ID")
+        if !field.IsValid() </span><span class="cov0" title="0">{
+                return uuid.Nil, false
+        }</span>
+        <span class="cov4" title="4">if field.Type() != reflect.TypeOf(uuid.UUID{}) </span><span class="cov0" title="0">{
+                return uuid.Nil, false
+        }</span>
+
+        <span class="cov4" title="4">id, ok := field.Interface().(uuid.UUID)
+        if !ok || id == uuid.Nil </span><span class="cov0" title="0">{
+                return uuid.Nil, false
+        }</span>
+        <span class="cov4" title="4">return id, true</span>
 }
 </pre>
 		
 		<pre class="file" id="file20" style="display: none">package repository
 
 import (
+        "time"
+
+        "github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
         "github.com/jeheskielSunloy77/go-kickstart/internal/model"
         "gorm.io/gorm"
 )
 
-type UserRepository struct {
-        *ResourceRepository[model.User]
+type UserRepository interface {
+        ResourceRepository[model.User]
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository <span class="cov10" title="2">{
-        return &amp;UserRepository{
-                ResourceRepository: NewResourceRepository[model.User](db),
+type userRepository struct {
+        ResourceRepository[model.User]
+}
+
+func NewUserRepository(db *gorm.DB, cacheClient cache.Cache, cacheTTL time.Duration) UserRepository <span class="cov10" title="3">{
+        return &amp;userRepository{
+                ResourceRepository: NewResourceRepository[model.User](db, cacheClient, cacheTTL),
         }
 }</span>
 </pre>
@@ -2325,10 +2482,10 @@ type googleStatePayload struct {
         ExpiresAt time.Time `json:"expiresAt"`
 }
 
-type AuthService struct {
-        repo                 repository.AuthRepositoryInterface
-        sessionRepo          repository.AuthSessionRepositoryInterface
-        verificationRepo     repository.EmailVerificationRepositoryInterface
+type authService struct {
+        repo                 repository.AuthRepository
+        sessionRepo          repository.AuthSessionRepository
+        verificationRepo     repository.EmailVerificationRepository
         taskEnqueuer         TaskEnqueuer
         logger               *zerolog.Logger
         secretKey            []byte
@@ -2354,7 +2511,7 @@ type AuthResult struct {
         RefreshToken AuthToken   `json:"refreshToken"`
 }
 
-type AuthServiceInterface interface {
+type AuthService interface {
         Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error)
         Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error)
         StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error)
@@ -2377,7 +2534,7 @@ type GoogleAuthStart struct {
         StateExpiresAt time.Time
 }
 
-func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, sessionRepo repository.AuthSessionRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService <span class="cov10" title="21">{
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepository, sessionRepo repository.AuthSessionRepository, verificationRepo repository.EmailVerificationRepository, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) AuthService <span class="cov10" title="21">{
         refreshTTL := cfg.RefreshTokenTTL
         if refreshTTL &lt;= 0 </span><span class="cov10" title="21">{
                 refreshTTL = 30 * 24 * time.Hour
@@ -2391,7 +2548,7 @@ func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterf
                 Endpoint:     googleoauth.Endpoint,
         }
 
-        return &amp;AuthService{
+        return &amp;authService{
                 repo:                 repo,
                 sessionRepo:          sessionRepo,
                 verificationRepo:     verificationRepo,
@@ -2410,7 +2567,7 @@ func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterf
         }</span>
 }
 
-func (s *AuthService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error) <span class="cov3" title="2">{
+func (s *authService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error) <span class="cov3" title="2">{
         if len(password) &lt; minPasswordLength </span><span class="cov1" title="1">{
                 return nil, errs.NewBadRequestError(
                         fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
@@ -2456,7 +2613,7 @@ func (s *AuthService) Register(ctx context.Context, email, username, password, u
         }, nil</span>
 }
 
-func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error) <span class="cov4" title="3">{
+func (s *authService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error) <span class="cov4" title="3">{
         user, err := s.lookupUser(ctx, identifier)
         if err != nil </span><span class="cov1" title="1">{
                 if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov1" title="1">{
@@ -2493,7 +2650,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent
         }, nil</span>
 }
 
-func (s *AuthService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error) <span class="cov3" title="2">{
+func (s *authService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error) <span class="cov3" title="2">{
         if !s.googleConfigReady() </span><span class="cov1" title="1">{
                 return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
         }</span>
@@ -2512,7 +2669,7 @@ func (s *AuthService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, er
         }, nil</span>
 }
 
-func (s *AuthService) CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error) <span class="cov1" title="1">{
+func (s *authService) CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error) <span class="cov1" title="1">{
         if !s.googleConfigReady() </span><span class="cov0" title="0">{
                 return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
         }</span>
@@ -2550,7 +2707,7 @@ func (s *AuthService) CompleteGoogleAuth(ctx context.Context, code, state, state
         return s.loginWithGoogleClaims(ctx, subject, emailClaim, emailVerified, userAgent, ipAddress)</span>
 }
 
-func (s *AuthService) loginWithGoogleClaims(ctx context.Context, subject, emailClaim string, emailVerified bool, userAgent, ipAddress string) (*AuthResult, error) <span class="cov1" title="1">{
+func (s *authService) loginWithGoogleClaims(ctx context.Context, subject, emailClaim string, emailVerified bool, userAgent, ipAddress string) (*AuthResult, error) <span class="cov1" title="1">{
         if subject == "" </span><span class="cov0" title="0">{
                 return nil, errs.NewUnauthorizedError("Invalid Google token", false)
         }</span>
@@ -2611,11 +2768,11 @@ func (s *AuthService) loginWithGoogleClaims(ctx context.Context, subject, emailC
         }, nil</span>
 }
 
-func (s *AuthService) googleConfigReady() bool <span class="cov4" title="3">{
+func (s *authService) googleConfigReady() bool <span class="cov4" title="3">{
         return s.googleClientID != "" &amp;&amp; s.googleClientSecret != "" &amp;&amp; s.googleRedirectURL != "" &amp;&amp; s.googleOAuthConfig != nil
 }</span>
 
-func (s *AuthService) buildGoogleStateCookie() (string, string, time.Time, error) <span class="cov3" title="2">{
+func (s *authService) buildGoogleStateCookie() (string, string, time.Time, error) <span class="cov3" title="2">{
         state, err := generateStateToken()
         if err != nil </span><span class="cov0" title="0">{
                 return "", "", time.Time{}, err
@@ -2640,7 +2797,7 @@ func (s *AuthService) buildGoogleStateCookie() (string, string, time.Time, error
         return state, cookieValue, expiresAt, nil</span>
 }
 
-func (s *AuthService) parseGoogleStateCookie(cookieValue string) (*googleStatePayload, error) <span class="cov3" title="2">{
+func (s *authService) parseGoogleStateCookie(cookieValue string) (*googleStatePayload, error) <span class="cov3" title="2">{
         parts := strings.SplitN(cookieValue, ".", 2)
         if len(parts) != 2 </span><span class="cov0" title="0">{
                 return nil, errors.New("invalid state cookie format")
@@ -2685,20 +2842,20 @@ func (s *AuthService) parseGoogleStateCookie(cookieValue string) (*googleStatePa
         <span class="cov3" title="2">return &amp;payload, nil</span>
 }
 
-func (s *AuthService) signGoogleState(payload string) []byte <span class="cov5" title="4">{
+func (s *authService) signGoogleState(payload string) []byte <span class="cov5" title="4">{
         mac := hmac.New(sha256.New, s.secretKey)
         _, _ = mac.Write([]byte(payload))
         return mac.Sum(nil)
 }</span>
 
-func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model.User, error) <span class="cov4" title="3">{
+func (s *authService) lookupUser(ctx context.Context, identifier string) (*model.User, error) <span class="cov4" title="3">{
         if emailRegex.MatchString(identifier) </span><span class="cov3" title="2">{
                 return s.repo.GetByEmail(ctx, identifier)
         }</span>
         <span class="cov1" title="1">return s.repo.GetByUsername(ctx, identifier)</span>
 }
 
-func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) <span class="cov3" title="2">{
+func (s *authService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) <span class="cov3" title="2">{
         user, err := s.repo.GetByEmail(ctx, email)
         if err != nil </span><span class="cov0" title="0">{
                 if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
@@ -2737,7 +2894,7 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*mod
         return user, nil</span>
 }
 
-func (s *AuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) <span class="cov1" title="1">{
+func (s *authService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) <span class="cov1" title="1">{
         user, err := s.repo.GetByID(ctx, userID)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(err)
@@ -2745,7 +2902,7 @@ func (s *AuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model
         <span class="cov1" title="1">return user, nil</span>
 }
 
-func (s *AuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error) <span class="cov5" title="5">{
+func (s *authService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error) <span class="cov5" title="5">{
         if refreshToken == "" </span><span class="cov1" title="1">{
                 return nil, errs.NewUnauthorizedError("Unauthorized", false)
         }</span>
@@ -2793,7 +2950,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAd
         }, nil</span>
 }
 
-func (s *AuthService) Logout(ctx context.Context, refreshToken string) error <span class="cov3" title="2">{
+func (s *authService) Logout(ctx context.Context, refreshToken string) error <span class="cov3" title="2">{
         if refreshToken == "" || s.sessionRepo == nil </span><span class="cov0" title="0">{
                 return nil
         }</span>
@@ -2815,7 +2972,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error <sp
         return sqlerr.HandleError(s.sessionRepo.RevokeByID(ctx, session.ID, now))</span>
 }
 
-func (s *AuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error <span class="cov1" title="1">{
+func (s *authService) LogoutAll(ctx context.Context, userID uuid.UUID) error <span class="cov1" title="1">{
         if s.sessionRepo == nil </span><span class="cov0" title="0">{
                 return nil
         }</span>
@@ -2823,7 +2980,7 @@ func (s *AuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error <sp
         return sqlerr.HandleError(s.sessionRepo.RevokeByUserID(ctx, userID, now))</span>
 }
 
-func (s *AuthService) ResendVerification(ctx context.Context, userID uuid.UUID) error <span class="cov3" title="2">{
+func (s *authService) ResendVerification(ctx context.Context, userID uuid.UUID) error <span class="cov3" title="2">{
         user, err := s.repo.GetByID(ctx, userID)
         if err != nil </span><span class="cov0" title="0">{
                 return sqlerr.HandleError(err)
@@ -2841,7 +2998,7 @@ func (s *AuthService) ResendVerification(ctx context.Context, userID uuid.UUID) 
         <span class="cov1" title="1">return nil</span>
 }
 
-func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) <span class="cov5" title="4">{
+func (s *authService) generateToken(user *model.User) (string, time.Time, error) <span class="cov5" title="4">{
         if user == nil </span><span class="cov0" title="0">{
                 return "", time.Time{}, errs.NewInternalServerError()
         }</span>
@@ -2865,7 +3022,7 @@ func (s *AuthService) generateToken(user *model.User) (string, time.Time, error)
         <span class="cov5" title="4">return signed, exp, nil</span>
 }
 
-func (s *AuthService) createSession(ctx context.Context, user *model.User, userAgent, ipAddress string) (string, time.Time, error) <span class="cov5" title="4">{
+func (s *authService) createSession(ctx context.Context, user *model.User, userAgent, ipAddress string) (string, time.Time, error) <span class="cov5" title="4">{
         if s.sessionRepo == nil || user == nil </span><span class="cov0" title="0">{
                 return "", time.Time{}, errs.NewInternalServerError()
         }</span>
@@ -2931,7 +3088,7 @@ func hashRefreshToken(token string) string <span class="cov8" title="12">{
         return hex.EncodeToString(sum[:])
 }</span>
 
-func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error <span class="cov3" title="2">{
+func (s *authService) queueEmailVerification(ctx context.Context, user *model.User) error <span class="cov3" title="2">{
         if user == nil || user.Email == "" || user.EmailVerifiedAt != nil || s.verificationRepo == nil </span><span class="cov1" title="1">{
                 return nil
         }</span>
@@ -2979,7 +3136,7 @@ func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.Us
         return err</span>
 }
 
-func (s *AuthService) logVerificationQueueError(err error) <span class="cov0" title="0">{
+func (s *authService) logVerificationQueueError(err error) <span class="cov0" title="0">{
         if err == nil || s.logger == nil </span><span class="cov0" title="0">{
                 return
         }</span>
@@ -3123,7 +3280,7 @@ import (
         "gorm.io/gorm"
 )
 
-type ResourceServiceInterface[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
+type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
         Store(ctx context.Context, dto S) (*T, error)
         GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
         GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error)
@@ -3133,16 +3290,16 @@ type ResourceServiceInterface[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] 
         Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
 }
 
-type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
-        repo         repository.ResourceRepositoryInterface[T]
+type resourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+        repo         repository.ResourceRepository[T]
         resourceName string
 }
 
-func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepositoryInterface[T]) *ResourceService[T, S, U] <span class="cov10" title="2">{
-        return &amp;ResourceService[T, S, U]{resourceName: resourceName, repo: repo}
+func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepository[T]) ResourceService[T, S, U] <span class="cov10" title="2">{
+        return &amp;resourceService[T, S, U]{resourceName: resourceName, repo: repo}
 }</span>
 
-func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error) <span class="cov0" title="0">{
+func (s *resourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error) <span class="cov0" title="0">{
         entity := dto.ToModel()
         if err := s.repo.Store(ctx, entity); err != nil </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(err)
@@ -3150,7 +3307,7 @@ func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error)
         <span class="cov0" title="0">return entity, nil</span>
 }
 
-func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov1" title="1">{
+func (s *resourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov1" title="1">{
         entity, err := s.repo.GetByID(ctx, id, preloads)
         if err != nil </span><span class="cov1" title="1">{
                 return nil, sqlerr.HandleError(err)
@@ -3158,7 +3315,7 @@ func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, pr
         <span class="cov0" title="0">return entity, nil</span>
 }
 
-func (s *ResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error) <span class="cov0" title="0">{
+func (s *resourceService[T, S, U]) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error) <span class="cov0" title="0">{
         entities, total, err := s.repo.GetMany(ctx, opts)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, 0, sqlerr.HandleError(err)
@@ -3166,7 +3323,7 @@ func (s *ResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.
         <span class="cov0" title="0">return entities, total, nil</span>
 }
 
-func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) <span class="cov1" title="1">{
+func (s *resourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) <span class="cov1" title="1">{
         updates := dto.ToMap()
 
         entity, err := s.repo.GetByID(ctx, id, nil)
@@ -3186,7 +3343,7 @@ func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto
         <span class="cov0" title="0">return updatedEntity, nil</span>
 }
 
-func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+func (s *resourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
         if err := s.repo.Destroy(ctx, id); err != nil </span><span class="cov0" title="0">{
                 if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
                         return errs.NewNotFoundError(s.resourceName+" not found", true)
@@ -3196,7 +3353,7 @@ func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) er
         <span class="cov0" title="0">return nil</span>
 }
 
-func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+func (s *resourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
         if err := s.repo.Kill(ctx, id); err != nil </span><span class="cov0" title="0">{
                 if err == gorm.ErrRecordNotFound </span><span class="cov0" title="0">{
                         return errs.NewNotFoundError(s.resourceName+" not found", true)
@@ -3206,7 +3363,7 @@ func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error
         <span class="cov0" title="0">return nil</span>
 }
 
-func (s *ResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
+func (s *resourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
         entity, err := s.repo.Restore(ctx, id)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, sqlerr.HandleError(err)
@@ -3232,8 +3389,8 @@ import (
 )
 
 type Services struct {
-        Auth          *AuthService
-        User          *UserService
+        Auth          AuthService
+        User          UserService
         Authorization *AuthorizationService
         Job           *job.JobService
 }
@@ -3274,17 +3431,23 @@ import (
         "golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-        *ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
+type UserService interface {
+        ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService <span class="cov0" title="0">{
-        return &amp;UserService{
+type userService struct {
+        ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
+        repo repository.UserRepository
+}
+
+func NewUserService(repo repository.UserRepository) UserService <span class="cov0" title="0">{
+        return &amp;userService{
                 ResourceService: NewResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]("user", repo),
+                repo:            repo,
         }
 }</span>
 
-func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) <span class="cov1" title="1">{
+func (s *userService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) <span class="cov1" title="1">{
         user := dto.ToModel()
 
         if dto.Password != "" </span><span class="cov1" title="1">{
@@ -3301,7 +3464,7 @@ func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*mode
         <span class="cov1" title="1">return user, nil</span>
 }
 
-func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) <span class="cov10" title="3">{
+func (s *userService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) <span class="cov10" title="3">{
         if dto == nil </span><span class="cov0" title="0">{
                 return s.GetByID(ctx, id, nil)
         }</span>

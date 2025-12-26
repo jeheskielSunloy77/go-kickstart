@@ -17,7 +17,7 @@ type Config struct {
 	Server        ServerConfig         `koanf:"server" validate:"required"`
 	Database      DatabaseConfig       `koanf:"database" validate:"required"`
 	Auth          AuthConfig           `koanf:"auth" validate:"required"`
-	Redis         RedisConfig          `koanf:"redis" validate:"required"`
+	Cache         CacheConfig          `koanf:"cache" validate:"required"`
 	SMTP          SMTPConfig           `koanf:"smtp" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 	Seeder        SeederConfig         `koanf:"seeder" validate:"required"`
@@ -70,8 +70,9 @@ type SeederConfig struct {
 	Timeout time.Duration `koanf:"timeout" validate:"required"`
 }
 
-type RedisConfig struct {
-	Address string `koanf:"address" validate:"required"`
+type CacheConfig struct {
+	TTL          time.Duration `koanf:"ttl" validate:"required"`
+	RedisAddress string        `koanf:"redis_address" validate:"required"`
 }
 
 type IntegrationConfig struct {
