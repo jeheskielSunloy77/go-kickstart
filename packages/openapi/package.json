@@ -4,7 +4,7 @@
 	"description": "Generates OpenAPI doc",
 	"type": "module",
 	"scripts": {
-		"generate": "bun run --cwd ../zod build && tsx src/generate.ts",
+		"generate": "bun run --cwd ../zod build && bun src/generate.ts",
 		"build": "tsc && tsc-alias",
 		"dev": "wait-on ../zod/dist/index.js && tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
 		"clean": "rimraf dist tsconfig.tsbuildinfo .turbo node_modules"

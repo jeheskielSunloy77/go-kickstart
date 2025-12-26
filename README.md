@@ -38,8 +38,10 @@ Run the API only with `bun run api:run`.
 ## Common commands
 
 ```bash
-# Monorepo
-bun dev
+# Monorepo (from root)
+bun dev         # Start dev servers for all apps
+bun dev:all    # Start dev servers for all apps and packages
+bun run test       # Run tests for all apps and packages
 bun run build
 bun run lint
 bun run typecheck
@@ -52,8 +54,8 @@ cd apps/api && make migrate-up
 cd apps/api && make migrate-down
 
 # Contracts and emails
-bun run openapi:generate
-bun run emails:generate
+bun run openapi:generate    # Generate OpenAPI spec file from contracts
+bun run emails:generate     # Generate email HTML templates
 
 # UI components
 bun run web:shadcn:add <component>
@@ -90,7 +92,7 @@ bun run web:shadcn:add <component>
 - Google login uses `@react-oauth/google` (provider in `apps/web/src/main.tsx`).
 - Prefer classes and variables from `apps/web/src/index.css`; avoid arbitrary values unless necessary. User-facing text stays in English.
 
-## Packages (packages/*)
+## Packages (packages/\*)
 
 - `@go-kickstart/zod` (`packages/zod`): source of truth for API request/response schemas (exported from `packages/zod/src/index.ts`).
 - `@go-kickstart/openapi` (`packages/openapi`): builds the OpenAPI spec from Zod + ts-rest contracts in `packages/openapi/src/contracts`. Regenerate with `bun run openapi:generate`.
