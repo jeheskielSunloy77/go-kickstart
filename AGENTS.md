@@ -6,6 +6,25 @@
 - OpenAPI docs are generated from shared Zod schemas in `packages/zod` and written into `apps/api/static/openapi.json`.
 - Email templates are authored in React Email (`packages/emails`) and exported to Go HTML templates consumed by the API.
 
+## Global Testing Guidelines
+
+### Goals
+
+- Test behavior where decisions are made.
+- Prefer fewer, high-value tests over many shallow tests.
+- Keep tests deterministic, fast, and isolated; avoid global state.
+- Avoid real network calls; mock where possible.
+- Keep setup explicit; no hidden magic.
+
+## Commands (run from repo root)
+
+- Install dependencies for all apps and packages: `bun install`
+- Build all apps and packages: `bun run build` or `bun run <APP NAME>:build` to build specific app.
+- Start dev servers for all apps: `bun run dev` or `bun run <APP NAME>:dev` to start specific app. can also use `bun run dev:all` to start all apps and packages.
+- Run tests for all apps and packages: `bun run test` or `bun run <APP NAME>:test` to test specific app.
+- Generate OpenAPI spec: `bun run openapi:generate`
+- Generate email HTML templates: `bun run emails:generate`
+
 ## App #1: API (apps/api)
 
 ### Architecture & Flow
@@ -53,14 +72,6 @@
 - Regenerate with `bun run openapi:generate` at repo root.
 
 ### Testing Guidelines
-
-#### Goals
-
-- Test behavior where decisions are made.
-- Prefer fewer, high-value tests over many shallow tests.
-- Keep tests deterministic, fast, and free of global state.
-- Avoid real network calls.
-- No hidden magic; keep setup explicit.
 
 #### What To Test
 
@@ -117,6 +128,39 @@
 
 - shadcn/ui with Tailwind CSS.
 - use the classes and colors variables on `apps/web/src/index.css` as much as possible for consistency. Avoid using arbitrary values unless absolutely necessary. so use `bg-primary` instead of `bg-[#123456]`.
+
+### Testing Guidelines
+
+#### What To Test
+
+- Pages: user flows, redirects, auth gating, form submissions, and error states.
+- Hooks: data shaping, derived state, and side effects.
+- Complex components: conditional rendering and critical interactions.
+- API client layer: request shaping and refresh behavior.
+
+#### What Not To Test
+
+- Third-party libraries (React Query, Router, shadcn/ui).
+- Tailwind class presence unless it drives behavior.
+- Snapshot-only tests with no behavioral assertions.
+
+#### Tooling & Structure
+
+- Unit/component tests: Vitest + React Testing Library + user-event.
+- Network mocking: MSW (node server).
+- Co-locate tests next to code: `foo.tsx` -> `foo.test.tsx`.
+- Shared helpers in `apps/web/src/testing`.
+
+#### Utilities
+
+- `renderWithProviders` wraps QueryClient + ts-rest + Toaster.
+- `renderWithRouter` builds a memory router for navigation tests.
+- MSW handlers live in `apps/web/src/testing/handlers.ts`.
+
+#### Quickstart
+
+- Run tests: `bun run test` (from `apps/web`).
+- Override MSW handlers inside tests with `server.use(...)`.
 
 ### Language
 

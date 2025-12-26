@@ -9,6 +9,19 @@ export default defineConfig({
   define: {
     "process.env": process.env,
   },
+  test: {
+    css: true,
+    environment: "jsdom",
+    setupFiles: "./src/testing/setup.ts",
+    globals: true,
+    clearMocks: true,
+    restoreMocks: true,
+    env: {
+      VITE_API_URL: "http://localhost:3001",
+      VITE_ENV: "development",
+      VITE_GOOGLE_AUTH_ENABLED: "false",
+    },
+  },
   server: {
     port: 3000,
   },

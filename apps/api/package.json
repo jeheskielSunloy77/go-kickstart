@@ -3,6 +3,7 @@
 	"private": true,
 	"version": "1.0.0",
 	"scripts": {
-		"dev": "go run ./cmd/api"
+		"dev": "go run ./cmd/api",
+		"test": "sh -c \"go test -covermode=atomic -coverprofile=coverage.out ./internal/handler ./internal/service ./internal/middleware ./internal/repository && go tool cover -func=coverage.out | tail -n1 && go tool cover -html=coverage.out -o coverage.html\""
 	}
 }

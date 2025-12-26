@@ -1,0 +1,11 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "with": ["@go-kickstart/api#dev"]
+    }
+  }
+}

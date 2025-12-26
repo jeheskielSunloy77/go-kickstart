@@ -22,7 +22,7 @@ export function ThemeDropdown(props: { children?: ReactNode }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
         {props.children || (
           <Button
             type="button"

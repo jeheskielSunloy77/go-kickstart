@@ -100,3 +100,5 @@ export const useApiClient = ({ isBlob = false }: { isBlob?: boolean } = {}) =>
   initClient(apiContract, createClientArgs({ isBlob }));
 
 export const tsr = initTsrReactQuery(apiContract, createClientArgs());
+
+export const __testing = { createApiFetcher, attemptRefresh };
