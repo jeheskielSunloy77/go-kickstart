@@ -18,11 +18,13 @@
 		"api:migrate:down": "cd apps/api && make migrate-down",
 		"api:migrate:fresh": "cd apps/api && make migrate-fresh",
 		"api:tidy": "cd apps/api && go fmt ./... && go mod tidy && go mod verify",
+		"api:install": "cd apps/api && go mod download",
 		"api:test": "cd apps/api && sh -c \"go test -covermode=atomic -coverprofile=coverage.out ./internal/handler ./internal/service ./internal/middleware ./internal/repository && go tool cover -func=coverage.out | tail -n1 && go tool cover -html=coverage.out -o coverage.html\"",
 		"web:test": "cd apps/web && bun run test:ci",
 		"web:shadcn:add": "cd apps/web && bunx --bun shadcn@latest add",
 		"openapi:generate": "cd packages/openapi && bun generate",
-		"emails:generate": "cd packages/emails && bun run generate"
+		"emails:generate": "cd packages/emails && bun run generate",
+		"postinstall": "bun run api:install"
 	},
 	"packageManager": "bun@1.2.13",
 	"engines": {
