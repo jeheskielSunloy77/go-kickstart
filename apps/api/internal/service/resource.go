@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ResourceServiceInterface[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
+type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
 	Store(ctx context.Context, dto S) (*T, error)
 	GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
 	GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error)
@@ -21,16 +21,16 @@ type ResourceServiceInterface[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] 
 	Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
 }
 
-type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
-	repo         repository.ResourceRepositoryInterface[T]
+type resourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+	repo         repository.ResourceRepository[T]
 	resourceName string
 }
 
-func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepositoryInterface[T]) *ResourceService[T, S, U] {
-	return &ResourceService[T, S, U]{resourceName: resourceName, repo: repo}
+func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepository[T]) ResourceService[T, S, U] {
+	return &resourceService[T, S, U]{resourceName: resourceName, repo: repo}
 }
 
-func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error) {
+func (s *resourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error) {
 	entity := dto.ToModel()
 	if err := s.repo.Store(ctx, entity); err != nil {
 		return nil, sqlerr.HandleError(err)
@@ -38,7 +38,7 @@ func (s *ResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error)
 	return entity, nil
 }
 
-func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
+func (s *resourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
 	entity, err := s.repo.GetByID(ctx, id, preloads)
 	if err != nil {
 		return nil, sqlerr.HandleError(err)
@@ -46,7 +46,7 @@ func (s *ResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, pr
 	return entity, nil
 }
 
-func (s *ResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error) {
+func (s *resourceService[T, S, U]) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error) {
 	entities, total, err := s.repo.GetMany(ctx, opts)
 	if err != nil {
 		return nil, 0, sqlerr.HandleError(err)
@@ -54,7 +54,7 @@ func (s *ResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.
 	return entities, total, nil
 }
 
-func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) {
+func (s *resourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) {
 	updates := dto.ToMap()
 
 	entity, err := s.repo.GetByID(ctx, id, nil)
@@ -74,7 +74,7 @@ func (s *ResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto
 	return updatedEntity, nil
 }
 
-func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error {
+func (s *resourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.Destroy(ctx, id); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return errs.NewNotFoundError(s.resourceName+" not found", true)
@@ -84,7 +84,7 @@ func (s *ResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) er
 	return nil
 }
 
-func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error {
+func (s *resourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.Kill(ctx, id); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return errs.NewNotFoundError(s.resourceName+" not found", true)
@@ -94,7 +94,7 @@ func (s *ResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error
 	return nil
 }
 
-func (s *ResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
+func (s *resourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
 	entity, err := s.repo.Restore(ctx, id)
 	if err != nil {
 		return nil, sqlerr.HandleError(err)

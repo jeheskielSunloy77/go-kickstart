@@ -387,7 +387,7 @@ func TestAuthServiceStartGoogleAuth_Success(t *testing.T) {
 		nil,
 		nil,
 		nil,
-	)
+	).(*authService)
 
 	mockOAuth := &mockOAuthConfig{authURL: "https://accounts.google.com/o/oauth2/auth"}
 	svc.googleOAuthConfig = mockOAuth
@@ -442,7 +442,7 @@ func TestAuthServiceCompleteGoogleAuth_Success(t *testing.T) {
 		nil,
 		nil,
 		nil,
-	)
+	).(*authService)
 
 	oauthConfig := &mockOAuthConfig{
 		exchangeFn: func(_ context.Context, code string) (*oauth2.Token, error) {

@@ -9,7 +9,7 @@ type UserHandler struct {
 	*ResourceHandler[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
 }
 
-func NewUserHandler(h Handler, service *service.UserService) *UserHandler {
+func NewUserHandler(h Handler, service service.UserService) *UserHandler {
 	return &UserHandler{
 		ResourceHandler: NewResourceHandler("user", h, service),
 	}

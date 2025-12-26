@@ -73,12 +73,13 @@ func (m *mockUserRepo) Restore(ctx context.Context, id uuid.UUID) (*model.User, 
 	return nil, nil
 }
 
-func newUserServiceWithRepo(repo *mockUserRepo) *UserService {
-	return &UserService{
-		ResourceService: &ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]{
+func newUserServiceWithRepo(repo *mockUserRepo) UserService {
+	return &userService{
+		ResourceService: &resourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]{
 			resourceName: "user",
 			repo:         repo,
 		},
+		repo: repo,
 	}
 }
 

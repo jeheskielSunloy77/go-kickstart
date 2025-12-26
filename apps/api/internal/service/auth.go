@@ -51,10 +51,10 @@ type googleStatePayload struct {
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
-type AuthService struct {
-	repo                 repository.AuthRepositoryInterface
-	sessionRepo          repository.AuthSessionRepositoryInterface
-	verificationRepo     repository.EmailVerificationRepositoryInterface
+type authService struct {
+	repo                 repository.AuthRepository
+	sessionRepo          repository.AuthSessionRepository
+	verificationRepo     repository.EmailVerificationRepository
 	taskEnqueuer         TaskEnqueuer
 	logger               *zerolog.Logger
 	secretKey            []byte
@@ -80,7 +80,7 @@ type AuthResult struct {
 	RefreshToken AuthToken   `json:"refreshToken"`
 }
 
-type AuthServiceInterface interface {
+type AuthService interface {
 	Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error)
 	Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error)
 	StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error)
@@ -103,7 +103,7 @@ type GoogleAuthStart struct {
 	StateExpiresAt time.Time
 }
 
-func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterface, sessionRepo repository.AuthSessionRepositoryInterface, verificationRepo repository.EmailVerificationRepositoryInterface, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) *AuthService {
+func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepository, sessionRepo repository.AuthSessionRepository, verificationRepo repository.EmailVerificationRepository, taskEnqueuer TaskEnqueuer, logger *zerolog.Logger) AuthService {
 	refreshTTL := cfg.RefreshTokenTTL
 	if refreshTTL <= 0 {
 		refreshTTL = 30 * 24 * time.Hour
@@ -117,7 +117,7 @@ func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterf
 		Endpoint:     googleoauth.Endpoint,
 	}
 
-	return &AuthService{
+	return &authService{
 		repo:                 repo,
 		sessionRepo:          sessionRepo,
 		verificationRepo:     verificationRepo,
@@ -136,7 +136,7 @@ func NewAuthService(cfg *config.AuthConfig, repo repository.AuthRepositoryInterf
 	}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error) {
+func (s *authService) Register(ctx context.Context, email, username, password, userAgent, ipAddress string) (*AuthResult, error) {
 	if len(password) < minPasswordLength {
 		return nil, errs.NewBadRequestError(
 			fmt.Sprintf("Password must be at least %d characters", minPasswordLength),
@@ -182,7 +182,7 @@ func (s *AuthService) Register(ctx context.Context, email, username, password, u
 	}, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error) {
+func (s *authService) Login(ctx context.Context, identifier, password, userAgent, ipAddress string) (*AuthResult, error) {
 	user, err := s.lookupUser(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -219,7 +219,7 @@ func (s *AuthService) Login(ctx context.Context, identifier, password, userAgent
 	}, nil
 }
 
-func (s *AuthService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error) {
+func (s *authService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, error) {
 	if !s.googleConfigReady() {
 		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
 	}
@@ -238,7 +238,7 @@ func (s *AuthService) StartGoogleAuth(ctx context.Context) (*GoogleAuthStart, er
 	}, nil
 }
 
-func (s *AuthService) CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error) {
+func (s *authService) CompleteGoogleAuth(ctx context.Context, code, state, stateCookie, userAgent, ipAddress string) (*AuthResult, error) {
 	if !s.googleConfigReady() {
 		return nil, errs.NewBadRequestError("Google login is not configured", false, nil, nil)
 	}
@@ -276,7 +276,7 @@ func (s *AuthService) CompleteGoogleAuth(ctx context.Context, code, state, state
 	return s.loginWithGoogleClaims(ctx, subject, emailClaim, emailVerified, userAgent, ipAddress)
 }
 
-func (s *AuthService) loginWithGoogleClaims(ctx context.Context, subject, emailClaim string, emailVerified bool, userAgent, ipAddress string) (*AuthResult, error) {
+func (s *authService) loginWithGoogleClaims(ctx context.Context, subject, emailClaim string, emailVerified bool, userAgent, ipAddress string) (*AuthResult, error) {
 	if subject == "" {
 		return nil, errs.NewUnauthorizedError("Invalid Google token", false)
 	}
@@ -337,11 +337,11 @@ func (s *AuthService) loginWithGoogleClaims(ctx context.Context, subject, emailC
 	}, nil
 }
 
-func (s *AuthService) googleConfigReady() bool {
+func (s *authService) googleConfigReady() bool {
 	return s.googleClientID != "" && s.googleClientSecret != "" && s.googleRedirectURL != "" && s.googleOAuthConfig != nil
 }
 
-func (s *AuthService) buildGoogleStateCookie() (string, string, time.Time, error) {
+func (s *authService) buildGoogleStateCookie() (string, string, time.Time, error) {
 	state, err := generateStateToken()
 	if err != nil {
 		return "", "", time.Time{}, err
@@ -366,7 +366,7 @@ func (s *AuthService) buildGoogleStateCookie() (string, string, time.Time, error
 	return state, cookieValue, expiresAt, nil
 }
 
-func (s *AuthService) parseGoogleStateCookie(cookieValue string) (*googleStatePayload, error) {
+func (s *authService) parseGoogleStateCookie(cookieValue string) (*googleStatePayload, error) {
 	parts := strings.SplitN(cookieValue, ".", 2)
 	if len(parts) != 2 {
 		return nil, errors.New("invalid state cookie format")
@@ -411,20 +411,20 @@ func (s *AuthService) parseGoogleStateCookie(cookieValue string) (*googleStatePa
 	return &payload, nil
 }
 
-func (s *AuthService) signGoogleState(payload string) []byte {
+func (s *authService) signGoogleState(payload string) []byte {
 	mac := hmac.New(sha256.New, s.secretKey)
 	_, _ = mac.Write([]byte(payload))
 	return mac.Sum(nil)
 }
 
-func (s *AuthService) lookupUser(ctx context.Context, identifier string) (*model.User, error) {
+func (s *authService) lookupUser(ctx context.Context, identifier string) (*model.User, error) {
 	if emailRegex.MatchString(identifier) {
 		return s.repo.GetByEmail(ctx, identifier)
 	}
 	return s.repo.GetByUsername(ctx, identifier)
 }
 
-func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) {
+func (s *authService) VerifyEmail(ctx context.Context, email, code string) (*model.User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -463,7 +463,7 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email, code string) (*mod
 	return user, nil
 }
 
-func (s *AuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) {
+func (s *authService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model.User, error) {
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, sqlerr.HandleError(err)
@@ -471,7 +471,7 @@ func (s *AuthService) CurrentUser(ctx context.Context, userID uuid.UUID) (*model
 	return user, nil
 }
 
-func (s *AuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error) {
+func (s *authService) Refresh(ctx context.Context, refreshToken, userAgent, ipAddress string) (*AuthResult, error) {
 	if refreshToken == "" {
 		return nil, errs.NewUnauthorizedError("Unauthorized", false)
 	}
@@ -519,7 +519,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken, userAgent, ipAd
 	}, nil
 }
 
-func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
+func (s *authService) Logout(ctx context.Context, refreshToken string) error {
 	if refreshToken == "" || s.sessionRepo == nil {
 		return nil
 	}
@@ -541,7 +541,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return sqlerr.HandleError(s.sessionRepo.RevokeByID(ctx, session.ID, now))
 }
 
-func (s *AuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error {
+func (s *authService) LogoutAll(ctx context.Context, userID uuid.UUID) error {
 	if s.sessionRepo == nil {
 		return nil
 	}
@@ -549,7 +549,7 @@ func (s *AuthService) LogoutAll(ctx context.Context, userID uuid.UUID) error {
 	return sqlerr.HandleError(s.sessionRepo.RevokeByUserID(ctx, userID, now))
 }
 
-func (s *AuthService) ResendVerification(ctx context.Context, userID uuid.UUID) error {
+func (s *authService) ResendVerification(ctx context.Context, userID uuid.UUID) error {
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return sqlerr.HandleError(err)
@@ -567,7 +567,7 @@ func (s *AuthService) ResendVerification(ctx context.Context, userID uuid.UUID) 
 	return nil
 }
 
-func (s *AuthService) generateToken(user *model.User) (string, time.Time, error) {
+func (s *authService) generateToken(user *model.User) (string, time.Time, error) {
 	if user == nil {
 		return "", time.Time{}, errs.NewInternalServerError()
 	}
@@ -591,7 +591,7 @@ func (s *AuthService) generateToken(user *model.User) (string, time.Time, error)
 	return signed, exp, nil
 }
 
-func (s *AuthService) createSession(ctx context.Context, user *model.User, userAgent, ipAddress string) (string, time.Time, error) {
+func (s *authService) createSession(ctx context.Context, user *model.User, userAgent, ipAddress string) (string, time.Time, error) {
 	if s.sessionRepo == nil || user == nil {
 		return "", time.Time{}, errs.NewInternalServerError()
 	}
@@ -657,7 +657,7 @@ func hashRefreshToken(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.User) error {
+func (s *authService) queueEmailVerification(ctx context.Context, user *model.User) error {
 	if user == nil || user.Email == "" || user.EmailVerifiedAt != nil || s.verificationRepo == nil {
 		return nil
 	}
@@ -705,7 +705,7 @@ func (s *AuthService) queueEmailVerification(ctx context.Context, user *model.Us
 	return err
 }
 
-func (s *AuthService) logVerificationQueueError(err error) {
+func (s *authService) logVerificationQueueError(err error) {
 	if err == nil || s.logger == nil {
 		return
 	}

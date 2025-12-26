@@ -7,8 +7,8 @@ import (
 )
 
 type Services struct {
-	Auth          *AuthService
-	User          *UserService
+	Auth          AuthService
+	User          UserService
 	Authorization *AuthorizationService
 	Job           *job.JobService
 }

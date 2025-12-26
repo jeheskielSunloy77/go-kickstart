@@ -14,10 +14,10 @@ import (
 type ResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
 	Handler
 	resourceName string
-	service      service.ResourceServiceInterface[T, S, U]
+	service      service.ResourceService[T, S, U]
 }
 
-func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceServiceInterface[T, S, U]) *ResourceHandler[T, S, U] {
+func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceService[T, S, U]) *ResourceHandler[T, S, U] {
 	return &ResourceHandler[T, S, U]{
 		resourceName: resourceName,
 		Handler:      base,

@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthRepositoryInterface interface {
+type AuthRepository interface {
 	Save(ctx context.Context, user *model.User) error
 	CreateUser(ctx context.Context, user *model.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
@@ -21,26 +21,26 @@ type AuthRepositoryInterface interface {
 	UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error
 }
 
-type AuthRepository struct {
+type authRepository struct {
 	db *gorm.DB
 }
 
-func NewAuthRepository(db *gorm.DB) *AuthRepository {
-	return &AuthRepository{db: db}
+func NewAuthRepository(db *gorm.DB) AuthRepository {
+	return &authRepository{db: db}
 }
 
-func (r *AuthRepository) Save(ctx context.Context, user *model.User) error {
+func (r *authRepository) Save(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-func (r *AuthRepository) CreateUser(ctx context.Context, user *model.User) error {
+func (r *authRepository) CreateUser(ctx context.Context, user *model.User) error {
 	if user.ID == uuid.Nil {
 		user.ID = uuid.New()
 	}
 	return r.db.WithContext(ctx).Create(user).Error
 }
 
-func (r *AuthRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
+func (r *authRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
 	if err := r.db.WithContext(ctx).First(&user, "id = ?", id).Error; err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (r *AuthRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 	return &user, nil
 }
 
-func (r *AuthRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *authRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
 	if err := r.db.WithContext(ctx).First(&user, "LOWER(email) = ?", strings.ToLower(email)).Error; err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (r *AuthRepository) GetByEmail(ctx context.Context, email string) (*model.U
 	return &user, nil
 }
 
-func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+func (r *authRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	var user model.User
 	if err := r.db.WithContext(ctx).First(&user, "LOWER(username) = ?", strings.ToLower(username)).Error; err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (r *AuthRepository) GetByUsername(ctx context.Context, username string) (*m
 	return &user, nil
 }
 
-func (r *AuthRepository) GetByGoogleID(ctx context.Context, googleID string) (*model.User, error) {
+func (r *authRepository) GetByGoogleID(ctx context.Context, googleID string) (*model.User, error) {
 	var user model.User
 	if err := r.db.WithContext(ctx).First(&user, "google_id = ?", googleID).Error; err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (r *AuthRepository) GetByGoogleID(ctx context.Context, googleID string) (*m
 	return &user, nil
 }
 
-func (r *AuthRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error {
+func (r *authRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts time.Time) error {
 	return r.db.WithContext(ctx).
 		Model(&model.User{}).
 		Where("id = ?", id).
@@ -80,7 +80,7 @@ func (r *AuthRepository) UpdateLoginAt(ctx context.Context, id uuid.UUID, ts tim
 		Error
 }
 
-func (r *AuthRepository) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error {
+func (r *authRepository) UpdateEmailVerifiedAt(ctx context.Context, id uuid.UUID, ts time.Time) error {
 	return r.db.WithContext(ctx).
 		Model(&model.User{}).
 		Where("id = ?", id).

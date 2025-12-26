@@ -5,12 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository struct {
-	*ResourceRepository[model.User]
+type UserRepository interface {
+	ResourceRepository[model.User]
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{
+type userRepository struct {
+	ResourceRepository[model.User]
+}
+
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{
 		ResourceRepository: NewResourceRepository[model.User](db),
 	}
 }

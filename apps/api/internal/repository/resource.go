@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ResourceRepositoryInterface[T any] interface {
+type ResourceRepository[T any] interface {
 	Store(ctx context.Context, entity *T) error
 	GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
 	GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error)
@@ -20,19 +20,19 @@ type ResourceRepositoryInterface[T any] interface {
 	Restore(ctx context.Context, id uuid.UUID) (*T, error)
 }
 
-type ResourceRepository[T any] struct {
+type resourceRepository[T any] struct {
 	db *gorm.DB
 }
 
-func NewResourceRepository[T any](db *gorm.DB) *ResourceRepository[T] {
-	return &ResourceRepository[T]{db: db}
+func NewResourceRepository[T any](db *gorm.DB) ResourceRepository[T] {
+	return &resourceRepository[T]{db: db}
 }
 
-func (r *ResourceRepository[T]) Store(ctx context.Context, entity *T) error {
+func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error {
 	return r.db.WithContext(ctx).Create(entity).Error
 }
 
-func (r *ResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
+func (r *resourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
 	var entity T
 	query := applyPreloads(r.db.WithContext(ctx), preloads)
 	if err := query.First(&entity, id).Error; err != nil {
@@ -41,7 +41,7 @@ func (r *ResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, prelo
 	return &entity, nil
 }
 
-func (r *ResourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) {
+func (r *resourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) {
 	// if the updates are provided, use them to only update specific fields, if not replace the entire entity
 	var err error
 	if len(updates) > 0 {
@@ -57,15 +57,15 @@ func (r *ResourceRepository[T]) Update(ctx context.Context, entity T, updates ..
 	return &entity, nil
 }
 
-func (r *ResourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error {
+func (r *resourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(new(T), id).Error
 }
 
-func (r *ResourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error {
+func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error
 }
 
-func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) {
+func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) {
 	if err := r.db.WithContext(ctx).
 		Unscoped().
 		Model(new(T)).
@@ -78,7 +78,7 @@ func (r *ResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
 	return r.GetByID(ctx, id, nil)
 }
 
-func (r *ResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) {
+func (r *resourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) {
 	opts.Normalize()
 
 	var (

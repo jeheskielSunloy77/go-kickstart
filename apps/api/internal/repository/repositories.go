@@ -5,10 +5,10 @@ import (
 )
 
 type Repositories struct {
-	Auth              *AuthRepository
-	AuthSession       *AuthSessionRepository
-	User              *UserRepository
-	EmailVerification *EmailVerificationRepository
+	Auth              AuthRepository
+	AuthSession       AuthSessionRepository
+	User              UserRepository
+	EmailVerification EmailVerificationRepository
 }
 
 func NewRepositories(s *server.Server) *Repositories {

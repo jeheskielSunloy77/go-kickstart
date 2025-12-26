@@ -13,17 +13,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	*ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
+type UserService interface {
+	ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{
+type userService struct {
+	ResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]
+	repo repository.UserRepository
+}
+
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{
 		ResourceService: NewResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]("user", repo),
+		repo:            repo,
 	}
 }
 
-func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) {
+func (s *userService) Store(ctx context.Context, dto *model.StoreUserDTO) (*model.User, error) {
 	user := dto.ToModel()
 
 	if dto.Password != "" {
@@ -40,7 +46,7 @@ func (s *UserService) Store(ctx context.Context, dto *model.StoreUserDTO) (*mode
 	return user, nil
 }
 
-func (s *UserService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) {
+func (s *userService) Update(ctx context.Context, id uuid.UUID, dto *model.UpdateUserDTO) (*model.User, error) {
 	if dto == nil {
 		return s.GetByID(ctx, id, nil)
 	}
