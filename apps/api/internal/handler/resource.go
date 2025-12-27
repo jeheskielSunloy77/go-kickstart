@@ -11,13 +11,13 @@ import (
 	"github.com/jeheskielSunloy77/go-kickstart/internal/service"
 )
 
-type ResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+type ResourceHandler[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
 	Handler
 	resourceName string
 	service      service.ResourceService[T, S, U]
 }
 
-func NewResourceHandler[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceService[T, S, U]) *ResourceHandler[T, S, U] {
+func NewResourceHandler[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, base Handler, service service.ResourceService[T, S, U]) *ResourceHandler[T, S, U] {
 	return &ResourceHandler[T, S, U]{
 		resourceName: resourceName,
 		Handler:      base,

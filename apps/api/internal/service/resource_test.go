@@ -18,6 +18,10 @@ type testEntity struct {
 	Name string
 }
 
+func (m testEntity) GetID() uuid.UUID {
+	return m.ID
+}
+
 type testStoreDTO struct {
 	Name string
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/database"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/handler"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/logger"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/repository"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/router"
@@ -44,8 +45,14 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to initialize server")
 	}
 
+	cacheClient := cache.NewRedisCache(
+		httpServer.Redis,
+		&cfg.Cache,
+		&log,
+	)
+
 	// Initialize repositories, services, and handlers
-	repos := repository.NewRepositories(httpServer)
+	repos := repository.NewRepositories(httpServer, cacheClient)
 	services, serviceErr := service.NewServices(httpServer, repos)
 	if serviceErr != nil {
 		log.Fatal().Err(serviceErr).Msg("could not create services")

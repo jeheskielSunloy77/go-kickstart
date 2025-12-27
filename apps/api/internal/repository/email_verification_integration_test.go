@@ -21,7 +21,7 @@ func TestEmailVerificationRepository_Lifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	err := internaltesting.WithRollbackTransaction(ctx, testDB, func(tx *gorm.DB) error {
-		userRepo := NewUserRepository(tx, nil, 0)
+		userRepo := NewUserRepository(tx, nil)
 		repo := NewEmailVerificationRepository(tx)
 
 		user := &model.User{

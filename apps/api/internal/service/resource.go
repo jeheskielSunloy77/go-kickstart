@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
+type ResourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]] interface {
 	Store(ctx context.Context, dto S) (*T, error)
 	GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
 	GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error)
@@ -21,12 +21,12 @@ type ResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] interface
 	Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
 }
 
-type resourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+type resourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
 	repo         repository.ResourceRepository[T]
 	resourceName string
 }
 
-func NewResourceService[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepository[T]) ResourceService[T, S, U] {
+func NewResourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepository[T]) ResourceService[T, S, U] {
 	return &resourceService[T, S, U]{resourceName: resourceName, repo: repo}
 }
 

@@ -18,6 +18,6 @@ type EmailVerification struct {
 	VerifiedAt *time.Time `json:"verifiedAt,omitempty"`
 }
 
-func (EmailVerification) TableName() string {
-	return "email_verifications"
+func (m EmailVerification) GetID() uuid.UUID {
+	return m.ID
 }

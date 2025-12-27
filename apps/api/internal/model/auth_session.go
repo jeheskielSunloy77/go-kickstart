@@ -17,3 +17,7 @@ type AuthSession struct {
 	CreatedAt        time.Time  `json:"createdAt"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
 }
+
+func (m AuthSession) GetID() uuid.UUID {
+	return m.ID
+}

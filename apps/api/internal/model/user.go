@@ -24,6 +24,10 @@ type User struct {
 	IsAdmin         bool       `json:"isAdmin" gorm:"not null;default:false"`
 }
 
+func (m User) GetID() uuid.UUID {
+	return m.ID
+}
+
 type StoreUserDTO struct {
 	Email    string  `json:"email" validate:"required,email"`
 	Username string  `json:"username" validate:"required,min=3,max=50"`

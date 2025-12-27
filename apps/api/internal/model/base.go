@@ -2,28 +2,13 @@ package model
 
 import (
 	"reflect"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/validation"
 )
 
-type BaseWithId struct {
-	ID uuid.UUID `json:"id" db:"id"`
-}
-
-type BaseWithCreatedAt struct {
-	CreatedAt time.Time `json:"createdAt" db:"created_at"`
-}
-
-type BaseWithUpdatedAt struct {
-	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
-}
-
-type Base struct {
-	BaseWithId
-	BaseWithCreatedAt
-	BaseWithUpdatedAt
+type BaseModel interface {
+	GetID() uuid.UUID
 }
 
 type PaginatedResponse[T any] struct {

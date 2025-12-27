@@ -3,10 +3,13 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/errs"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 )
 
 func PrintJSON(v any) {
@@ -54,4 +57,35 @@ func ParseQueryInt(raw string, maxAndDefaultVal ...int) int {
 	}
 
 	return defaultVal
+}
+
+func GetModelName[T model.BaseModel]() string {
+	t := reflect.TypeOf((*T)(nil)).Elem()
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	return t.Name()
+}
+
+func GetModelNameLower[T model.BaseModel]() string {
+	return strings.ToLower(GetModelName[T]())
+}
+
+func GetModelSemanticName[T model.BaseModel]() string {
+	var name strings.Builder
+
+	for i, r := range GetModelName[T]() {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			name.WriteRune(' ')
+		}
+		name.WriteRune(r)
+	}
+	return name.String()
+
+}
+func GetModelCacheKey[T model.BaseModel](id uuid.UUID) string {
+	if id == uuid.Nil {
+		return ""
+	}
+	return "resource:" + GetModelNameLower[T]() + ":id:" + id.String()
 }

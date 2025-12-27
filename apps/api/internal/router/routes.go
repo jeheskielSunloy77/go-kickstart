@@ -40,7 +40,7 @@ func registerRoutes(
 	resource(protected, "/users", h.User.ResourceHandler)
 }
 
-func resource[T any, S model.StoreDTO[T], U model.UpdateDTO[T]](group fiber.Router, path string, h *handler.ResourceHandler[T, S, U], authMiddleware ...fiber.Handler) {
+func resource[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]](group fiber.Router, path string, h *handler.ResourceHandler[T, S, U], authMiddleware ...fiber.Handler) {
 	g := group.Group(path, authMiddleware...)
 	g.Get("/", h.GetMany())
 	g.Get("/:id", h.GetByID())

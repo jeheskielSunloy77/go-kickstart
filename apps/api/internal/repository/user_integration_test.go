@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	internaltesting "github.com/jeheskielSunloy77/go-kickstart/internal/testing"
 	"gorm.io/gorm"
@@ -22,7 +24,7 @@ func TestUserRepository_ResourceLifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	err := internaltesting.WithRollbackTransaction(ctx, testDB, func(tx *gorm.DB) error {
-		repo := NewUserRepository(tx, nil, 0)
+		repo := NewUserRepository(tx, nil)
 
 		user1 := &model.User{ID: uuid.New(), Email: "user1@example.com", Username: "user1"}
 		user2 := &model.User{ID: uuid.New(), Email: "user2@example.com", Username: "user2"}
@@ -85,6 +87,27 @@ func (c *testCache) Set(ctx context.Context, key string, value []byte, ttl ...ti
 	return nil
 }
 
+func (c *testCache) SetJSON(ctx context.Context, key string, value any, ttl ...time.Duration) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	c.values[key] = data
+	return nil
+}
+
+func (c *testCache) GetJSON(ctx context.Context, key string, dest any) error {
+	data, ok := c.values[key]
+	if !ok {
+		return cache.ErrCacheMiss
+	}
+	if err := json.Unmarshal(data, dest); err != nil {
+		_ = c.Delete(ctx, key)
+		return cache.ErrCacheMiss
+	}
+	return nil
+}
+
 func (c *testCache) Delete(ctx context.Context, keys ...string) error {
 	for _, key := range keys {
 		delete(c.values, key)
@@ -101,12 +124,12 @@ func TestUserRepository_CacheLifecycle(t *testing.T) {
 
 	err := internaltesting.WithRollbackTransaction(ctx, testDB, func(tx *gorm.DB) error {
 		cacheClient := newTestCache()
-		repo := NewUserRepository(tx, cacheClient, time.Minute)
+		repo := NewUserRepository(tx, cacheClient)
 
 		user := &model.User{ID: uuid.New(), Email: "cache1@example.com", Username: "cache1"}
 		require.NoError(t, repo.Store(ctx, user))
 
-		key := "resource:" + resourceTypeName[model.User]() + ":id:" + user.ID.String()
+		key := "resource:" + utils.GetModelNameLower[model.User]() + ":id:" + user.ID.String()
 		_, ok := cacheClient.values[key]
 		require.True(t, ok, "expected cache entry after store")
 
@@ -119,7 +142,7 @@ func TestUserRepository_CacheLifecycle(t *testing.T) {
 		user2 := &model.User{ID: uuid.New(), Email: "cache2@example.com", Username: "cache2"}
 		require.NoError(t, repo.Store(ctx, user2))
 
-		key2 := "resource:" + resourceTypeName[model.User]() + ":id:" + user2.ID.String()
+		key2 := "resource:" + utils.GetModelNameLower[model.User]() + ":id:" + user2.ID.String()
 		require.NotEmpty(t, cacheClient.values[key2])
 
 		fetched, err := repo.GetByID(ctx, user2.ID, nil)
@@ -133,7 +156,7 @@ func TestUserRepository_CacheLifecycle(t *testing.T) {
 		user3 := &model.User{ID: uuid.New(), Email: "cache3@example.com", Username: "cache3"}
 		require.NoError(t, repo.Store(ctx, user3))
 
-		key3 := "resource:" + resourceTypeName[model.User]() + ":id:" + user3.ID.String()
+		key3 := "resource:" + utils.GetModelNameLower[model.User]() + ":id:" + user3.ID.String()
 		require.NotEmpty(t, cacheClient.values[key3])
 
 		require.NoError(t, repo.Destroy(ctx, user3.ID))

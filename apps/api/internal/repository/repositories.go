@@ -12,15 +12,11 @@ type Repositories struct {
 	EmailVerification EmailVerificationRepository
 }
 
-func NewRepositories(s *server.Server) *Repositories {
-	var cacheClient cache.Cache
-	if s.Redis != nil && s.Config.Cache.TTL > 0 {
-		cacheClient = cache.NewRedisCache(s.Redis, &s.Config.Cache)
-	}
+func NewRepositories(s *server.Server, cacheClient cache.Cache) *Repositories {
 	return &Repositories{
 		Auth:              NewAuthRepository(s.DB.DB),
 		AuthSession:       NewAuthSessionRepository(s.DB.DB),
-		User:              NewUserRepository(s.DB.DB, cacheClient, s.Config.Cache.TTL),
+		User:              NewUserRepository(s.DB.DB, cacheClient),
 		EmailVerification: NewEmailVerificationRepository(s.DB.DB),
 	}
 }
