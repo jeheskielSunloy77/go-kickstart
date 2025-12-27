@@ -58,6 +58,10 @@ type mockResourceRepo struct {
 	restoreFn func(ctx context.Context, id uuid.UUID) (*testEntity, error)
 }
 
+func (m *mockResourceRepo) CacheEnabled() bool {
+	return false
+}
+
 func (m *mockResourceRepo) Store(ctx context.Context, entity *testEntity) error {
 	if m.storeFn != nil {
 		return m.storeFn(ctx, entity)

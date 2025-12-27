@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	internaltesting "github.com/jeheskielSunloy77/go-kickstart/internal/testing"
 	"gorm.io/gorm"
@@ -21,7 +22,7 @@ func TestEmailVerificationRepository_Lifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	err := internaltesting.WithRollbackTransaction(ctx, testDB, func(tx *gorm.DB) error {
-		userRepo := NewUserRepository(tx, nil)
+		userRepo := NewUserRepository(&config.Config{}, tx, nil)
 		repo := NewEmailVerificationRepository(tx)
 
 		user := &model.User{

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
@@ -24,7 +25,7 @@ func TestUserRepository_ResourceLifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	err := internaltesting.WithRollbackTransaction(ctx, testDB, func(tx *gorm.DB) error {
-		repo := NewUserRepository(tx, nil)
+		repo := NewUserRepository(&config.Config{}, tx, nil)
 
 		user1 := &model.User{ID: uuid.New(), Email: "user1@example.com", Username: "user1"}
 		user2 := &model.User{ID: uuid.New(), Email: "user2@example.com", Username: "user2"}
@@ -124,7 +125,11 @@ func TestUserRepository_CacheLifecycle(t *testing.T) {
 
 	err := internaltesting.WithRollbackTransaction(ctx, testDB, func(tx *gorm.DB) error {
 		cacheClient := newTestCache()
-		repo := NewUserRepository(tx, cacheClient)
+		repo := NewUserRepository(&config.Config{
+			Cache: config.CacheConfig{
+				TTL: 5 * time.Minute,
+			},
+		}, tx, cacheClient)
 
 		user := &model.User{ID: uuid.New(), Email: "cache1@example.com", Username: "cache1"}
 		require.NoError(t, repo.Store(ctx, user))

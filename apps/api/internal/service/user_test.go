@@ -24,6 +24,10 @@ type mockUserRepo struct {
 	restoreFn func(ctx context.Context, id uuid.UUID) (*model.User, error)
 }
 
+func (m *mockUserRepo) CacheEnabled() bool {
+	return false
+}
+
 func (m *mockUserRepo) Store(ctx context.Context, entity *model.User) error {
 	if m.storeFn != nil {
 		return m.storeFn(ctx, entity)

@@ -12,7 +12,6 @@ import (
 )
 
 var ErrCacheMiss = errors.New("cache miss")
-var ErrCacheDisabled = errors.New("cache is disabled")
 
 type Cache interface {
 	Get(ctx context.Context, key string) ([]byte, error)
@@ -23,43 +22,28 @@ type Cache interface {
 }
 
 type redisCache struct {
-	client    *redis.Client
-	cfg       *config.CacheConfig
-	logger    *zerolog.Logger
-	isEnabled bool
+	client *redis.Client
+	cfg    *config.CacheConfig
+	logger *zerolog.Logger
 }
 
 func NewRedisCache(client *redis.Client, cfg *config.CacheConfig, logger *zerolog.Logger) *redisCache {
-	isEnabled := client != nil && cfg.TTL > 0
-
-	return &redisCache{client: client, cfg: cfg, logger: logger, isEnabled: isEnabled}
+	return &redisCache{client: client, cfg: cfg, logger: logger}
 }
 
 func (c *redisCache) Get(ctx context.Context, key string) ([]byte, error) {
-	if !c.isEnabled {
-		return nil, ErrCacheDisabled
-	}
-
 	data, err := c.get(ctx, key)
 	c.logGet("get", key, err)
 	return data, err
 }
 
 func (c *redisCache) Set(ctx context.Context, key string, value []byte, ttl ...time.Duration) error {
-	if !c.isEnabled {
-		return ErrCacheDisabled
-	}
-
 	err := c.set(ctx, key, value, ttl...)
 	c.logWrite("set", key, err, ttl...)
 	return err
 }
 
 func (c *redisCache) SetJSON(ctx context.Context, key string, value any, ttl ...time.Duration) error {
-	if !c.isEnabled {
-		return ErrCacheDisabled
-	}
-
 	if key == "" {
 		return nil
 	}
@@ -75,20 +59,12 @@ func (c *redisCache) SetJSON(ctx context.Context, key string, value any, ttl ...
 }
 
 func (c *redisCache) Delete(ctx context.Context, keys ...string) error {
-	if !c.isEnabled {
-		return ErrCacheDisabled
-	}
-
 	err := c.del(ctx, keys...)
 	c.logDelete(ctx, keys, err)
 	return err
 }
 
 func (c *redisCache) GetJSON(ctx context.Context, key string, dest any) error {
-	if !c.isEnabled {
-		return ErrCacheDisabled
-	}
-
 	data, err := c.get(ctx, key)
 	if err != nil {
 		c.logGet("get_json", key, err)

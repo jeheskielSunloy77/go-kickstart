@@ -100,6 +100,7 @@
 - Do not test business logic in handlers.
 - Do not duplicate service tests at handler level.
 - Do not test Fiber or any other external libraries functionality.
+- Do not test duplicate resource handlers, services, or repositories that use the generic implementations. still test any additional custom logic added.
 
 #### Style & Structure
 

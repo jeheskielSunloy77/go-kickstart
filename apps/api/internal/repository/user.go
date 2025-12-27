@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	"gorm.io/gorm"
@@ -14,8 +15,8 @@ type userRepository struct {
 	ResourceRepository[model.User]
 }
 
-func NewUserRepository(db *gorm.DB, cacheClient cache.Cache) UserRepository {
+func NewUserRepository(cfg *config.Config, db *gorm.DB, cacheClient cache.Cache) UserRepository {
 	return &userRepository{
-		ResourceRepository: NewResourceRepository[model.User](db, cacheClient),
+		ResourceRepository: NewResourceRepository[model.User](cfg, db, cacheClient),
 	}
 }

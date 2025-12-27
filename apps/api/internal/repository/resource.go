@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/utils"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
@@ -20,15 +21,24 @@ type ResourceRepository[T model.BaseModel] interface {
 	Destroy(ctx context.Context, id uuid.UUID) error
 	Kill(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) (*T, error)
+	CacheEnabled() bool
 }
 
 type resourceRepository[T model.BaseModel] struct {
-	db    *gorm.DB
-	cache cache.Cache
+	cfg            *config.Config
+	db             *gorm.DB
+	cache          cache.Cache
+	isCacheEnabled bool
 }
 
-func NewResourceRepository[T model.BaseModel](db *gorm.DB, cacheClient cache.Cache) ResourceRepository[T] {
-	return &resourceRepository[T]{db: db, cache: cacheClient}
+func NewResourceRepository[T model.BaseModel](cfg *config.Config, db *gorm.DB, cacheClient cache.Cache) ResourceRepository[T] {
+	isCacheEnabled := cacheClient != nil && cfg.Cache.TTL > 0
+
+	return &resourceRepository[T]{db: db, cache: cacheClient, cfg: cfg, isCacheEnabled: isCacheEnabled}
+}
+
+func (r *resourceRepository[T]) CacheEnabled() bool {
+	return r.isCacheEnabled
 }
 
 func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error {
@@ -36,14 +46,16 @@ func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error {
 		return err
 	}
 
-	id := (*entity).GetID()
-	_ = r.cache.SetJSON(ctx, utils.GetModelCacheKey[T](id), entity)
+	if r.isCacheEnabled {
+		id := (*entity).GetID()
+		_ = r.cache.SetJSON(ctx, utils.GetModelCacheKey[T](id), entity)
+	}
 
 	return nil
 }
 
 func (r *resourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) {
-	if len(preloads) == 0 {
+	if len(preloads) == 0 && r.isCacheEnabled {
 		if cached, ok := r.getCachedByID(ctx, id); ok {
 			return cached, nil
 		}
@@ -54,7 +66,11 @@ func (r *resourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, prelo
 	if err := query.First(&entity, id).Error; err != nil {
 		return nil, err
 	}
-	_ = r.cache.SetJSON(ctx, utils.GetModelCacheKey[T](id), &entity)
+
+	if r.isCacheEnabled {
+		_ = r.cache.SetJSON(ctx, utils.GetModelCacheKey[T](id), &entity)
+	}
+
 	return &entity, nil
 }
 
@@ -70,7 +86,9 @@ func (r *resourceRepository[T]) Update(ctx context.Context, entity T, updates ..
 		return nil, err
 	}
 
-	r.evictCache(ctx, entity.GetID())
+	if r.isCacheEnabled {
+		r.evictCache(ctx, entity.GetID())
+	}
 
 	// return updated entity
 	return &entity, nil
@@ -80,7 +98,10 @@ func (r *resourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error
 	if err := r.db.WithContext(ctx).Delete(new(T), id).Error; err != nil {
 		return err
 	}
-	r.evictCache(ctx, id)
+	if r.isCacheEnabled {
+		r.evictCache(ctx, id)
+	}
+
 	return nil
 }
 
@@ -88,7 +109,11 @@ func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Unscoped().Delete(new(T), id).Error; err != nil {
 		return err
 	}
-	r.evictCache(ctx, id)
+
+	if r.isCacheEnabled {
+		r.evictCache(ctx, id)
+	}
+
 	return nil
 }
 
@@ -102,7 +127,10 @@ func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
 		return nil, err
 	}
 
-	r.evictCache(ctx, id)
+	if r.isCacheEnabled {
+		r.evictCache(ctx, id)
+	}
+
 	return r.GetByID(ctx, id, nil)
 }
 

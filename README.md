@@ -1,6 +1,7 @@
 # Go Kickstart
 
-A monorepo for a Go API and a Vite + React web app with shared TypeScript packages, managed with Turborepo and Bun workspaces.
+A monorepo for a Go API and a Vite + React web app with shared TypeScript packages, managed with Turborepo and Bun workspaces. visit the
+[repository](https://github.com/jeheskielSunloy77/go-kickstart) for more details.
 
 ## Repository layout
 
