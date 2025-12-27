@@ -17,6 +17,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@go-kickstart/openapi": "workspace:*",
+        "@go-kickstart/ui": "workspace:*",
         "@go-kickstart/zod": "workspace:*",
         "@hookform/resolvers": "^5.2.1",
         "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -96,6 +97,29 @@
         "tsx": "^4.19.3",
         "typescript": "^5.8.2",
         "wait-on": "^8.0.3",
+      },
+    },
+    "packages/ui": {
+      "name": "@go-kickstart/ui",
+      "version": "1.0.0",
+      "dependencies": {
+        "@radix-ui/react-dropdown-menu": "^2.1.16",
+        "@radix-ui/react-label": "^2.1.8",
+        "@radix-ui/react-separator": "^1.1.8",
+        "@radix-ui/react-slot": "^1.2.4",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.562.0",
+        "tailwind-merge": "^3.4.0",
+      },
+      "devDependencies": {
+        "@types/react": "^19.1.8",
+        "@types/react-dom": "^19.1.6",
+        "typescript": "^5.8.3",
+      },
+      "peerDependencies": {
+        "react": ">=18",
+        "react-dom": ">=18",
       },
     },
     "packages/zod": {
@@ -256,6 +280,8 @@
     "@go-kickstart/emails": ["@go-kickstart/emails@workspace:packages/emails"],
 
     "@go-kickstart/openapi": ["@go-kickstart/openapi@workspace:packages/openapi"],
+
+    "@go-kickstart/ui": ["@go-kickstart/ui@workspace:packages/ui"],
 
     "@go-kickstart/web": ["@go-kickstart/web@workspace:apps/web"],
 
