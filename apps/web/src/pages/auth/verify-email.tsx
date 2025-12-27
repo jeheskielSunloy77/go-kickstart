@@ -1,24 +1,25 @@
 import { tsr } from "@/api";
 import { ThemeDropdown } from "@/components/theme-dropdown";
-import { Button } from "@/components/ui/button";
-import {
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import {
   applyFieldErrors,
   getApiErrorMessage,
   isUnauthorizedError,
 } from "@/lib/api-errors";
 import { verifyEmailSchema } from "@/pages/auth/schemas";
+import {
+  Button,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Spinner,
+} from "@go-kickstart/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -77,10 +78,12 @@ export function VerifyEmailPage() {
   return (
     <>
       <CardHeader className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Verify your email
-        </p>
-        <CardTitle className="font-serif text-3xl">Enter your code</CardTitle>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Verify your email
+          </p>
+          <CardTitle className="font-serif text-3xl">Enter your code</CardTitle>
+        </div>
         <CardDescription>
           We sent a code to your inbox. It expires shortly.
         </CardDescription>
@@ -127,7 +130,10 @@ export function VerifyEmailPage() {
             {verifyMutation.isPending ? (
               <Spinner className="size-4" />
             ) : (
-              "Verify email"
+              <>
+                <ShieldCheck />
+                Verify email
+              </>
             )}
           </Button>
         </form>

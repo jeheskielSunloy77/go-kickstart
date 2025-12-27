@@ -1,16 +1,17 @@
 import { ThemeDropdown } from "@/components/theme-dropdown";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Input,
+  Label,
+} from "@go-kickstart/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Send } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -69,6 +70,7 @@ export function ForgotPasswordPage() {
             )}
           </div>
           <Button className="w-full" type="submit">
+            <Send />
             Send reset link
           </Button>
         </form>

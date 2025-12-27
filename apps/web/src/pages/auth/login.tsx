@@ -1,21 +1,22 @@
 import { tsr } from "@/api";
 import { ThemeDropdown } from "@/components/theme-dropdown";
-import { Button } from "@/components/ui/button";
+import { API_URL, GOOGLE_AUTH_ENABLED } from "@/config/env";
+import { applyFieldErrors, getApiErrorMessage } from "@/lib/api-errors";
+import { loginSchema } from "@/pages/auth/schemas";
 import {
+  Button,
   CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { API_URL, GOOGLE_AUTH_ENABLED } from "@/config/env";
-import { applyFieldErrors, getApiErrorMessage } from "@/lib/api-errors";
-import { loginSchema } from "@/pages/auth/schemas";
+  Input,
+  Label,
+  Spinner,
+} from "@go-kickstart/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -115,7 +116,10 @@ export function LoginPage() {
             {loginMutation.isPending ? (
               <Spinner className="size-4" />
             ) : (
-              "Sign in"
+              <>
+                <Lock />
+                Sign in
+              </>
             )}
           </Button>
         </form>

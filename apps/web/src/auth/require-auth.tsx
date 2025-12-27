@@ -1,6 +1,6 @@
 import { AuthProvider } from "./auth-context";
 import { tsr } from "@/api";
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@go-kickstart/ui";
 import { getApiErrorMessage, isUnauthorizedError } from "@/lib/api-errors";
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";

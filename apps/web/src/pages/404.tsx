@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@go-kickstart/ui";
 import { ArrowLeft, Home, SearchX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 

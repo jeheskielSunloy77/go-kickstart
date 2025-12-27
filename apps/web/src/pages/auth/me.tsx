@@ -1,8 +1,8 @@
 import { tsr } from "@/api";
 import { useAuth } from "@/auth/auth-context";
 import { ThemeDropdown } from "@/components/theme-dropdown";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Card,
   CardAction,
   CardContent,
@@ -10,7 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@go-kickstart/ui";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";

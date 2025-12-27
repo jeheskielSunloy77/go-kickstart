@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 export type ThemeMode = "system" | "light" | "dark";
 
@@ -22,7 +22,13 @@ const getStoredTheme = (): ThemeMode => {
   return "system";
 };
 
-export function useTheme() {
+const ThemeContext = createContext<{
+  theme: ThemeMode;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: ThemeMode) => void;
+} | null>(null);
+
+export function ThemeProvider(props: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>(() => getStoredTheme());
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     getSystemTheme(),
@@ -54,5 +60,23 @@ export function useTheme() {
     return () => media.removeEventListener("change", handleChange);
   }, [theme]);
 
-  return { theme, resolvedTheme, setTheme };
+  return (
+    <ThemeContext.Provider
+      value={{
+        theme,
+        resolvedTheme,
+        setTheme,
+      }}
+    >
+      {props.children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  if (!ThemeContext) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+
+  return useContext(ThemeContext)!;
 }

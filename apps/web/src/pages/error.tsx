@@ -1,13 +1,15 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+  Separator,
+} from "@go-kickstart/ui";
 import { AlertTriangle, ArrowLeft, Bug, Home, RefreshCw } from "lucide-react";
 import {
   isRouteErrorResponse,

@@ -24,9 +24,13 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@go-kickstart/openapi": ["../../packages/openapi/src/index.ts"],
+      "@go-kickstart/openapi/*": ["../../packages/openapi/src/*"],
+      "@go-kickstart/ui": ["../../packages/ui/src/index.ts"],
+      "@go-kickstart/ui/*": ["../../packages/ui/src/*"],
+      "@go-kickstart/zod": ["../../packages/zod/src/index.ts"],
+      "@go-kickstart/zod/*": ["../../packages/zod/src/*"]
     }
   },
   "include": ["src"]

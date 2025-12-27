@@ -59,6 +59,12 @@
 - Cookie config lives under `AuthConfig` (`access_cookie_name`, `refresh_cookie_name`, `cookie_domain`, `cookie_same_site`).
 - Auth routes: `/api/v1/auth/register`, `/login`, `/google`, `/verify-email`, `/refresh`, `/me`, `/resend-verification`, `/logout`, `/logout-all`.
 
+### Caching
+
+- Redis cache is enabled only when `Config.Cache.TTL > 0` (see `apps/api/internal/repository/repositories.go`) for example.
+- Use `internal/lib/cache` package for caching data by its methods.
+- Use most the caching on repositories layer to avoid caching business logic in services only if necessary.
+
 ### Jobs & Emails
 
 - Background jobs use Asynq (`apps/api/internal/lib/job`).
@@ -108,7 +114,7 @@
 - Vite + React + TypeScript.
 - Routing via React Router v7 in `apps/web/src/router.tsx`.
 - Data layer uses `@ts-rest/react-query` with an axios fetcher in `apps/web/src/api/index.ts`.
-- UI uses Tailwind + shadcn/ui; components live in `apps/web/src/components/ui`.
+- UI uses Tailwind + shadcn/ui; shared components live in `packages/ui/src/components`.
 
 ### Auth Flow & Security
 
@@ -121,13 +127,13 @@
 ### Pages & Components
 
 - use `apps/web/src/pages` for route-based pages.
-- shadcn/ui components in `apps/web/src/components/ui` Use `bun run web:shadcn:add <component name>` to add new components.
+- shadcn/ui components in `packages/ui/src/components` Use `bun run ui:shadcn:add <component name>` to add new components.
 - use `apps/web/src/auth/require-auth.tsx` wrapper component for protected routes.
 
 ### UI Design System
 
 - shadcn/ui with Tailwind CSS.
-- use the classes and colors variables on `apps/web/src/index.css` as much as possible for consistency. Avoid using arbitrary values unless absolutely necessary. so use `bg-primary` instead of `bg-[#123456]`.
+- use the classes and colors variables on `packages/ui/src/styles.css` as much as possible for consistency. Avoid using arbitrary values unless absolutely necessary. so use `bg-primary` instead of `bg-[#123456]`.
 
 ### Testing Guidelines
 

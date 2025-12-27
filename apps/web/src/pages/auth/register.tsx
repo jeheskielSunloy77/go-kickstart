@@ -1,20 +1,21 @@
 import { tsr } from "@/api";
 import { ThemeDropdown } from "@/components/theme-dropdown";
-import { Button } from "@/components/ui/button";
+import { applyFieldErrors, getApiErrorMessage } from "@/lib/api-errors";
+import { registerSchema } from "@/pages/auth/schemas";
 import {
+  Button,
   CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { applyFieldErrors, getApiErrorMessage } from "@/lib/api-errors";
-import { registerSchema } from "@/pages/auth/schemas";
+  Input,
+  Label,
+  Spinner,
+} from "@go-kickstart/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -124,7 +125,10 @@ export function RegisterPage() {
             {registerMutation.isPending ? (
               <Spinner className="size-4" />
             ) : (
-              "Create account"
+              <>
+                <Plus />
+                Create account
+              </>
             )}
           </Button>
         </form>

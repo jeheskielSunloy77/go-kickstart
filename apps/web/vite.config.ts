@@ -6,9 +6,6 @@ import { defineConfig } from "vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  define: {
-    "process.env": process.env,
-  },
   test: {
     css: true,
     environment: "jsdom",
@@ -32,7 +29,11 @@ export default defineConfig({
         __dirname,
         "../../packages/openapi/src",
       ),
+      "@go-kickstart/ui": path.resolve(__dirname, "../../packages/ui/src"),
       "@go-kickstart/zod": path.resolve(__dirname, "../../packages/zod/src"),
     },
+  },
+  optimizeDeps: {
+    exclude: ["@go-kickstart/openapi", "@go-kickstart/ui", "@go-kickstart/zod"],
   },
 });

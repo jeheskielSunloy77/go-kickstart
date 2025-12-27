@@ -1,14 +1,14 @@
 import { tsr } from "@/api";
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+  Spinner,
+} from "@go-kickstart/ui";
 import { getApiErrorMessage, isUnauthorizedError } from "@/lib/api-errors";
 import { Link } from "react-router-dom";
 

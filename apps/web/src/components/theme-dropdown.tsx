@@ -1,24 +1,23 @@
-import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/hooks/use-theme";
+} from "@go-kickstart/ui";
 import { Computer, Moon, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function ThemeDropdown(props: { children?: ReactNode }) {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
 
   const themeIcons = {
     dark: Moon,
     light: Sun,
-    system: Computer,
   };
 
-  const ThemeIcon = themeIcons[theme];
+  const ThemeIcon = themeIcons[resolvedTheme];
 
   return (
     <DropdownMenu>
