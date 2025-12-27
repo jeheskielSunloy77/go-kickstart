@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
 export const ZResponse = z.object({
-	status: z.number().int(),
-	message: z.string(),
-	success: z.boolean(),
+	status: z.number().int().default(200),
+	message: z.string().default('Request processed successfully.'),
+	success: z.boolean().default(true),
 })
 
 export const ZEmpty = z.object({}).strict()
@@ -13,15 +13,17 @@ export function ZResponseWithData<T>(schema: z.ZodSchema<T>) {
 }
 
 export function ZPaginatedResponse<T>(schema: z.ZodSchema<T>) {
-	return z
-		.object({
-			total: z.number(),
+	return ZResponse.extend(
+		z.object({
+			total: z.number().default(946),
 			page: z.number(),
-			limit: z.number(),
-			totalPages: z.number(),
+			limit: z.number().default(20),
+			totalPages: z.number().default(Math.ceil(946 / 20)),
 			data: z.array(schema),
-		})
-		.extend(ZResponse.shape)
+			message: z.string().default('Fetched paginated data successfully!'),
+			status: z.literal(200),
+		}).shape
+	)
 }
 
 export const ZModel = z.object({
@@ -41,4 +43,34 @@ export const ZGetManyQuery = z.object({
 
 export const ZPreloadsQuery = z.object({
 	preloads: z.string().optional(),
+})
+
+export const ZUnauthorizedResponse = ZResponse.extend({
+	status: z.literal(401),
+	message: z
+		.string()
+		.default('Sorry, you are not authorized to access this resource.'),
+	success: z.literal(false),
+})
+
+export const ZForbiddenResponse = ZResponse.extend({
+	status: z.literal(403),
+	message: z
+		.string()
+		.default('Sorry, you do not have permission to access this resource.'),
+	success: z.literal(false),
+})
+
+export const ZNotFoundResponse = ZResponse.extend({
+	status: z.literal(404),
+	message: z.string().default('The requested resource was not found.'),
+	success: z.literal(false),
+})
+
+export const ZInternalServerErrorResponse = ZResponse.extend({
+	status: z.literal(500),
+	message: z
+		.string()
+		.default('Sorry, something went wrong on our end. Please try again later.'),
+	success: z.literal(false),
 })

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-faker/faker/v4"
+	"github.com/google/uuid"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -31,6 +32,7 @@ func SeedUsers(ctx context.Context, db *gorm.DB, count int) (int, error) {
 		username := normalizeUsername(faker.Username(), i)
 		email := uniqueEmail(faker.Email(), i)
 		users = append(users, model.User{
+			ID:           uuid.New(),
 			Email:        email,
 			Username:     username,
 			PasswordHash: string(passwordHash),

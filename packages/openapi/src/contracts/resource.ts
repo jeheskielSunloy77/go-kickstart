@@ -1,6 +1,3 @@
-import { initContract } from '@ts-rest/core'
-import { z } from 'zod'
-
 import {
 	ZGetManyQuery,
 	ZPaginatedResponse,
@@ -8,7 +5,13 @@ import {
 	ZResponse,
 	ZResponseWithData,
 } from '@go-kickstart/zod'
-import { failResponses, getSecurityMetadata } from '../utils.js'
+import { initContract } from '@ts-rest/core'
+import { z } from 'zod'
+import {
+	failResponses,
+	getSecurityMetadata,
+	type SecurityType,
+} from '../utils.js'
 
 type ResourceContractOptions = {
 	path: string
@@ -20,12 +23,12 @@ type ResourceContractOptions = {
 		updateDTO: z.ZodTypeAny
 	}
 	security?: boolean
-	securityType?: 'bearer' | 'service'
+	securityType?: SecurityType
 }
 
 const c = initContract()
 
-const userIdParams = z.object({
+const idParams = z.object({
 	id: z.string().uuid(),
 })
 
@@ -35,7 +38,7 @@ export const createResourceContract = ({
 	resourcePlural,
 	schemas,
 	security = true,
-	securityType = 'bearer',
+	securityType = 'bearerOrCookie',
 }: ResourceContractOptions) => {
 	const metadata = getSecurityMetadata({ security, securityType })
 
@@ -57,7 +60,7 @@ export const createResourceContract = ({
 			description: `Retrieve a single ${resource} by its unique identifier (ID), with optional preloaded relationships.`,
 			path: `${path}/:id`,
 			method: 'GET',
-			pathParams: userIdParams,
+			pathParams: idParams,
 			query: ZPreloadsQuery,
 			responses: {
 				200: ZResponseWithData(schemas.entity),
@@ -82,7 +85,7 @@ export const createResourceContract = ({
 			description: `Update an existing ${resource} by its ID with the provided data, and return the updated entity.`,
 			path: `${path}/:id`,
 			method: 'PATCH',
-			pathParams: userIdParams,
+			pathParams: idParams,
 			body: schemas.updateDTO,
 			responses: {
 				200: ZResponseWithData(schemas.entity),
@@ -95,7 +98,7 @@ export const createResourceContract = ({
 			description: `Soft delete the specified ${resource} by its ID. This action is reversible.`,
 			path: `${path}/:id`,
 			method: 'DELETE',
-			pathParams: userIdParams,
+			pathParams: idParams,
 			responses: {
 				200: ZResponse,
 				...failResponses,
@@ -107,7 +110,7 @@ export const createResourceContract = ({
 			description: `Permanently delete the specified ${resource} by its ID. This action is irreversible.`,
 			path: `${path}/:id/kill`,
 			method: 'DELETE',
-			pathParams: userIdParams,
+			pathParams: idParams,
 			responses: {
 				200: ZResponse,
 				...failResponses,
@@ -119,7 +122,7 @@ export const createResourceContract = ({
 			description: `Restore a previously soft-deleted ${resource} by its ID and then return the restored entity.`,
 			path: `${path}/:id/restore`,
 			method: 'PATCH',
-			pathParams: userIdParams,
+			pathParams: idParams,
 			query: ZPreloadsQuery,
 			body: ZResponse,
 			responses: {

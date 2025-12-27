@@ -13,6 +13,7 @@
 		"test": "turbo run test",
 		"clean": "turbo run clean && rimraf node_modules",
 		"api:run": "cd apps/api && go run ./cmd/api",
+		"api:seed": "cd apps/api && make seed",
 		"api:migrate:new": "cd apps/api && make migrate-new",
 		"api:migrate:up": "cd apps/api && make migrate-up",
 		"api:migrate:down": "cd apps/api && make migrate-down",

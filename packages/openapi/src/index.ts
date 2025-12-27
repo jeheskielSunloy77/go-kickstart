@@ -50,21 +50,21 @@ export const OpenAPI = Object.assign(
 		},
 		{
 			operationMapper,
-			setOperationId: true,
+			setOperationId: 'concatenated-path',
 		}
 	),
 	{
 		components: {
 			securitySchemes: {
+				cookieAuth: {
+					type: 'apiKey',
+					name: 'access_token',
+					in: 'cookie',
+				},
 				bearerAuth: {
 					type: 'http',
 					scheme: 'bearer',
 					bearerFormat: 'JWT',
-				},
-				'x-service-token': {
-					type: 'apiKey',
-					name: 'x-service-token',
-					in: 'header',
 				},
 			},
 		},

@@ -1,21 +1,31 @@
-import { ZResponse } from '@go-kickstart/zod'
+import {
+	ZForbiddenResponse,
+	ZInternalServerErrorResponse,
+	ZNotFoundResponse,
+	ZUnauthorizedResponse,
+} from '@go-kickstart/zod'
+
+export type SecurityType = 'bearer' | 'cookie' | 'bearerOrCookie'
 
 export const getSecurityMetadata = ({
 	security = true,
-	securityType = 'bearer',
+	securityType = 'bearerOrCookie',
 }: {
 	security?: boolean
-	securityType?: 'bearer' | 'service'
+	securityType?: SecurityType
 } = {}) => {
 	const openApiSecurity = (() => {
 		switch (securityType) {
 			case 'bearer':
 				return [{ bearerAuth: [] }]
-			case 'service':
-				return [{ 'x-service-token': [] }]
-			default:
+			case 'cookie':
+				return [{ cookieAuth: [] }]
+			case 'bearerOrCookie':
+				return [{ bearerAuth: [] }, { cookieAuth: [] }]
+			default: {
 				const _exhaustive: never = securityType
 				throw new Error(`Unhandled securityType: ${_exhaustive}`)
+			}
 		}
 	})()
 
@@ -25,8 +35,8 @@ export const getSecurityMetadata = ({
 }
 
 export const failResponses = {
-	401: ZResponse,
-	403: ZResponse,
-	404: ZResponse,
-	500: ZResponse,
+	401: ZUnauthorizedResponse,
+	403: ZForbiddenResponse,
+	404: ZNotFoundResponse,
+	500: ZInternalServerErrorResponse,
 } as const

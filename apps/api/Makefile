@@ -44,6 +44,12 @@ confirm:
 run:
 	go run ./cmd/api
 
+.PHONY: seed
+seed:
+	@echo "Seeding database..."
+	go run ./cmd/seed
+	@echo "Database seeded."
+	
 # Create new migration
 .PHONY: migrate-new
 migrate-new:
