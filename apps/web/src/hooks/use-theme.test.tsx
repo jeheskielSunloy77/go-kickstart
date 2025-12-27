@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { useTheme } from "@/hooks/use-theme";
+import { renderWithCriticalProviders } from "@/testing/render";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react";
-import { describe, expect, it, beforeEach, vi } from "vitest";
-import { useTheme } from "@/hooks/use-theme";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 function ThemeProbe() {
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -10,15 +11,15 @@ function ThemeProbe() {
     <div>
       <div data-testid="theme">{theme}</div>
       <div data-testid="resolved">{resolvedTheme}</div>
-      <button type="button" onClick={() => setTheme("light")}
-        >Light</button
-      >
-      <button type="button" onClick={() => setTheme("dark")}
-        >Dark</button
-      >
-      <button type="button" onClick={() => setTheme("system")}
-        >System</button
-      >
+      <button type="button" onClick={() => setTheme("light")}>
+        Light
+      </button>
+      <button type="button" onClick={() => setTheme("dark")}>
+        Dark
+      </button>
+      <button type="button" onClick={() => setTheme("system")}>
+        System
+      </button>
     </div>
   );
 }
@@ -31,10 +32,16 @@ function setupMatchMedia(matches = false) {
       matches,
       media: query,
       onchange: null,
-      addEventListener: (_: string, cb: (event: MediaQueryListEvent) => void) => {
+      addEventListener: (
+        _: string,
+        cb: (event: MediaQueryListEvent) => void,
+      ) => {
         listeners.add(cb);
       },
-      removeEventListener: (_: string, cb: (event: MediaQueryListEvent) => void) => {
+      removeEventListener: (
+        _: string,
+        cb: (event: MediaQueryListEvent) => void,
+      ) => {
         listeners.delete(cb);
       },
       addListener: () => undefined,
@@ -63,7 +70,7 @@ describe("useTheme", () => {
   it("defaults to system theme and resolves to system preference", () => {
     setupMatchMedia(true);
 
-    render(<ThemeProbe />);
+    renderWithCriticalProviders(<ThemeProbe />);
 
     expect(screen.getByTestId("theme").textContent).toBe("system");
     expect(screen.getByTestId("resolved").textContent).toBe("dark");
@@ -73,7 +80,7 @@ describe("useTheme", () => {
   it("persists explicit theme selection", async () => {
     setupMatchMedia(false);
 
-    render(<ThemeProbe />);
+    renderWithCriticalProviders(<ThemeProbe />);
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Dark" }));
@@ -86,7 +93,7 @@ describe("useTheme", () => {
   it("reacts to system theme changes in system mode", () => {
     const media = setupMatchMedia(false);
 
-    render(<ThemeProbe />);
+    renderWithCriticalProviders(<ThemeProbe />);
 
     act(() => {
       media.setMatches(true);

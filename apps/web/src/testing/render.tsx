@@ -1,13 +1,14 @@
 import { tsr } from "@/api";
+import { ThemeProvider } from "@/hooks/use-theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { Toaster } from "sonner";
 import {
   RouterProvider,
   createMemoryRouter,
   type RouteObject,
 } from "react-router-dom";
+import { Toaster } from "sonner";
 
 type RenderWithRouterOptions = {
   initialEntries?: string[];
@@ -32,13 +33,7 @@ export function renderWithProviders(
 ) {
   const queryClient = createTestQueryClient();
 
-  const result = render(
-    <QueryClientProvider client={queryClient}>
-      <tsr.ReactQueryProvider>{ui}</tsr.ReactQueryProvider>
-      <Toaster position="top-right" />
-    </QueryClientProvider>,
-    options,
-  );
+  const result = render(<Providers>{ui}</Providers>, options);
 
   return { ...result, queryClient };
 }
@@ -53,13 +48,35 @@ export function renderWithRouter(
   });
 
   const result = render(
-    <QueryClientProvider client={queryClient}>
-      <tsr.ReactQueryProvider>
-        <RouterProvider router={router} />
-      </tsr.ReactQueryProvider>
-      <Toaster position="top-right" />
-    </QueryClientProvider>,
+    <Providers>
+      <RouterProvider router={router} />
+    </Providers>,
   );
 
   return { ...result, router, queryClient };
+}
+
+export function renderWithCriticalProviders(
+  ui: ReactElement,
+  options?: Omit<RenderOptions, "wrapper">,
+) {
+  const result = render(<CriticalProviders>{ui}</CriticalProviders>, options);
+
+  return { ...result };
+}
+
+function Providers(props: { children: React.ReactNode }) {
+  const queryClient = createTestQueryClient();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <tsr.ReactQueryProvider>
+        <CriticalProviders>{props.children}</CriticalProviders>
+      </tsr.ReactQueryProvider>
+      <Toaster position="top-right" />
+    </QueryClientProvider>
+  );
+}
+
+function CriticalProviders(props: { children: React.ReactNode }) {
+  return <ThemeProvider>{props.children}</ThemeProvider>;
 }
