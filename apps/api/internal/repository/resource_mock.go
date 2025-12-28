@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"reflect"
+	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/model"
@@ -25,6 +27,10 @@ func NewMockResourceRepository[T model.BaseModel](cacheEnabled bool) *MockResour
 		deleted: make(map[uuid.UUID]T),
 		cacheEn: cacheEnabled,
 	}
+}
+
+func (m *MockResourceRepository[T]) EvictCache(ctx context.Context, id uuid.UUID) {
+	// no-op for mock
 }
 
 func (m *MockResourceRepository[T]) CacheEnabled() bool {
@@ -68,25 +74,8 @@ func (m *MockResourceRepository[T]) Update(ctx context.Context, entity T, update
 	if _, ok := m.data[id]; !ok {
 		return nil, gorm.ErrRecordNotFound
 	}
-	// If updates provided, apply common update keys to the entity (for tests).
 	if len(updates) > 0 && updates[0] != nil {
-		upd := updates[0]
-		// apply known fields
-		if email, ok := upd["email"].(string); ok {
-			// set via field assignment using a type assertion
-			if e, ok := any(&entity).(*T); ok {
-				_ = e
-			}
-			// fallback: attempt to set via reflection for arbitrary T
-			// use reflection to set Email, Username, PasswordHash when present
-			setFieldIfAvailable(&entity, "Email", email)
-		}
-		if username, ok := upd["username"].(string); ok {
-			setFieldIfAvailable(&entity, "Username", username)
-		}
-		if ph, ok := upd["password_hash"].(string); ok {
-			setFieldIfAvailable(&entity, "PasswordHash", ph)
-		}
+		applyUpdates(&entity, updates[0])
 	}
 	m.data[id] = entity
 	return &entity, nil
@@ -123,28 +112,164 @@ func (m *MockResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (
 	return nil, gorm.ErrRecordNotFound
 }
 
-// setFieldIfAvailable tries to set a field by name on the target value pointed
-// to by ptr using reflection. If the field doesn't exist or can't be set,
-// the function is a no-op.
-func setFieldIfAvailable[T any](ptr *T, fieldName string, value any) {
-	rv := reflect.ValueOf(ptr)
+// applyUpdates maps update keys to struct fields and applies values via reflection.
+func applyUpdates[T any](entity *T, updates map[string]any) {
+	if entity == nil || len(updates) == 0 {
+		return
+	}
+
+	rv := reflect.ValueOf(entity)
 	if rv.Kind() != reflect.Pointer || rv.IsNil() {
 		return
 	}
 	rv = rv.Elem()
-	field := rv.FieldByName(fieldName)
+	if rv.Kind() == reflect.Pointer {
+		if rv.IsNil() {
+			return
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return
+	}
+
+	fieldIndex := buildFieldIndex(rv.Type())
+	for key, value := range updates {
+		if idx, ok := fieldIndex[normalizeFieldKey(key)]; ok {
+			field := rv.Field(idx)
+			setFieldValue(field, value)
+		}
+	}
+}
+
+func buildFieldIndex(rt reflect.Type) map[string]int {
+	index := make(map[string]int, rt.NumField()*3)
+	for i := 0; i < rt.NumField(); i++ {
+		field := rt.Field(i)
+		if field.PkgPath != "" {
+			continue
+		}
+		addKey(index, field.Name, i)
+		addKey(index, toSnakeCase(field.Name), i)
+		if jsonTag := strings.Split(field.Tag.Get("json"), ",")[0]; jsonTag != "" && jsonTag != "-" {
+			addKey(index, jsonTag, i)
+		}
+		if gormTag := field.Tag.Get("gorm"); gormTag != "" {
+			for _, part := range strings.Split(gormTag, ";") {
+				if strings.HasPrefix(part, "column:") {
+					addKey(index, strings.TrimPrefix(part, "column:"), i)
+				}
+			}
+		}
+	}
+	return index
+}
+
+func addKey(index map[string]int, key string, fieldIndex int) {
+	key = normalizeFieldKey(key)
+	if key == "" {
+		return
+	}
+	if _, exists := index[key]; !exists {
+		index[key] = fieldIndex
+	}
+}
+
+func normalizeFieldKey(key string) string {
+	return strings.ToLower(strings.TrimSpace(key))
+}
+
+func toSnakeCase(s string) string {
+	if s == "" {
+		return ""
+	}
+	runes := []rune(s)
+	var b strings.Builder
+	b.Grow(len(runes) + 4)
+	for i, r := range runes {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				prev := runes[i-1]
+				nextLower := i+1 < len(runes) && unicode.IsLower(runes[i+1])
+				if unicode.IsLower(prev) || (unicode.IsUpper(prev) && nextLower) {
+					b.WriteByte('_')
+				}
+			}
+			b.WriteRune(unicode.ToLower(r))
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+func setFieldValue(field reflect.Value, value any) {
 	if !field.IsValid() || !field.CanSet() {
 		return
 	}
+
+	if value == nil {
+		field.Set(reflect.Zero(field.Type()))
+		return
+	}
+
 	val := reflect.ValueOf(value)
 	if !val.IsValid() {
 		return
 	}
+
+	if field.Kind() == reflect.Pointer {
+		setPointerFieldValue(field, val)
+		return
+	}
+
 	if val.Type().AssignableTo(field.Type()) {
 		field.Set(val)
 		return
 	}
 	if val.Type().ConvertibleTo(field.Type()) {
 		field.Set(val.Convert(field.Type()))
+		return
+	}
+	if val.Kind() == reflect.Pointer && !val.IsNil() {
+		elem := val.Elem()
+		if elem.Type().AssignableTo(field.Type()) {
+			field.Set(elem)
+			return
+		}
+		if elem.Type().ConvertibleTo(field.Type()) {
+			field.Set(elem.Convert(field.Type()))
+		}
+	}
+}
+
+func setPointerFieldValue(field reflect.Value, val reflect.Value) {
+	if val.Type().AssignableTo(field.Type()) {
+		field.Set(val)
+		return
+	}
+	if val.Type().ConvertibleTo(field.Type()) {
+		field.Set(val.Convert(field.Type()))
+		return
+	}
+
+	elemType := field.Type().Elem()
+	if val.Kind() == reflect.Pointer {
+		if val.IsNil() {
+			field.Set(reflect.Zero(field.Type()))
+			return
+		}
+		val = val.Elem()
+	}
+	if val.Type().AssignableTo(elemType) {
+		ptr := reflect.New(elemType)
+		ptr.Elem().Set(val)
+		field.Set(ptr)
+		return
+	}
+	if val.Type().ConvertibleTo(elemType) {
+		ptr := reflect.New(elemType)
+		ptr.Elem().Set(val.Convert(elemType))
+		field.Set(ptr)
 	}
 }

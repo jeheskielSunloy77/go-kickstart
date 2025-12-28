@@ -93,7 +93,7 @@
 				
 				<option value="file18">github.com/jeheskielSunloy77/go-kickstart/internal/repository/repositories.go (0.0%)</option>
 				
-				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (53.5%)</option>
+				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (54.1%)</option>
 				
 				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource_mock.go (0.0%)</option>
 				
@@ -105,9 +105,11 @@
 				
 				<option value="file24">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource.go (21.4%)</option>
 				
-				<option value="file25">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				<option value="file25">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource_mock.go (0.0%)</option>
 				
-				<option value="file26">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (78.6%)</option>
+				<option value="file26">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				
+				<option value="file27">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (78.6%)</option>
 				
 				</select>
 			</div>
@@ -2055,6 +2057,7 @@ type ResourceRepository[T model.BaseModel] interface {
         Kill(ctx context.Context, id uuid.UUID) error
         Restore(ctx context.Context, id uuid.UUID) (*T, error)
         CacheEnabled() bool
+        EvictCache(ctx context.Context, id uuid.UUID)
 }
 
 type resourceRepository[T model.BaseModel] struct {
@@ -2073,6 +2076,12 @@ func NewResourceRepository[T model.BaseModel](cfg *config.Config, db *gorm.DB, c
 func (r *resourceRepository[T]) CacheEnabled() bool <span class="cov0" title="0">{
         return r.isCacheEnabled
 }</span>
+
+func (r *resourceRepository[T]) EvictCache(ctx context.Context, id uuid.UUID) <span class="cov9" title="5">{
+        if r.isCacheEnabled </span><span class="cov4" title="2">{
+                _ = r.cache.Delete(ctx, utils.GetModelCacheKey[T](id))
+        }</span>
+}
 
 func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov10" title="6">{
         if err := r.db.WithContext(ctx).Create(entity).Error; err != nil </span><span class="cov0" title="0">{
@@ -2119,23 +2128,20 @@ func (r *resourceRepository[T]) Update(ctx context.Context, entity T, updates ..
                 return nil, err
         }</span>
 
-        <span class="cov4" title="2">if r.isCacheEnabled </span><span class="cov1" title="1">{
-                r.evictCache(ctx, entity.GetID())
-        }</span>
+        <span class="cov4" title="2">r.EvictCache(ctx, entity.GetID())
 
         // return updated entity
-        <span class="cov4" title="2">return &amp;entity, nil</span>
+        return &amp;entity, nil</span>
 }
 
 func (r *resourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov4" title="2">{
         if err := r.db.WithContext(ctx).Delete(new(T), id).Error; err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
-        <span class="cov4" title="2">if r.isCacheEnabled </span><span class="cov1" title="1">{
-                r.evictCache(ctx, id)
-        }</span>
 
-        <span class="cov4" title="2">return nil</span>
+        <span class="cov4" title="2">r.EvictCache(ctx, id)
+
+        return nil</span>
 }
 
 func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
@@ -2143,11 +2149,9 @@ func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <s
                 return err
         }</span>
 
-        <span class="cov0" title="0">if r.isCacheEnabled </span><span class="cov0" title="0">{
-                r.evictCache(ctx, id)
-        }</span>
+        <span class="cov0" title="0">r.EvictCache(ctx, id)
 
-        <span class="cov0" title="0">return nil</span>
+        return nil</span>
 }
 
 func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov1" title="1">{
@@ -2160,11 +2164,9 @@ func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
                 return nil, err
         }</span>
 
-        <span class="cov1" title="1">if r.isCacheEnabled </span><span class="cov0" title="0">{
-                r.evictCache(ctx, id)
-        }</span>
+        <span class="cov1" title="1">r.EvictCache(ctx, id)
 
-        <span class="cov1" title="1">return r.GetByID(ctx, id, nil)</span>
+        return r.GetByID(ctx, id, nil)</span>
 }
 
 func (r *resourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov1" title="1">{
@@ -2322,10 +2324,6 @@ func (r *resourceRepository[T]) getCachedByID(ctx context.Context, id uuid.UUID)
 
         <span class="cov4" title="2">return &amp;entity, true</span>
 }
-
-func (r *resourceRepository[T]) evictCache(ctx context.Context, id uuid.UUID) <span class="cov4" title="2">{
-        _ = r.cache.Delete(ctx, utils.GetModelCacheKey[T](id))
-}</span>
 </pre>
 		
 		<pre class="file" id="file20" style="display: none">package repository
@@ -2333,7 +2331,9 @@ func (r *resourceRepository[T]) evictCache(ctx context.Context, id uuid.UUID) <s
 import (
         "context"
         "reflect"
+        "strings"
         "sync"
+        "unicode"
 
         "github.com/google/uuid"
         "github.com/jeheskielSunloy77/go-kickstart/internal/model"
@@ -2355,6 +2355,10 @@ func NewMockResourceRepository[T model.BaseModel](cacheEnabled bool) *MockResour
                 deleted: make(map[uuid.UUID]T),
                 cacheEn: cacheEnabled,
         }
+}</span>
+
+func (m *MockResourceRepository[T]) EvictCache(ctx context.Context, id uuid.UUID) {<span class="cov0" title="0">
+        // no-op for mock
 }</span>
 
 func (m *MockResourceRepository[T]) CacheEnabled() bool <span class="cov0" title="0">{
@@ -2398,26 +2402,9 @@ func (m *MockResourceRepository[T]) Update(ctx context.Context, entity T, update
         if _, ok := m.data[id]; !ok </span><span class="cov0" title="0">{
                 return nil, gorm.ErrRecordNotFound
         }</span>
-        // If updates provided, apply common update keys to the entity (for tests).
         <span class="cov0" title="0">if len(updates) &gt; 0 &amp;&amp; updates[0] != nil </span><span class="cov0" title="0">{
-                upd := updates[0]
-                // apply known fields
-                if email, ok := upd["email"].(string); ok </span><span class="cov0" title="0">{
-                        // set via field assignment using a type assertion
-                        if e, ok := any(&amp;entity).(*T); ok </span><span class="cov0" title="0">{
-                                _ = e
-                        }</span>
-                        // fallback: attempt to set via reflection for arbitrary T
-                        // use reflection to set Email, Username, PasswordHash when present
-                        <span class="cov0" title="0">setFieldIfAvailable(&amp;entity, "Email", email)</span>
-                }
-                <span class="cov0" title="0">if username, ok := upd["username"].(string); ok </span><span class="cov0" title="0">{
-                        setFieldIfAvailable(&amp;entity, "Username", username)
-                }</span>
-                <span class="cov0" title="0">if ph, ok := upd["password_hash"].(string); ok </span><span class="cov0" title="0">{
-                        setFieldIfAvailable(&amp;entity, "PasswordHash", ph)
-                }</span>
-        }
+                applyUpdates(&amp;entity, updates[0])
+        }</span>
         <span class="cov0" title="0">m.data[id] = entity
         return &amp;entity, nil</span>
 }
@@ -2453,29 +2440,165 @@ func (m *MockResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (
         <span class="cov0" title="0">return nil, gorm.ErrRecordNotFound</span>
 }
 
-// setFieldIfAvailable tries to set a field by name on the target value pointed
-// to by ptr using reflection. If the field doesn't exist or can't be set,
-// the function is a no-op.
-func setFieldIfAvailable[T any](ptr *T, fieldName string, value any) <span class="cov0" title="0">{
-        rv := reflect.ValueOf(ptr)
+// applyUpdates maps update keys to struct fields and applies values via reflection.
+func applyUpdates[T any](entity *T, updates map[string]any) <span class="cov0" title="0">{
+        if entity == nil || len(updates) == 0 </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">rv := reflect.ValueOf(entity)
         if rv.Kind() != reflect.Pointer || rv.IsNil() </span><span class="cov0" title="0">{
                 return
         }</span>
         <span class="cov0" title="0">rv = rv.Elem()
-        field := rv.FieldByName(fieldName)
+        if rv.Kind() == reflect.Pointer </span><span class="cov0" title="0">{
+                if rv.IsNil() </span><span class="cov0" title="0">{
+                        return
+                }</span>
+                <span class="cov0" title="0">rv = rv.Elem()</span>
+        }
+        <span class="cov0" title="0">if rv.Kind() != reflect.Struct </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">fieldIndex := buildFieldIndex(rv.Type())
+        for key, value := range updates </span><span class="cov0" title="0">{
+                if idx, ok := fieldIndex[normalizeFieldKey(key)]; ok </span><span class="cov0" title="0">{
+                        field := rv.Field(idx)
+                        setFieldValue(field, value)
+                }</span>
+        }
+}
+
+func buildFieldIndex(rt reflect.Type) map[string]int <span class="cov0" title="0">{
+        index := make(map[string]int, rt.NumField()*3)
+        for i := 0; i &lt; rt.NumField(); i++ </span><span class="cov0" title="0">{
+                field := rt.Field(i)
+                if field.PkgPath != "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">addKey(index, field.Name, i)
+                addKey(index, toSnakeCase(field.Name), i)
+                if jsonTag := strings.Split(field.Tag.Get("json"), ",")[0]; jsonTag != "" &amp;&amp; jsonTag != "-" </span><span class="cov0" title="0">{
+                        addKey(index, jsonTag, i)
+                }</span>
+                <span class="cov0" title="0">if gormTag := field.Tag.Get("gorm"); gormTag != "" </span><span class="cov0" title="0">{
+                        for _, part := range strings.Split(gormTag, ";") </span><span class="cov0" title="0">{
+                                if strings.HasPrefix(part, "column:") </span><span class="cov0" title="0">{
+                                        addKey(index, strings.TrimPrefix(part, "column:"), i)
+                                }</span>
+                        }
+                }
+        }
+        <span class="cov0" title="0">return index</span>
+}
+
+func addKey(index map[string]int, key string, fieldIndex int) <span class="cov0" title="0">{
+        key = normalizeFieldKey(key)
+        if key == "" </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">if _, exists := index[key]; !exists </span><span class="cov0" title="0">{
+                index[key] = fieldIndex
+        }</span>
+}
+
+func normalizeFieldKey(key string) string <span class="cov0" title="0">{
+        return strings.ToLower(strings.TrimSpace(key))
+}</span>
+
+func toSnakeCase(s string) string <span class="cov0" title="0">{
+        if s == "" </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+        <span class="cov0" title="0">runes := []rune(s)
+        var b strings.Builder
+        b.Grow(len(runes) + 4)
+        for i, r := range runes </span><span class="cov0" title="0">{
+                if unicode.IsUpper(r) </span><span class="cov0" title="0">{
+                        if i &gt; 0 </span><span class="cov0" title="0">{
+                                prev := runes[i-1]
+                                nextLower := i+1 &lt; len(runes) &amp;&amp; unicode.IsLower(runes[i+1])
+                                if unicode.IsLower(prev) || (unicode.IsUpper(prev) &amp;&amp; nextLower) </span><span class="cov0" title="0">{
+                                        b.WriteByte('_')
+                                }</span>
+                        }
+                        <span class="cov0" title="0">b.WriteRune(unicode.ToLower(r))
+                        continue</span>
+                }
+                <span class="cov0" title="0">b.WriteRune(r)</span>
+        }
+        <span class="cov0" title="0">return b.String()</span>
+}
+
+func setFieldValue(field reflect.Value, value any) <span class="cov0" title="0">{
         if !field.IsValid() || !field.CanSet() </span><span class="cov0" title="0">{
                 return
         }</span>
+
+        <span class="cov0" title="0">if value == nil </span><span class="cov0" title="0">{
+                field.Set(reflect.Zero(field.Type()))
+                return
+        }</span>
+
         <span class="cov0" title="0">val := reflect.ValueOf(value)
         if !val.IsValid() </span><span class="cov0" title="0">{
                 return
         }</span>
+
+        <span class="cov0" title="0">if field.Kind() == reflect.Pointer </span><span class="cov0" title="0">{
+                setPointerFieldValue(field, val)
+                return
+        }</span>
+
         <span class="cov0" title="0">if val.Type().AssignableTo(field.Type()) </span><span class="cov0" title="0">{
                 field.Set(val)
                 return
         }</span>
         <span class="cov0" title="0">if val.Type().ConvertibleTo(field.Type()) </span><span class="cov0" title="0">{
                 field.Set(val.Convert(field.Type()))
+                return
+        }</span>
+        <span class="cov0" title="0">if val.Kind() == reflect.Pointer &amp;&amp; !val.IsNil() </span><span class="cov0" title="0">{
+                elem := val.Elem()
+                if elem.Type().AssignableTo(field.Type()) </span><span class="cov0" title="0">{
+                        field.Set(elem)
+                        return
+                }</span>
+                <span class="cov0" title="0">if elem.Type().ConvertibleTo(field.Type()) </span><span class="cov0" title="0">{
+                        field.Set(elem.Convert(field.Type()))
+                }</span>
+        }
+}
+
+func setPointerFieldValue(field reflect.Value, val reflect.Value) <span class="cov0" title="0">{
+        if val.Type().AssignableTo(field.Type()) </span><span class="cov0" title="0">{
+                field.Set(val)
+                return
+        }</span>
+        <span class="cov0" title="0">if val.Type().ConvertibleTo(field.Type()) </span><span class="cov0" title="0">{
+                field.Set(val.Convert(field.Type()))
+                return
+        }</span>
+
+        <span class="cov0" title="0">elemType := field.Type().Elem()
+        if val.Kind() == reflect.Pointer </span><span class="cov0" title="0">{
+                if val.IsNil() </span><span class="cov0" title="0">{
+                        field.Set(reflect.Zero(field.Type()))
+                        return
+                }</span>
+                <span class="cov0" title="0">val = val.Elem()</span>
+        }
+        <span class="cov0" title="0">if val.Type().AssignableTo(elemType) </span><span class="cov0" title="0">{
+                ptr := reflect.New(elemType)
+                ptr.Elem().Set(val)
+                field.Set(ptr)
+                return
+        }</span>
+        <span class="cov0" title="0">if val.Type().ConvertibleTo(elemType) </span><span class="cov0" title="0">{
+                ptr := reflect.New(elemType)
+                ptr.Elem().Set(val.Convert(elemType))
+                field.Set(ptr)
         }</span>
 }
 </pre>
@@ -3458,6 +3581,81 @@ func (s *resourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, pr
 		<pre class="file" id="file25" style="display: none">package service
 
 import (
+        "context"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
+)
+
+// MockResourceService is a generic mock for ResourceService interfaces in tests.
+type MockResourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]] struct {
+        StoreFn   func(ctx context.Context, dto S) (*T, error)
+        GetByIDFn func(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
+        GetManyFn func(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error)
+        DestroyFn func(ctx context.Context, id uuid.UUID) error
+        KillFn    func(ctx context.Context, id uuid.UUID) error
+        UpdateFn  func(ctx context.Context, id uuid.UUID, dto U) (*T, error)
+        RestoreFn func(ctx context.Context, id uuid.UUID, preloads []string) (*T, error)
+}
+
+func NewMockResourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]]() *MockResourceService[T, S, U] <span class="cov0" title="0">{
+        return &amp;MockResourceService[T, S, U]{}
+}</span>
+
+func (m *MockResourceService[T, S, U]) Store(ctx context.Context, dto S) (*T, error) <span class="cov0" title="0">{
+        if m.StoreFn != nil </span><span class="cov0" title="0">{
+                return m.StoreFn(ctx, dto)
+        }</span>
+        <span class="cov0" title="0">return nil, nil</span>
+}
+
+func (m *MockResourceService[T, S, U]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
+        if m.GetByIDFn != nil </span><span class="cov0" title="0">{
+                return m.GetByIDFn(ctx, id, preloads)
+        }</span>
+        <span class="cov0" title="0">return nil, nil</span>
+}
+
+func (m *MockResourceService[T, S, U]) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]T, int64, error) <span class="cov0" title="0">{
+        if m.GetManyFn != nil </span><span class="cov0" title="0">{
+                return m.GetManyFn(ctx, opts)
+        }</span>
+        <span class="cov0" title="0">return nil, 0, nil</span>
+}
+
+func (m *MockResourceService[T, S, U]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        if m.DestroyFn != nil </span><span class="cov0" title="0">{
+                return m.DestroyFn(ctx, id)
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (m *MockResourceService[T, S, U]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        if m.KillFn != nil </span><span class="cov0" title="0">{
+                return m.KillFn(ctx, id)
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (m *MockResourceService[T, S, U]) Update(ctx context.Context, id uuid.UUID, dto U) (*T, error) <span class="cov0" title="0">{
+        if m.UpdateFn != nil </span><span class="cov0" title="0">{
+                return m.UpdateFn(ctx, id, dto)
+        }</span>
+        <span class="cov0" title="0">return nil, nil</span>
+}
+
+func (m *MockResourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
+        if m.RestoreFn != nil </span><span class="cov0" title="0">{
+                return m.RestoreFn(ctx, id, preloads)
+        }</span>
+        <span class="cov0" title="0">return nil, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file26" style="display: none">package service
+
+import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
         "github.com/jeheskielSunloy77/go-kickstart/internal/repository"
         "github.com/jeheskielSunloy77/go-kickstart/internal/server"
@@ -3491,7 +3689,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 }
 </pre>
 		
-		<pre class="file" id="file26" style="display: none">package service
+		<pre class="file" id="file27" style="display: none">package service
 
 import (
         "context"

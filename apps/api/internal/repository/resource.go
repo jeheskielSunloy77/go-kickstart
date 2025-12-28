@@ -22,6 +22,7 @@ type ResourceRepository[T model.BaseModel] interface {
 	Kill(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) (*T, error)
 	CacheEnabled() bool
+	EvictCache(ctx context.Context, id uuid.UUID)
 }
 
 type resourceRepository[T model.BaseModel] struct {
@@ -39,6 +40,12 @@ func NewResourceRepository[T model.BaseModel](cfg *config.Config, db *gorm.DB, c
 
 func (r *resourceRepository[T]) CacheEnabled() bool {
 	return r.isCacheEnabled
+}
+
+func (r *resourceRepository[T]) EvictCache(ctx context.Context, id uuid.UUID) {
+	if r.isCacheEnabled {
+		_ = r.cache.Delete(ctx, utils.GetModelCacheKey[T](id))
+	}
 }
 
 func (r *resourceRepository[T]) Store(ctx context.Context, entity *T) error {
@@ -86,9 +93,7 @@ func (r *resourceRepository[T]) Update(ctx context.Context, entity T, updates ..
 		return nil, err
 	}
 
-	if r.isCacheEnabled {
-		r.evictCache(ctx, entity.GetID())
-	}
+	r.EvictCache(ctx, entity.GetID())
 
 	// return updated entity
 	return &entity, nil
@@ -98,9 +103,8 @@ func (r *resourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error
 	if err := r.db.WithContext(ctx).Delete(new(T), id).Error; err != nil {
 		return err
 	}
-	if r.isCacheEnabled {
-		r.evictCache(ctx, id)
-	}
+
+	r.EvictCache(ctx, id)
 
 	return nil
 }
@@ -110,9 +114,7 @@ func (r *resourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 
-	if r.isCacheEnabled {
-		r.evictCache(ctx, id)
-	}
+	r.EvictCache(ctx, id)
 
 	return nil
 }
@@ -127,9 +129,7 @@ func (r *resourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, 
 		return nil, err
 	}
 
-	if r.isCacheEnabled {
-		r.evictCache(ctx, id)
-	}
+	r.EvictCache(ctx, id)
 
 	return r.GetByID(ctx, id, nil)
 }
@@ -288,8 +288,4 @@ func (r *resourceRepository[T]) getCachedByID(ctx context.Context, id uuid.UUID)
 	}
 
 	return &entity, true
-}
-
-func (r *resourceRepository[T]) evictCache(ctx context.Context, id uuid.UUID) {
-	_ = r.cache.Delete(ctx, utils.GetModelCacheKey[T](id))
 }
