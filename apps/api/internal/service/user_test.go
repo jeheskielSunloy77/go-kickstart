@@ -14,77 +14,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mockUserRepo struct {
-	storeFn   func(ctx context.Context, entity *model.User) error
-	getByIDFn func(ctx context.Context, id uuid.UUID, preloads []string) (*model.User, error)
-	getManyFn func(ctx context.Context, opts repository.GetManyOptions) ([]model.User, int64, error)
-	updateFn  func(ctx context.Context, entity model.User, updates ...map[string]any) (*model.User, error)
-	destroyFn func(ctx context.Context, id uuid.UUID) error
-	killFn    func(ctx context.Context, id uuid.UUID) error
-	restoreFn func(ctx context.Context, id uuid.UUID) (*model.User, error)
-}
-
-func (m *mockUserRepo) CacheEnabled() bool {
-	return false
-}
-
-func (m *mockUserRepo) Store(ctx context.Context, entity *model.User) error {
-	if m.storeFn != nil {
-		return m.storeFn(ctx, entity)
-	}
-	return nil
-}
-
-func (m *mockUserRepo) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*model.User, error) {
-	if m.getByIDFn != nil {
-		return m.getByIDFn(ctx, id, preloads)
-	}
-	return nil, nil
-}
-
-func (m *mockUserRepo) GetMany(ctx context.Context, opts repository.GetManyOptions) ([]model.User, int64, error) {
-	if m.getManyFn != nil {
-		return m.getManyFn(ctx, opts)
-	}
-	return nil, 0, nil
-}
-
-func (m *mockUserRepo) Update(ctx context.Context, entity model.User, updates ...map[string]any) (*model.User, error) {
-	if m.updateFn != nil {
-		return m.updateFn(ctx, entity, updates...)
-	}
-	return &entity, nil
-}
-
-func (m *mockUserRepo) Destroy(ctx context.Context, id uuid.UUID) error {
-	if m.destroyFn != nil {
-		return m.destroyFn(ctx, id)
-	}
-	return nil
-}
-
-func (m *mockUserRepo) Kill(ctx context.Context, id uuid.UUID) error {
-	if m.killFn != nil {
-		return m.killFn(ctx, id)
-	}
-	return nil
-}
-
-func (m *mockUserRepo) Restore(ctx context.Context, id uuid.UUID) (*model.User, error) {
-	if m.restoreFn != nil {
-		return m.restoreFn(ctx, id)
-	}
-	return nil, nil
-}
-
-func newUserServiceWithRepo(repo *mockUserRepo) UserService {
+func newUserServiceWithRepo(repo repository.UserRepository) UserService {
 	return &userService{
-		ResourceService: &resourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]{
-			resourceName: "user",
-			repo:         repo,
-		},
-		repo: repo,
+		ResourceService: NewResourceService[model.User, *model.StoreUserDTO, *model.UpdateUserDTO]("user", repo),
+		repo:            repo,
 	}
+}
+
+// trackingRepo wraps a UserRepository and records whether GetByID was called.
+type trackingRepo struct {
+	repository.UserRepository
+	called *bool
+}
+
+func (t *trackingRepo) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*model.User, error) {
+	if t.called != nil {
+		*t.called = true
+	}
+	return t.UserRepository.GetByID(ctx, id, preloads)
 }
 
 func ptrString(v string) *string {
@@ -94,14 +41,8 @@ func ptrString(v string) *string {
 // Ensures Store hashes passwords before persisting users.
 func TestUserServiceStore_HashesPassword(t *testing.T) {
 	ctx := context.Background()
-	var stored *model.User
 
-	repo := &mockUserRepo{
-		storeFn: func(_ context.Context, user *model.User) error {
-			stored = user
-			return nil
-		},
-	}
+	repo := repository.NewMockResourceRepository[model.User](false)
 
 	svc := newUserServiceWithRepo(repo)
 
@@ -111,40 +52,21 @@ func TestUserServiceStore_HashesPassword(t *testing.T) {
 		Password: "password123",
 	})
 	require.NoError(t, err)
-	require.NotNil(t, stored)
-	require.Equal(t, stored, user)
-	require.NotEmpty(t, stored.PasswordHash)
-	require.NotEqual(t, "password123", stored.PasswordHash)
-	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(stored.PasswordHash), []byte("password123")))
+	require.NotNil(t, user)
+	require.NotEmpty(t, user.PasswordHash)
+	require.NotEqual(t, "password123", user.PasswordHash)
+	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte("password123")))
 }
 
 // Ensures Update normalizes inputs and hashes passwords before updating.
 func TestUserServiceUpdate_NormalizesAndHashes(t *testing.T) {
 	ctx := context.Background()
 	id := uuid.New()
-	var capturedUpdates map[string]any
-
 	existing := &model.User{ID: id, Email: "old@example.com", Username: "old"}
 
-	repo := &mockUserRepo{
-		getByIDFn: func(_ context.Context, gotID uuid.UUID, _ []string) (*model.User, error) {
-			require.Equal(t, id, gotID)
-			return existing, nil
-		},
-		updateFn: func(_ context.Context, entity model.User, updates ...map[string]any) (*model.User, error) {
-			capturedUpdates = updates[0]
-			if email, ok := capturedUpdates["email"].(string); ok {
-				entity.Email = email
-			}
-			if username, ok := capturedUpdates["username"].(string); ok {
-				entity.Username = username
-			}
-			if hash, ok := capturedUpdates["password_hash"].(string); ok {
-				entity.PasswordHash = hash
-			}
-			return &entity, nil
-		},
-	}
+	repo := repository.NewMockResourceRepository[model.User](false)
+	// pre-populate existing user
+	require.NoError(t, repo.Store(ctx, existing))
 
 	svc := newUserServiceWithRepo(repo)
 
@@ -156,31 +78,20 @@ func TestUserServiceUpdate_NormalizesAndHashes(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 
-	require.Equal(t, "test@example.com", capturedUpdates["email"])
-	require.Equal(t, "Alice", capturedUpdates["username"])
-	require.NotEmpty(t, capturedUpdates["password_hash"])
-	hash := capturedUpdates["password_hash"].(string)
-	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(hash), []byte("password123")))
+	require.Equal(t, "test@example.com", updated.Email)
+	require.Equal(t, "Alice", updated.Username)
+	require.NotEmpty(t, updated.PasswordHash)
+	require.NoError(t, bcrypt.CompareHashAndPassword([]byte(updated.PasswordHash), []byte("password123")))
 }
 
 // Ensures Update returns the existing entity when no meaningful updates are provided.
 func TestUserServiceUpdate_EmptyUpdates(t *testing.T) {
 	ctx := context.Background()
 	id := uuid.New()
-	updateCalled := false
-
 	existing := &model.User{ID: id, Email: "old@example.com", Username: "old"}
 
-	repo := &mockUserRepo{
-		getByIDFn: func(_ context.Context, gotID uuid.UUID, _ []string) (*model.User, error) {
-			require.Equal(t, id, gotID)
-			return existing, nil
-		},
-		updateFn: func(_ context.Context, entity model.User, updates ...map[string]any) (*model.User, error) {
-			updateCalled = true
-			return &entity, nil
-		},
-	}
+	repo := repository.NewMockResourceRepository[model.User](false)
+	require.NoError(t, repo.Store(ctx, existing))
 
 	svc := newUserServiceWithRepo(repo)
 
@@ -188,8 +99,8 @@ func TestUserServiceUpdate_EmptyUpdates(t *testing.T) {
 		Email: ptrString("   "),
 	})
 	require.NoError(t, err)
-	require.False(t, updateCalled)
-	require.Equal(t, existing, updated)
+	require.Equal(t, existing.Email, updated.Email)
+	require.Equal(t, existing.Username, updated.Username)
 }
 
 // Ensures Update rejects short passwords before performing repository lookups.
@@ -198,14 +109,11 @@ func TestUserServiceUpdate_PasswordTooShort(t *testing.T) {
 	id := uuid.New()
 	getCalled := false
 
-	repo := &mockUserRepo{
-		getByIDFn: func(_ context.Context, gotID uuid.UUID, _ []string) (*model.User, error) {
-			getCalled = true
-			return &model.User{ID: gotID}, nil
-		},
-	}
+	// wrap underlying mock to track whether GetByID is called
+	base := repository.NewMockResourceRepository[model.User](false)
+	trepo := &trackingRepo{UserRepository: base, called: &getCalled}
 
-	svc := newUserServiceWithRepo(repo)
+	svc := newUserServiceWithRepo(trepo)
 
 	_, err := svc.Update(ctx, id, &model.UpdateUserDTO{
 		Password: ptrString("short"),

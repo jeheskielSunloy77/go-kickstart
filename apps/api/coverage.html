@@ -95,17 +95,19 @@
 				
 				<option value="file19">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource.go (53.5%)</option>
 				
-				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/repository/user.go (100.0%)</option>
+				<option value="file20">github.com/jeheskielSunloy77/go-kickstart/internal/repository/resource_mock.go (0.0%)</option>
 				
-				<option value="file21">github.com/jeheskielSunloy77/go-kickstart/internal/service/auth.go (74.3%)</option>
+				<option value="file21">github.com/jeheskielSunloy77/go-kickstart/internal/repository/user.go (100.0%)</option>
 				
-				<option value="file22">github.com/jeheskielSunloy77/go-kickstart/internal/service/authorization.go (30.4%)</option>
+				<option value="file22">github.com/jeheskielSunloy77/go-kickstart/internal/service/auth.go (74.3%)</option>
 				
-				<option value="file23">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource.go (21.4%)</option>
+				<option value="file23">github.com/jeheskielSunloy77/go-kickstart/internal/service/authorization.go (30.4%)</option>
 				
-				<option value="file24">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				<option value="file24">github.com/jeheskielSunloy77/go-kickstart/internal/service/resource.go (21.4%)</option>
 				
-				<option value="file25">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (78.6%)</option>
+				<option value="file25">github.com/jeheskielSunloy77/go-kickstart/internal/service/services.go (0.0%)</option>
+				
+				<option value="file26">github.com/jeheskielSunloy77/go-kickstart/internal/service/user.go (78.6%)</option>
 				
 				</select>
 			</div>
@@ -2329,6 +2331,158 @@ func (r *resourceRepository[T]) evictCache(ctx context.Context, id uuid.UUID) <s
 		<pre class="file" id="file20" style="display: none">package repository
 
 import (
+        "context"
+        "reflect"
+        "sync"
+
+        "github.com/google/uuid"
+        "github.com/jeheskielSunloy77/go-kickstart/internal/model"
+        "gorm.io/gorm"
+)
+
+// MockResourceRepository is a simple in-memory implementation of
+// repository.ResourceRepository[T] for use in tests across entities.
+type MockResourceRepository[T model.BaseModel] struct {
+        mu      sync.RWMutex
+        data    map[uuid.UUID]T
+        deleted map[uuid.UUID]T
+        cacheEn bool
+}
+
+func NewMockResourceRepository[T model.BaseModel](cacheEnabled bool) *MockResourceRepository[T] <span class="cov0" title="0">{
+        return &amp;MockResourceRepository[T]{
+                data:    make(map[uuid.UUID]T),
+                deleted: make(map[uuid.UUID]T),
+                cacheEn: cacheEnabled,
+        }
+}</span>
+
+func (m *MockResourceRepository[T]) CacheEnabled() bool <span class="cov0" title="0">{
+        return m.cacheEn
+}</span>
+
+func (m *MockResourceRepository[T]) Store(ctx context.Context, entity *T) error <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+        id := (*entity).GetID()
+        m.data[id] = *entity
+        // if it existed in deleted, remove tombstone
+        delete(m.deleted, id)
+        return nil
+}</span>
+
+func (m *MockResourceRepository[T]) GetByID(ctx context.Context, id uuid.UUID, preloads []string) (*T, error) <span class="cov0" title="0">{
+        m.mu.RLock()
+        defer m.mu.RUnlock()
+        if v, ok := m.data[id]; ok </span><span class="cov0" title="0">{
+                return &amp;v, nil
+        }</span>
+        // not found
+        <span class="cov0" title="0">return nil, gorm.ErrRecordNotFound</span>
+}
+
+func (m *MockResourceRepository[T]) GetMany(ctx context.Context, opts GetManyOptions) ([]T, int64, error) <span class="cov0" title="0">{
+        m.mu.RLock()
+        defer m.mu.RUnlock()
+        list := make([]T, 0, len(m.data))
+        for _, v := range m.data </span><span class="cov0" title="0">{
+                list = append(list, v)
+        }</span>
+        <span class="cov0" title="0">return list, int64(len(list)), nil</span>
+}
+
+func (m *MockResourceRepository[T]) Update(ctx context.Context, entity T, updates ...map[string]any) (*T, error) <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+        id := entity.GetID()
+        if _, ok := m.data[id]; !ok </span><span class="cov0" title="0">{
+                return nil, gorm.ErrRecordNotFound
+        }</span>
+        // If updates provided, apply common update keys to the entity (for tests).
+        <span class="cov0" title="0">if len(updates) &gt; 0 &amp;&amp; updates[0] != nil </span><span class="cov0" title="0">{
+                upd := updates[0]
+                // apply known fields
+                if email, ok := upd["email"].(string); ok </span><span class="cov0" title="0">{
+                        // set via field assignment using a type assertion
+                        if e, ok := any(&amp;entity).(*T); ok </span><span class="cov0" title="0">{
+                                _ = e
+                        }</span>
+                        // fallback: attempt to set via reflection for arbitrary T
+                        // use reflection to set Email, Username, PasswordHash when present
+                        <span class="cov0" title="0">setFieldIfAvailable(&amp;entity, "Email", email)</span>
+                }
+                <span class="cov0" title="0">if username, ok := upd["username"].(string); ok </span><span class="cov0" title="0">{
+                        setFieldIfAvailable(&amp;entity, "Username", username)
+                }</span>
+                <span class="cov0" title="0">if ph, ok := upd["password_hash"].(string); ok </span><span class="cov0" title="0">{
+                        setFieldIfAvailable(&amp;entity, "PasswordHash", ph)
+                }</span>
+        }
+        <span class="cov0" title="0">m.data[id] = entity
+        return &amp;entity, nil</span>
+}
+
+func (m *MockResourceRepository[T]) Destroy(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+        if v, ok := m.data[id]; ok </span><span class="cov0" title="0">{
+                // soft-delete: move to deleted map
+                m.deleted[id] = v
+                delete(m.data, id)
+                return nil
+        }</span>
+        <span class="cov0" title="0">return gorm.ErrRecordNotFound</span>
+}
+
+func (m *MockResourceRepository[T]) Kill(ctx context.Context, id uuid.UUID) error <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+        delete(m.data, id)
+        delete(m.deleted, id)
+        return nil
+}</span>
+
+func (m *MockResourceRepository[T]) Restore(ctx context.Context, id uuid.UUID) (*T, error) <span class="cov0" title="0">{
+        m.mu.Lock()
+        defer m.mu.Unlock()
+        if v, ok := m.deleted[id]; ok </span><span class="cov0" title="0">{
+                m.data[id] = v
+                delete(m.deleted, id)
+                return &amp;v, nil
+        }</span>
+        <span class="cov0" title="0">return nil, gorm.ErrRecordNotFound</span>
+}
+
+// setFieldIfAvailable tries to set a field by name on the target value pointed
+// to by ptr using reflection. If the field doesn't exist or can't be set,
+// the function is a no-op.
+func setFieldIfAvailable[T any](ptr *T, fieldName string, value any) <span class="cov0" title="0">{
+        rv := reflect.ValueOf(ptr)
+        if rv.Kind() != reflect.Pointer || rv.IsNil() </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">rv = rv.Elem()
+        field := rv.FieldByName(fieldName)
+        if !field.IsValid() || !field.CanSet() </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">val := reflect.ValueOf(value)
+        if !val.IsValid() </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">if val.Type().AssignableTo(field.Type()) </span><span class="cov0" title="0">{
+                field.Set(val)
+                return
+        }</span>
+        <span class="cov0" title="0">if val.Type().ConvertibleTo(field.Type()) </span><span class="cov0" title="0">{
+                field.Set(val.Convert(field.Type()))
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package repository
+
+import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/config"
         "github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
         "github.com/jeheskielSunloy77/go-kickstart/internal/model"
@@ -2350,7 +2504,7 @@ func NewUserRepository(cfg *config.Config, db *gorm.DB, cacheClient cache.Cache)
 }</span>
 </pre>
 		
-		<pre class="file" id="file21" style="display: none">package service
+		<pre class="file" id="file22" style="display: none">package service
 
 import (
         "context"
@@ -3095,7 +3249,7 @@ func invalidVerificationError() *errs.ErrorResponse <span class="cov1" title="1"
 }</span>
 </pre>
 		
-		<pre class="file" id="file22" style="display: none">package service
+		<pre class="file" id="file23" style="display: none">package service
 
 import (
         "context"
@@ -3188,7 +3342,7 @@ func (a *AuthorizationService) Enforce(ctx context.Context, sub AuthorizationSub
 }
 </pre>
 		
-		<pre class="file" id="file23" style="display: none">package service
+		<pre class="file" id="file24" style="display: none">package service
 
 import (
         "context"
@@ -3216,7 +3370,7 @@ type resourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T
         resourceName string
 }
 
-func NewResourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepository[T]) ResourceService[T, S, U] <span class="cov10" title="2">{
+func NewResourceService[T model.BaseModel, S model.StoreDTO[T], U model.UpdateDTO[T]](resourceName string, repo repository.ResourceRepository[T]) ResourceService[T, S, U] <span class="cov10" title="6">{
         return &amp;resourceService[T, S, U]{resourceName: resourceName, repo: repo}
 }</span>
 
@@ -3301,7 +3455,7 @@ func (s *resourceService[T, S, U]) Restore(ctx context.Context, id uuid.UUID, pr
 }
 </pre>
 		
-		<pre class="file" id="file24" style="display: none">package service
+		<pre class="file" id="file25" style="display: none">package service
 
 import (
         "github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
@@ -3337,7 +3491,7 @@ func NewServices(s *server.Server, repos *repository.Repositories) (*Services, e
 }
 </pre>
 		
-		<pre class="file" id="file25" style="display: none">package service
+		<pre class="file" id="file26" style="display: none">package service
 
 import (
         "context"
