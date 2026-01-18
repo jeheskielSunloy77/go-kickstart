@@ -2010,15 +2010,18 @@
                       "type": "boolean"
                     },
                     "total": {
+                      "default": 946,
                       "type": "number"
                     },
                     "page": {
                       "type": "number"
                     },
                     "limit": {
+                      "default": 20,
                       "type": "number"
                     },
                     "totalPages": {
+                      "default": 48,
                       "type": "number"
                     },
                     "data": {
@@ -2079,10 +2082,7 @@
                   },
                   "required": [
                     "status",
-                    "total",
                     "page",
-                    "limit",
-                    "totalPages",
                     "data"
                   ]
                 }

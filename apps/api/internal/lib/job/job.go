@@ -3,16 +3,20 @@ package job
 import (
 	"github.com/hibiken/asynq"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/storage"
 	"github.com/rs/zerolog"
+	"gorm.io/gorm"
 )
 
 type JobService struct {
-	Client *asynq.Client
-	server *asynq.Server
-	logger *zerolog.Logger
+	Client  *asynq.Client
+	server  *asynq.Server
+	logger  *zerolog.Logger
+	db      *gorm.DB
+	storage storage.Storage
 }
 
-func NewJobService(logger *zerolog.Logger, cfg *config.Config) *JobService {
+func NewJobService(logger *zerolog.Logger, cfg *config.Config, db *gorm.DB, storageProvider storage.Storage) *JobService {
 	redisAddr := cfg.Cache.RedisAddress
 
 	client := asynq.NewClient(asynq.RedisClientOpt{
@@ -32,9 +36,11 @@ func NewJobService(logger *zerolog.Logger, cfg *config.Config) *JobService {
 	)
 
 	return &JobService{
-		Client: client,
-		server: server,
-		logger: logger,
+		Client:  client,
+		server:  server,
+		logger:  logger,
+		db:      db,
+		storage: storageProvider,
 	}
 }
 

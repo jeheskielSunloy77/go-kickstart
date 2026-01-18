@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ type Config struct {
 	Database      DatabaseConfig       `koanf:"database" validate:"required"`
 	Auth          AuthConfig           `koanf:"auth" validate:"required"`
 	Cache         CacheConfig          `koanf:"cache" validate:"required"`
+	FileStorage   FileStorageConfig    `koanf:"file_storage"`
 	SMTP          SMTPConfig           `koanf:"smtp" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 	Seeder        SeederConfig         `koanf:"seeder" validate:"required"`
@@ -73,6 +75,30 @@ type SeederConfig struct {
 type CacheConfig struct {
 	TTL          time.Duration `koanf:"ttl" validate:"required"`
 	RedisAddress string        `koanf:"redis_address" validate:"required"`
+}
+
+type FileStorageConfig struct {
+	Provider         string                 `koanf:"provider"`
+	MaxUploadSizeMB  int                    `koanf:"max_upload_size_mb"`
+	AllowedMimeTypes []string               `koanf:"allowed_mime_types"`
+	PathPrefix       string                 `koanf:"path_prefix"`
+	Local            FileStorageLocalConfig `koanf:"local"`
+	S3               FileStorageS3Config    `koanf:"s3"`
+}
+
+type FileStorageLocalConfig struct {
+	BaseDir    string `koanf:"base_dir"`
+	PublicPath string `koanf:"public_path"`
+}
+
+type FileStorageS3Config struct {
+	Bucket          string `koanf:"bucket"`
+	Region          string `koanf:"region"`
+	Endpoint        string `koanf:"endpoint"`
+	PublicURL       string `koanf:"public_url"`
+	AccessKeyID     string `koanf:"access_key_id"`
+	SecretAccessKey string `koanf:"secret_access_key"`
+	ForcePathStyle  bool   `koanf:"force_path_style"`
 }
 
 type IntegrationConfig struct {
@@ -138,6 +164,10 @@ func LoadConfig() (*Config, error) {
 		logger.Fatal().Err(err).Msg("config validation failed")
 	}
 
+	if err := validateFileStorageConfig(mainConfig); err != nil {
+		logger.Fatal().Err(err).Msg("file storage config validation failed")
+	}
+
 	// Set default observability config if not provided
 	if mainConfig.Observability == nil {
 		mainConfig.Observability = DefaultObservabilityConfig()
@@ -169,4 +199,46 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return mainConfig, nil
+}
+
+func validateFileStorageConfig(cfg *Config) error {
+	if cfg == nil {
+		return nil
+	}
+
+	switch cfg.FileStorage.Provider {
+	case "":
+		return fmt.Errorf("file storage provider is required")
+	case "local", "s3":
+	default:
+		return fmt.Errorf("unsupported file storage provider: %s", cfg.FileStorage.Provider)
+	}
+
+	if cfg.FileStorage.MaxUploadSizeMB <= 0 {
+		return fmt.Errorf("file storage max_upload_size_mb must be greater than 0")
+	}
+
+	if len(cfg.FileStorage.AllowedMimeTypes) == 0 {
+		return fmt.Errorf("file storage allowed_mime_types cannot be empty")
+	}
+
+	if cfg.FileStorage.Provider == "local" {
+		if strings.TrimSpace(cfg.FileStorage.Local.BaseDir) == "" {
+			return fmt.Errorf("file storage local.base_dir is required")
+		}
+		if strings.TrimSpace(cfg.FileStorage.Local.PublicPath) == "" {
+			return fmt.Errorf("file storage local.public_path is required")
+		}
+	}
+
+	if cfg.FileStorage.Provider == "s3" {
+		if strings.TrimSpace(cfg.FileStorage.S3.Bucket) == "" {
+			return fmt.Errorf("file storage s3.bucket is required")
+		}
+		if strings.TrimSpace(cfg.FileStorage.S3.Region) == "" {
+			return fmt.Errorf("file storage s3.region is required")
+		}
+	}
+
+	return nil
 }

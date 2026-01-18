@@ -10,6 +10,7 @@ import (
 	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/database"
 	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/job"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/storage"
 	loggerPkg "github.com/jeheskielSunloy77/go-kickstart/internal/logger"
 	"github.com/newrelic/go-agent/v3/integrations/nrredis-v9"
 	"github.com/redis/go-redis/v9"
@@ -23,6 +24,7 @@ type Server struct {
 	DB            *database.Database
 	Redis         *redis.Client
 	Job           *job.JobService
+	Storage       storage.Storage
 	App           *fiber.App
 }
 
@@ -30,6 +32,11 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 	db, err := database.NewDatabase(cfg, logger, loggerService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	storageProvider, err := storage.NewStorage(cfg.FileStorage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
 	// Redis client with New Relic integration
@@ -51,7 +58,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 	}
 
 	// job service
-	jobService := job.NewJobService(logger, cfg)
+	jobService := job.NewJobService(logger, cfg, db.DB, storageProvider)
 	jobService.InitHandlers(cfg, logger)
 
 	// Start job server
@@ -66,6 +73,7 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 		DB:            db,
 		Redis:         redisClient,
 		Job:           jobService,
+		Storage:       storageProvider,
 	}
 
 	// Start metrics collection
