@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/database"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/logger"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/config"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/database"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/logger"
 )
 
 const DefaultTimeout = 60 * time.Second

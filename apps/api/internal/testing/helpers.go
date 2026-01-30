@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jeheskielSunloy77/go-kickstart/internal/server"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/server"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )

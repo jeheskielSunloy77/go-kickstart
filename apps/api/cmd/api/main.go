@@ -7,15 +7,15 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/database"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/handler"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/lib/cache"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/logger"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/repository"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/router"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/server"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/service"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/application"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/config"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/database"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/lib/cache"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/logger"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/repository"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/server"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/interface/http/handler"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/interface/http/router"
 )
 
 const DefaultContextTimeout = 30
@@ -53,7 +53,7 @@ func main() {
 
 	// Initialize repositories, services, and handlers
 	repos := repository.NewRepositories(httpServer, cacheClient)
-	services, serviceErr := service.NewServices(httpServer, repos)
+	services, serviceErr := application.NewServices(httpServer, repos)
 	if serviceErr != nil {
 		log.Fatal().Err(serviceErr).Msg("could not create services")
 	}

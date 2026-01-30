@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/database"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/config"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/database"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"

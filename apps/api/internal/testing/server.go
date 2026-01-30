@@ -3,9 +3,9 @@ package testing
 import (
 	"time"
 
-	"github.com/jeheskielSunloy77/go-kickstart/internal/config"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/database"
-	"github.com/jeheskielSunloy77/go-kickstart/internal/server"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/config"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/database"
+	"github.com/jeheskielSunloy77/go-kickstart/internal/infrastructure/server"
 	"github.com/rs/zerolog"
 )
 
