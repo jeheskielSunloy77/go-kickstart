@@ -100,6 +100,19 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## Constitution Alignment *(mandatory)*
+
+<!--
+  ACTION REQUIRED: List which constitution principles apply to this feature and
+  how they will be satisfied. If a waiver is required, document the rationale.
+-->
+
+- **Contract-first schemas**: [How Zod/OpenAPI contracts are updated or N/A]
+- **Layered API responsibilities**: [How handler/service/repo separation applies]
+- **Testing discipline by layer**: [Tests planned or waiver with rationale]
+- **Cookie-only auth & client safety**: [Applicable changes or N/A]
+- **Generated artifacts & monorepo workflow**: [OpenAPI/emails generation or N/A]
+
 ## Success Criteria *(mandatory)*
 
 <!--

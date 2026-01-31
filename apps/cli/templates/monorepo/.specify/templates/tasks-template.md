@@ -8,10 +8,9 @@ description: "Task list template for feature implementation"
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: Tests are REQUIRED for new or changed behavior per the constitution,
-unless the feature spec includes an explicit waiver with rationale. For a
-scaffolder, prioritize deterministic tests around validation, config mapping,
-inclusion/exclusion rules, and rendering/env generation.
+**Tests**: Tests are REQUIRED when behavior changes or new logic is added, per
+the constitution. If tests are waived, the spec must document the rationale and
+the tasks list must reference that waiver.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -159,6 +158,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
+- [ ] TXXX Regenerate OpenAPI spec if contracts changed
+- [ ] TXXX Regenerate email templates if React Email sources changed
 
 ---
 

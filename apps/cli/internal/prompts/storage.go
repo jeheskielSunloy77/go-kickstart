@@ -1,0 +1,70 @@
+package prompts
+
+import (
+	"os"
+
+	"github.com/charmbracelet/huh"
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
+)
+
+func StorageFlow(cfg *scaffold.ScaffoldConfiguration) error {
+	choice := string(cfg.Storage.Type)
+	if choice == "" {
+		choice = string(scaffold.StorageLocal)
+	}
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().Title("Storage provider").
+				Options(
+					huh.NewOption("Local", string(scaffold.StorageLocal)),
+					huh.NewOption("S3-compatible", string(scaffold.StorageS3)),
+				).Value(&choice),
+		),
+	)
+	form.WithTheme(huh.ThemeCharm())
+	form.WithWidth(80)
+	form.WithHeight(10)
+	form.WithOutput(os.Stdout)
+	if err := form.Run(); err != nil {
+		return err
+	}
+
+	cfg.Storage.Type = scaffold.StorageType(choice)
+	if cfg.Storage.Type == scaffold.StorageLocal {
+		if cfg.Storage.Local == nil {
+			cfg.Storage.Local = &scaffold.LocalStorageConfig{Path: "storage"}
+		}
+		localForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().Title("Local storage base path").Value(&cfg.Storage.Local.Path),
+			),
+		)
+		localForm.WithTheme(huh.ThemeCharm())
+		localForm.WithWidth(80)
+		localForm.WithHeight(8)
+		localForm.WithOutput(os.Stdout)
+		return localForm.Run()
+	}
+
+	if cfg.Storage.Type == scaffold.StorageS3 {
+		if cfg.Storage.S3 == nil {
+			cfg.Storage.S3 = &scaffold.S3Config{}
+		}
+		s3Form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().Title("S3 endpoint").Value(&cfg.Storage.S3.Endpoint),
+				huh.NewInput().Title("S3 region").Value(&cfg.Storage.S3.Region),
+				huh.NewInput().Title("S3 bucket").Value(&cfg.Storage.S3.Bucket),
+				huh.NewInput().Title("S3 access key").Value(&cfg.Storage.S3.AccessKey),
+				huh.NewInput().Title("S3 secret key").Value(&cfg.Storage.S3.SecretKey),
+			),
+		)
+		s3Form.WithTheme(huh.ThemeCharm())
+		s3Form.WithWidth(80)
+		s3Form.WithHeight(16)
+		s3Form.WithOutput(os.Stdout)
+		return s3Form.Run()
+	}
+
+	return nil
+}

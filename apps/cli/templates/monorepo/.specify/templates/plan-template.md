@@ -31,11 +31,14 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- Deterministic, safe scaffolding preserved (no destructive writes without explicit confirmation).
-- Tests added for new/changed behavior at decision points.
-- UX consistency maintained for interactive flows; errors actionable for users.
-- Performance targets considered for default scaffold path.
-- Template/doc updates included when user-facing behavior or template output changes.
+- Contract-first schemas: Zod schemas and OpenAPI contracts updated when API
+  endpoints change; `bun run openapi:generate` planned.
+- Layered API: handlers thin, services own business rules, repositories data
+  access only; handler helpers used for new endpoints.
+- Testing discipline: tests added at the correct layer or a spec waiver exists.
+- Web auth safety: cookie-only auth; no JWT storage/decoding; RequireAuth used.
+- Generated artifacts: email templates regenerated; no manual edits to outputs.
+- Monorepo workflow: shared logic in `packages/*`; Bun/Turbo commands used.
 
 ## Project Structure
 

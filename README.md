@@ -1,9 +1,76 @@
-# Go Kickstart
+# Go Kickstart (CLI Scaffolder)
 
-A monorepo for a Go API and a Vite + React web app with shared TypeScript packages, managed with Turborepo and Bun workspaces. visit the
-[repository](https://github.com/jeheskielSunloy77/go-kickstart) for more details.
+Go Kickstart is a CLI that generates a production-ready monorepo (Go API + Vite/React web app + shared TypeScript packages) from an embedded template.
 
-## Repository layout
+This repository is the scaffolder itself. The README for the generated project lives in the template at `apps/cli/templates/monorepo/README.md`.
+
+## What This Repo Contains
+
+```
+go-kickstart/
+├── apps/cli/                      # CLI app (this repo's primary code)
+│   ├── cmd/gokickstart/           # CLI entrypoint
+│   ├── internal/                  # CLI implementation (prompts, scaffold engine, validation)
+│   └── templates/monorepo/        # Templatized scaffold source (becomes the generated repo)
+└── specs/                         # Feature specs/plans for the scaffolder
+```
+
+## Why Use It
+
+- Avoid copying a repo and manually renaming things.
+- Get a guided interactive setup (modern TUI wizard) or an automation-friendly CLI command.
+- Start from a consistent baseline with batteries included (API, web, jobs, caching, OpenAPI, emails, Docker).
+
+## Usage
+
+The CLI is a Go module under `apps/cli/`. Run it from there:
+
+```bash
+cd apps/cli
+
+# Interactive (default)
+go run ./cmd/gokickstart new
+
+# Non-interactive
+go run ./cmd/gokickstart new <name> [path] --module github.com/acme/<name> --storage local
+```
+
+Notes:
+- `path` defaults to the current directory when omitted.
+- Interactive mode always asks for destination path and defaults it to the current directory.
+
+## Customization (High Level)
+
+Inputs supported by the scaffolder (interactive and/or flags):
+
+- Project name + destination path
+- Go module path
+- Include/exclude web app (`--web` / `--no-web`)
+- Database: PostgreSQL only (for now) + connection details for `.env`
+- Package manager: Bun only (for now)
+- Include/exclude Docker Compose (`--docker` / `--no-docker`)
+- Git init + initial commit (`--git` / `--no-git`)
+- Storage: local or S3-compatible + `.env` details (S3 details required when selected)
+
+For the full CLI contract, see `specs/001-cli-scaffold-app/contracts/cli.md`.
+
+## Template (Generated Project)
+
+The scaffold source is the directory `apps/cli/templates/monorepo/`. The CLI embeds these files and writes them to the destination path, applying:
+
+- Conditional inclusion (e.g., exclude `apps/web` when `--no-web`)
+- String/token replacements (project name/module)
+- `.env` generation from `.env.example` plus user overrides
+
+If you want to understand the generated project in depth, read:
+
+`apps/cli/templates/monorepo/README.md`
+
+## Scaffolded Monorepo Overview (What Users Get)
+
+This is a condensed overview of what the generated project contains.
+
+### Repository Layout
 
 ```
 go-kickstart/
@@ -11,137 +78,43 @@ go-kickstart/
 ├── apps/web             # Vite + React frontend
 ├── packages/zod         # Shared Zod schemas
 ├── packages/openapi     # OpenAPI generation
-├── packages/emails      # React Email for email templates generation
+├── packages/emails      # React Email templates -> Go HTML templates
 └── packages/*           # Other shared packages
 ```
 
-## Prerequisites
+### Prerequisites (Generated Project)
 
-- Go 1.24+
-- Bun 1.2.13 (Node 22+)
-- PostgreSQL 16+
-- Redis 8+
+- Go (API)
+- Bun + Node (web + workspaces)
+- PostgreSQL (database)
+- Redis (jobs/cache)
 
-## Quick start
+### Quick Start (Generated Project)
 
 ```bash
-bun install                          # Install dependencies for all apps and packages
-cp apps/api/.env.example apps/api/.env      # Set up API env
-cp apps/web/.env.example apps/web/.env      # Set up Web env
-bun run api:migrate:up   # Run DB migrations
-
-# Start all apps
+bun install
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+bun run api:migrate:up
 bun dev
 ```
 
-Or you can use docker compose for local development:
+Docker Compose is also supported by the template when enabled during scaffolding.
+
+### Key Features (Generated Project)
+
+- Go API with clean layering (handlers -> services -> repositories -> models)
+- Cookie-based auth with refresh flow
+- Background jobs (Asynq) + email templates generation
+- OpenAPI generation from shared schemas/contracts
+- React web app with React Router, React Query, Tailwind, and shadcn/ui
+
+## Developing This CLI
 
 ```bash
-docker compose up --build
+cd apps/cli
+go test ./...
 ```
 
-## Common commands
+To change what gets generated, edit files under `apps/cli/templates/monorepo/` and re-run the CLI.
 
-```bash
-# Monorepo (from root)
-bun dev         # Start dev servers for all apps
-bun dev:all    # Start dev servers for all apps and packages
-bun run test       # Run tests for all apps and packages
-bun run build
-bun run lint
-bun run typecheck
-
-# API helpers (see apps/api/Makefile for migrate targets)
-bun run api:run
-bun run api:test
-cd apps/api && make migrate-new NAME=add_table
-cd apps/api && make migrate-up
-cd apps/api && make migrate-down
-
-# Contracts and emails
-bun run openapi:generate    # Generate OpenAPI spec file from contracts
-bun run emails:generate     # Generate email HTML templates
-
-# UI components
-bun run ui:shadcn:add <component>
-```
-
-## API (apps/api)
-
-### Technologies
-
-- Fiber web framework
-- GORM ORM with PostgreSQL
-- Asynq for background jobs with Redis
-- Zap + Zerolog for logging
-- Testcontainers for integration tests
-- OpenAPI documentations UI
-- SMTP email handling
-- Redis caching layer
-
-### Architecture & Conventions
-
-- Clean layers: handlers -> services -> repositories -> models.
-- Repositories are data access only; services implement business rules and validations.
-- Use `ResourceRepository` / `ResourceService` / `ResourceHandler` for standard CRUD models.
-- Entry points: `apps/api/cmd/api/main.go` (server) and `apps/api/cmd/seed/main.go` (seeder).
-- Routes in `apps/api/internal/router/routes.go`; middleware order in `apps/api/internal/router/router.go`.
-- Prefer `handler.Handle` / `handler.HandleNoContent` / `handler.HandleFile` for new endpoints.
-- Request DTOs implement `validation.Validatable`; use `validation.BindAndValidate` or the handler wrappers.
-- Use `utils.ParseUUIDParam` for `:id` params.
-- Services return `errs.ErrorResponse`; wrap DB errors with `sqlerr.HandleError`. Handlers return errors and let `GlobalErrorHandler` format responses.
-- Request IDs are set in middleware and injected into logs; use `middleware.GetLogger` in handlers.
-- Context timeouts should use `server.Config.Server.ReadTimeout` / `WriteTimeout`.
-- Auth uses short-lived JWT access tokens and long-lived refresh tokens. `middleware.Auth.RequireAuth` sets `user_id` in Fiber locals; sessions live in `auth_sessions`. Cookie config is under `AuthConfig`.
-- Auth routes: `/api/v1/auth/register`, `/login`, `/google`, `/verify-email`, `/refresh`, `/me`, `/resend-verification`, `/logout`, `/logout-all`.
-- Background jobs use Asynq (`apps/api/internal/lib/job`). Define new task payloads in `email_tasks.go`, register them in `JobService.Start`, and wire handlers in `handlers.go`.
-- Email templates live in `apps/api/templates/emails` and are generated from `packages/emails`.
-- OpenAPI docs are written to `apps/api/static/openapi.json` and served at `/api/docs`. Update `packages/zod` and `packages/openapi/src/contracts` when endpoints change.
-- Caching layer with Redis in `apps/api/internal/lib/cache`.
-
-## Web (apps/web)
-
-### Technologies
-
-- Vite + React + TypeScript
-- React Query + ts-rest for data layer
-- Tailwind CSS + shadcn/ui for UI
-- React Router for routing
-- Cookie-based authentication with refresh
-- React Email for email templates generation
-- React OAuth for Google login
-- Zod for schema validation
-- Vitest + React Testing Library for testing
-- ESLint + Prettier for code quality
-
-### Architecture & Conventions
-
-- Vite + React + TypeScript with routing in `apps/web/src/router.tsx`.
-- Route-based pages live in `apps/web/src/pages`.
-- Data layer uses `@ts-rest/react-query` with the axios fetcher in `apps/web/src/api/index.ts`.
-- UI uses Tailwind + shadcn/ui; shared components live in `packages/ui/src/components`.
-- Auth is cookie-based only. The API client uses `withCredentials: true` and retries once after `/api/v1/auth/refresh`.
-- Protected routes use `apps/web/src/auth/require-auth.tsx` (calls `/api/v1/auth/me`).
-- Auth routes under `/auth`: `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/me`.
-- Google login uses `@react-oauth/google` (provider in `apps/web/src/main.tsx`).
-
-## Packages (packages/\*)
-
-- `@go-kickstart/zod` (`packages/zod`): source of truth for API request/response schemas (exported from `packages/zod/src/index.ts`).
-- `@go-kickstart/openapi` (`packages/openapi`): builds the OpenAPI spec from Zod + ts-rest contracts in `packages/openapi/src/contracts`. Regenerate with `bun run openapi:generate`.
-- `@go-kickstart/ui` (`packages/ui`): shared shadcn/ui component and other reusable components used by web apps.
-- `@go-kickstart/emails` (`packages/emails`): React Email templates in `packages/emails/src/templates`. Export HTML to `apps/api/templates/emails` via `bun run emails:generate`.
-
-## Testing
-
-- Services: unit tests only, mock repositories.
-- Repositories: integration tests with real PostgreSQL (Testcontainers), no SQL mocking.
-- Handlers: thin HTTP tests only, mock services.
-- Tests live next to code (`foo.go` -> `foo_test.go` / `foo_integration_test.go`).
-- Use helpers in `apps/api/internal/testing` (`SetupTestDB`, `WithRollbackTransaction`).
-
-## DevOps
-
-- This project is designed to be containerized. it is already dockerized with Dockerfiles in `apps/api/Dockerfile` and `apps/web/Dockerfile`. it also include a nginx configuration file in `apps/web/nginx.conf` for serving the web app and reverse proxying to the API.
-- Use docker compose file on `docker-compose.yml` for local development with containers.
-- CI/CD is set up with GitHub Actions in `.github/workflows/ci.yml`.
