@@ -24,7 +24,7 @@ func RenderFS(source fs.FS, dest string, shouldSkip func(path string) bool, tran
 			}
 			return nil
 		}
-		outPath := filepath.Join(dest, path)
+		outPath := filepath.Join(dest, stripTemplateSuffix(path))
 		if d.IsDir() {
 			return os.MkdirAll(outPath, 0o755)
 		}
@@ -60,6 +60,13 @@ func RenderFS(source fs.FS, dest string, shouldSkip func(path string) bool, tran
 		}
 		return nil
 	})
+}
+
+func stripTemplateSuffix(path string) string {
+	if strings.HasSuffix(path, ".tmpl") {
+		return strings.TrimSuffix(path, ".tmpl")
+	}
+	return path
 }
 
 func DefaultSkip(path string) bool {

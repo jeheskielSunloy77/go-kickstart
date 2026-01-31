@@ -1,0 +1,21 @@
+package repository
+
+import (
+	"{{MODULE_PATH}}/internal/application/port"
+	"{{MODULE_PATH}}/internal/domain"
+	"{{MODULE_PATH}}/internal/infrastructure/config"
+	"{{MODULE_PATH}}/internal/infrastructure/lib/cache"
+	"gorm.io/gorm"
+)
+
+type UserRepository = port.UserRepository
+
+type userRepository struct {
+	ResourceRepository[domain.User]
+}
+
+func NewUserRepository(cfg *config.Config, db *gorm.DB, cacheClient cache.Cache) UserRepository {
+	return &userRepository{
+		ResourceRepository: NewResourceRepository[domain.User](cfg, db, cacheClient),
+	}
+}

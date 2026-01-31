@@ -1,0 +1,18 @@
+package handler
+
+import (
+	"{{MODULE_PATH}}/internal/application"
+	applicationdto "{{MODULE_PATH}}/internal/application/dto"
+	"{{MODULE_PATH}}/internal/domain"
+	httpdto "{{MODULE_PATH}}/internal/interface/http/dto"
+)
+
+type UserHandler struct {
+	*ResourceHandler[domain.User, *applicationdto.StoreUserInput, *applicationdto.UpdateUserInput, *httpdto.StoreUserRequest, *httpdto.UpdateUserRequest]
+}
+
+func NewUserHandler(h Handler, service application.UserService) *UserHandler {
+	return &UserHandler{
+		ResourceHandler: NewResourceHandler[domain.User, *applicationdto.StoreUserInput, *applicationdto.UpdateUserInput, *httpdto.StoreUserRequest, *httpdto.UpdateUserRequest]("user", h, service),
+	}
+}

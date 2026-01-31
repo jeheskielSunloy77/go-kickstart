@@ -1,0 +1,18 @@
+package repository
+
+import (
+	"{{MODULE_PATH}}/internal/application/port"
+	"{{MODULE_PATH}}/internal/infrastructure/lib/cache"
+	"{{MODULE_PATH}}/internal/infrastructure/server"
+)
+
+type Repositories = port.Repositories
+
+func NewRepositories(s *server.Server, cacheClient cache.Cache) *Repositories {
+	return &Repositories{
+		Auth:              NewAuthRepository(s.DB.DB),
+		AuthSession:       NewAuthSessionRepository(s.DB.DB),
+		User:              NewUserRepository(s.Config, s.DB.DB, cacheClient),
+		EmailVerification: NewEmailVerificationRepository(s.DB.DB),
+	}
+}

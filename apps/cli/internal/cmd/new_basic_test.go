@@ -20,7 +20,7 @@ func TestScaffoldBasicFlow(t *testing.T) {
 	cfg.InitGit = false
 
 	fsys := fstest.MapFS{
-		"README.md": &fstest.MapFile{Data: []byte("{{PROJECT_NAME}}")},
+		"README.md.tmpl": &fstest.MapFile{Data: []byte("{{PROJECT_NAME}}")},
 	}
 
 	if err := scaffold.ScaffoldFromFS(cfg, true, fsys, nil); err != nil {

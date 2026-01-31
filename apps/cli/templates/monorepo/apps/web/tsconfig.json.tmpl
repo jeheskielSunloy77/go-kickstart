@@ -1,0 +1,19 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@{{PROJECT_NAME_KEBAB}}/openapi": ["../../packages/openapi/src/index.ts"],
+      "@{{PROJECT_NAME_KEBAB}}/openapi/*": ["../../packages/openapi/src/*"],
+      "@{{PROJECT_NAME_KEBAB}}/ui": ["../../packages/ui/src/index.ts"],
+      "@{{PROJECT_NAME_KEBAB}}/ui/*": ["../../packages/ui/src/*"],
+      "@{{PROJECT_NAME_KEBAB}}/zod": ["../../packages/zod/src/index.ts"],
+      "@{{PROJECT_NAME_KEBAB}}/zod/*": ["../../packages/zod/src/*"]
+    }
+  }
+}

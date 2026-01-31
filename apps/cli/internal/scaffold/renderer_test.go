@@ -9,7 +9,7 @@ import (
 
 func TestRenderFS(t *testing.T) {
 	fsys := fstest.MapFS{
-		"README.md":           &fstest.MapFile{Data: []byte("hello")},
+		"README.md.tmpl":      &fstest.MapFile{Data: []byte("hello")},
 		"apps/web/index.html": &fstest.MapFile{Data: []byte("web")},
 		"apps/api/main.go":    &fstest.MapFile{Data: []byte("api")},
 		"docker-compose.yml":  &fstest.MapFile{Data: []byte("compose")},

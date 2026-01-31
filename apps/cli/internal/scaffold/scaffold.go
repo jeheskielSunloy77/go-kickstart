@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/templates"
@@ -27,13 +28,22 @@ func ScaffoldFromFS(cfg ScaffoldConfiguration, allowOverwrite bool, source fs.FS
 		return err
 	}
 	replacements := map[string]string{
-		"{{PROJECT_NAME}}":  cfg.ProjectName,
-		"{{MODULE_PATH}}":   cfg.ModulePath,
-		TemplateModulePath:  cfg.ModulePath,
-		TemplateProjectName: cfg.ProjectName,
+		"{{PROJECT_NAME}}":       cfg.ProjectName,
+		"{{PROJECT_NAME_KEBAB}}": toKebabCase(cfg.ProjectName),
+		"{{MODULE_PATH}}":        cfg.ModulePath,
+		TemplateModulePath:       cfg.ModulePath,
+		TemplateProjectName:      cfg.ProjectName,
 	}
-	skip := combineSkips(DefaultSkip, ShouldSkipForConfig(cfg))
+	// Keep a real go.mod in the template for tooling/module-boundary purposes,
+	// but don't copy it into scaffolded projects (go.mod.tmpl renders to go.mod instead).
+	skip := combineSkips(DefaultSkip, ShouldSkipForConfig(cfg), func(path string) bool {
+		return path == "apps/api/go.mod"
+	})
 	transform := func(path string, content []byte) ([]byte, error) {
+		// Strict templating: only apply token replacement to *.tmpl files.
+		if !strings.HasSuffix(path, ".tmpl") {
+			return content, nil
+		}
 		return []byte(ReplaceTokens(string(content), replacements)), nil
 	}
 	if err := RenderFS(source, cfg.Destination, skip, transform); err != nil {
@@ -62,6 +72,24 @@ func combineSkips(skips ...func(string) bool) func(string) bool {
 		}
 		return false
 	}
+}
+
+var (
+	kebabBoundaryRe = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	nonAlnumRe      = regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	multiDashRe     = regexp.MustCompile(`-+`)
+)
+
+func toKebabCase(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	value = kebabBoundaryRe.ReplaceAllString(value, "$1-$2")
+	value = nonAlnumRe.ReplaceAllString(value, "-")
+	value = multiDashRe.ReplaceAllString(value, "-")
+	value = strings.Trim(value, "-")
+	return strings.ToLower(value)
 }
 
 func generateEnvFiles(root string, overrides map[string]map[string]string) error {
