@@ -1,0 +1,22 @@
+{
+	"name": "go-kickstart",
+	"private": true,
+	"scripts": {
+		"build": "turbo run build --filter=@go-kickstart/cli",
+		"dev": "turbo run dev --filter=@go-kickstart/cli",
+		"test": "turbo run test --filter=@go-kickstart/cli",
+		"lint": "turbo run lint --filter=@go-kickstart/cli",
+		"format:check": "turbo run format:check --filter=@go-kickstart/cli",
+		"format:fix": "turbo run format:fix --filter=@go-kickstart/cli",
+		"clean": "turbo run clean --filter=@go-kickstart/cli",
+		"cli:run": "turbo run dev --filter=@go-kickstart/cli",
+		"ci:simulate": "bun run format:check && bun run lint && bun run test && bun run build && echo '✅ CI simulation completed successfully!'"
+	},
+	"packageManager": "bun@1.2.13",
+	"workspaces": [
+		"apps/*"
+	],
+	"devDependencies": {
+		"turbo": "^2.5.5"
+	}
+}

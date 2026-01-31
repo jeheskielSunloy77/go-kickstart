@@ -1,0 +1,13 @@
+{
+	"name": "@go-kickstart/cli",
+	"private": true,
+	"scripts": {
+		"dev": "go run ./cmd/gokickstart",
+		"build": "go build -o ../../dist/gokickstart ./cmd/gokickstart",
+		"test": "go test ./...",
+		"lint": "go vet ./...",
+		"format:check": "test -z \"$(gofmt -l .)\"",
+		"format:fix": "gofmt -w .",
+		"clean": "rm -rf ../../dist"
+	}
+}

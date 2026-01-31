@@ -42,4 +42,3 @@ func TestScaffoldFromFS_StrictTemplates(t *testing.T) {
 		t.Fatalf("expected templated content, got %q", string(templated))
 	}
 }
-

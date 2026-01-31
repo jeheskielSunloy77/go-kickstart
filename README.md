@@ -111,10 +111,22 @@ Docker Compose is also supported by the template when enabled during scaffolding
 
 ## Developing This CLI
 
+### Root-level shortcuts
+
+You can run common tasks from the repo root (Bun + Turbo):
+
+```bash
+bun run cli:run
+bun run build
+bun run test
+bun run lint
+bun run format:check
+bun run ci:simulate
+```
+
 ```bash
 cd apps/cli
 go test ./...
 ```
 
 To change what gets generated, edit files under `apps/cli/templates/monorepo/` and re-run the CLI.
-
