@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/validate"
 )
 
 type ReviewAction string
@@ -17,17 +18,7 @@ const (
 )
 
 func ReviewConfig(cfg scaffold.ScaffoldConfiguration) (ReviewAction, error) {
-	summary := fmt.Sprintf(
-		"Project name: %s\nDestination: %s\nModule: %s\nWeb: %t\nDocker: %t\nGit: %t\nDatabase: %s\nStorage: %s\n",
-		cfg.ProjectName,
-		cfg.Destination,
-		cfg.ModulePath,
-		cfg.IncludeWeb,
-		cfg.IncludeDocker,
-		cfg.InitGit,
-		cfg.DatabaseType,
-		cfg.Storage.Type,
-	)
+	summary := reviewSummary(cfg)
 
 	action := ReviewGenerate
 	form := huh.NewForm(
@@ -47,4 +38,25 @@ func ReviewConfig(cfg scaffold.ScaffoldConfiguration) (ReviewAction, error) {
 	form.WithOutput(os.Stdout)
 
 	return action, form.Run()
+}
+
+func resolveDisplayDestination(cfg scaffold.ScaffoldConfiguration) string {
+	if resolved, err := validate.ResolveProjectDestination(cfg.Destination, cfg.ProjectName); err == nil {
+		return resolved
+	}
+	return cfg.Destination
+}
+
+func reviewSummary(cfg scaffold.ScaffoldConfiguration) string {
+	return fmt.Sprintf(
+		"Project name: %s\nDestination: %s\nModule: %s\nWeb: %t\nDocker: %t\nGit: %t\nDatabase: %s\nStorage: %s\n",
+		cfg.ProjectName,
+		resolveDisplayDestination(cfg),
+		cfg.ModulePath,
+		cfg.IncludeWeb,
+		cfg.IncludeDocker,
+		cfg.InitGit,
+		cfg.DatabaseType,
+		cfg.Storage.Type,
+	)
 }

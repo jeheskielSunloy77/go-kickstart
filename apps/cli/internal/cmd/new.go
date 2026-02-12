@@ -40,6 +40,23 @@ type newFlags struct {
 	s3Secret   string
 }
 
+var (
+	chooseFlowFn                = prompts.ChooseFlow
+	basicFlowFn                 = prompts.BasicFlow
+	destinationFlowFn           = prompts.DestinationFlow
+	componentsFlowFn            = prompts.ComponentsFlow
+	databaseFlowFn              = prompts.DatabaseFlow
+	storageFlowFn               = prompts.StorageFlow
+	reviewConfigFn              = prompts.ReviewConfig
+	validateProjectNameFn       = validate.ProjectName
+	validateModulePathFn        = validate.ModulePath
+	resolveProjectDestinationFn = validate.ResolveProjectDestination
+	isNonEmptyDirFn             = validate.IsNonEmptyDir
+	runWithSpinnerFn            = ui.RunWithSpinner
+	scaffoldProjectFn           = scaffold.ScaffoldProject
+	printSummaryFn              = ui.PrintSummary
+)
+
 func init() {
 	newCmd := &cobra.Command{
 		Use:   "new [name] [path]",
@@ -87,14 +104,14 @@ func runInteractive() error {
 	flow := prompts.FlowBasic
 
 	for {
-		choice, err := prompts.ChooseFlow()
+		choice, err := chooseFlowFn()
 		if err != nil {
 			return err
 		}
 		flow = choice
 		cfg.UseDefaults = flow == prompts.FlowBasic
 
-		result, err := prompts.BasicFlow(cfg)
+		result, err := basicFlowFn(cfg)
 		if err != nil {
 			return err
 		}
@@ -102,18 +119,21 @@ func runInteractive() error {
 
 		if flow == prompts.FlowAdvanced {
 			cfg.UseDefaults = false
-			if err := prompts.ComponentsFlow(&cfg); err != nil {
+			if err := destinationFlowFn(&cfg); err != nil {
 				return err
 			}
-			if err := prompts.DatabaseFlow(&cfg); err != nil {
+			if err := componentsFlowFn(&cfg); err != nil {
 				return err
 			}
-			if err := prompts.StorageFlow(&cfg); err != nil {
+			if err := databaseFlowFn(&cfg); err != nil {
+				return err
+			}
+			if err := storageFlowFn(&cfg); err != nil {
 				return err
 			}
 		}
 
-		action, err := prompts.ReviewConfig(cfg)
+		action, err := reviewConfigFn(cfg)
 		if err != nil {
 			return err
 		}
@@ -128,19 +148,19 @@ func runInteractive() error {
 		break
 	}
 
-	if err := validate.ProjectName(cfg.ProjectName); err != nil {
+	if err := validateProjectNameFn(cfg.ProjectName); err != nil {
 		return err
 	}
-	if err := validate.ModulePath(cfg.ModulePath); err != nil {
+	if err := validateModulePathFn(cfg.ModulePath); err != nil {
 		return err
 	}
-	dest, err := validate.ResolveProjectDestination(cfg.Destination, cfg.ProjectName)
+	dest, err := resolveProjectDestinationFn(cfg.Destination, cfg.ProjectName)
 	if err != nil {
 		return err
 	}
 	cfg.Destination = dest
 
-	nonEmpty, err := validate.IsNonEmptyDir(dest)
+	nonEmpty, err := isNonEmptyDirFn(dest)
 	if err != nil {
 		return err
 	}
@@ -149,7 +169,7 @@ func runInteractive() error {
 		confirm := false
 		form := huh.NewForm(
 			huh.NewGroup(
-				huh.NewConfirm().Title("Destination is not empty. Continue?").Value(&confirm),
+				huh.NewConfirm().Title(fmt.Sprintf("Destination %q is not empty. Continue?", dest)).Value(&confirm),
 			),
 		)
 		if err := form.Run(); err != nil {
@@ -161,14 +181,14 @@ func runInteractive() error {
 		allowOverwrite = true
 	}
 
-	err = ui.RunWithSpinner("Generating project...", func() error {
-		return scaffold.ScaffoldProject(cfg, allowOverwrite)
+	err = runWithSpinnerFn("Generating project...", func() error {
+		return scaffoldProjectFn(cfg, allowOverwrite)
 	})
 	if err != nil {
 		return err
 	}
 
-	ui.PrintSummary(cfg.Destination)
+	printSummaryFn(cfg.Destination)
 	return nil
 }
 
