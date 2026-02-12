@@ -70,8 +70,12 @@ func stripTemplateSuffix(path string) string {
 }
 
 func DefaultSkip(path string) bool {
+	base := filepath.Base(path)
 	for _, glob := range DefaultIgnoreGlobs {
 		if match, _ := filepath.Match(strings.ReplaceAll(glob, "**/", ""), path); match {
+			if strings.HasPrefix(base, ".env.example") {
+				continue
+			}
 			return true
 		}
 	}

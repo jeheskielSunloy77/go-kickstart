@@ -34,11 +34,7 @@ func ScaffoldFromFS(cfg ScaffoldConfiguration, allowOverwrite bool, source fs.FS
 		TemplateModulePath:       cfg.ModulePath,
 		TemplateProjectName:      cfg.ProjectName,
 	}
-	// Keep a real go.mod in the template for tooling/module-boundary purposes,
-	// but don't copy it into scaffolded projects (go.mod.tmpl renders to go.mod instead).
-	skip := combineSkips(DefaultSkip, ShouldSkipForConfig(cfg), func(path string) bool {
-		return path == "apps/api/go.mod"
-	})
+	skip := combineSkips(DefaultSkip, ShouldSkipForConfig(cfg))
 	transform := func(path string, content []byte) ([]byte, error) {
 		// Strict templating: only apply token replacement to *.tmpl files.
 		if !strings.HasSuffix(path, ".tmpl") {
