@@ -3,7 +3,7 @@ package scaffold
 func DefaultConfig() ScaffoldConfiguration {
 	return ScaffoldConfiguration{
 		ProjectName:  "my-app",
-		Destination:  ".",
+		Destination:  "",
 		ModulePath:   "github.com/yourorg/my-app",
 		IncludeWeb:   true,
 		DatabaseType: DatabasePostgres,

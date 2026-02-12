@@ -134,7 +134,7 @@ func runInteractive() error {
 	if err := validate.ModulePath(cfg.ModulePath); err != nil {
 		return err
 	}
-	dest, err := validate.ResolveDestination(cfg.Destination)
+	dest, err := validate.ResolveProjectDestination(cfg.Destination, cfg.ProjectName)
 	if err != nil {
 		return err
 	}
@@ -187,8 +187,6 @@ func configFromFlags(args []string, flags newFlags) (scaffold.ScaffoldConfigurat
 
 	if len(args) > 1 {
 		cfg.Destination = args[1]
-	} else {
-		cfg.Destination = "."
 	}
 
 	if flags.modulePath == "" {
@@ -258,7 +256,7 @@ func configFromFlags(args []string, flags newFlags) (scaffold.ScaffoldConfigurat
 		return cfg, err
 	}
 
-	dest, err := validate.ResolveDestination(cfg.Destination)
+	dest, err := validate.ResolveProjectDestination(cfg.Destination, cfg.ProjectName)
 	if err != nil {
 		return cfg, err
 	}

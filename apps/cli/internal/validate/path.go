@@ -21,6 +21,18 @@ func ResolveDestination(arg string) (string, error) {
 	return abs, nil
 }
 
+func ResolveProjectDestination(baseArg, projectName string) (string, error) {
+	base, err := ResolveDestination(baseArg)
+	if err != nil {
+		return "", err
+	}
+	base = filepath.Clean(base)
+	if filepath.Base(base) == projectName {
+		return base, nil
+	}
+	return filepath.Join(base, projectName), nil
+}
+
 func IsNonEmptyDir(path string) (bool, error) {
 	info, err := os.Stat(path)
 	if err != nil {

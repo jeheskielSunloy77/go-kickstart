@@ -37,8 +37,9 @@ go run ./cmd/gokickstart new <name> [path] --module github.com/acme/<name> --sto
 
 Notes:
 
-- `path` defaults to the current directory when omitted.
-- Interactive mode always asks for destination path and defaults it to the current directory.
+- `path` is a base directory. The project is created at `<base>/<name>`.
+- If `path` is omitted, base defaults to the current directory.
+- Interactive mode asks for a base destination path and defaults it to the current directory.
 
 ## CLI Contract
 
@@ -46,17 +47,17 @@ Notes:
 
 #### `gokickstart new <name> [path] [flags]`
 
-Non-interactive mode. All required inputs are provided via arguments and flags. `path` defaults to the current directory when omitted. If any required input is missing, the command fails with a clear error.
+Non-interactive mode. All required inputs are provided via arguments and flags. `path` is treated as a base directory and the project is generated at `<path>/<name>`. If `path` is omitted, base defaults to the current directory. If any required input is missing, the command fails with a clear error.
 
 #### `gokickstart new`
 
-Interactive mode. Launches a step-by-step TUI wizard with Back/Next navigation and a final review screen. The wizard asks for the destination path and defaults it to the current directory. `--interactive` also forces this mode.
-it have 2 flows, first one is the basic flow where the user only provide the project name, destination path and the module path, and all other options are set to defaults. The second flow is the advanced flow where the user can choose which parts of the template are included and adjust most template variables.
+Interactive mode. Launches a step-by-step TUI wizard with Back/Next navigation and a final review screen. The wizard asks for a base destination path and defaults it to the current directory, then generates the project at `<base>/<project-name>`. `--interactive` also forces this mode.
+it have 2 flows, first one is the basic flow where the user only provide the project name, base destination path and the module path, and all other options are set to defaults. The second flow is the advanced flow where the user can choose which parts of the template are included and adjust most template variables.
 
 ### Arguments and Flags (non-interactive)
 
 - `--name` (string): Folder/app name.
-- `path` (arg): Destination path for the generated project (defaults to current directory).
+- `path` (arg): Base destination path for the generated project. Final destination is `<path>/<name>` (defaults base to current directory).
 - `--module` (string): Go module path (e.g., `github.com/acme/foo`).
 - `--web` / `--no-web`: Include or exclude `apps/web`.
 - `--db` (enum): `postgres` (only option in this release).

@@ -42,3 +42,67 @@ func TestIsNonEmptyDir(t *testing.T) {
 		t.Fatalf("expected non-empty dir")
 	}
 }
+
+func TestResolveProjectDestination_EmptyBaseUsesCwd(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	got, err := ResolveProjectDestination("", "demo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := filepath.Join(cwd, "demo")
+	if got != want {
+		t.Fatalf("expected %s, got %s", want, got)
+	}
+}
+
+func TestResolveProjectDestination_RelativeBase(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	got, err := ResolveProjectDestination("some-dir", "demo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := filepath.Join(cwd, "some-dir", "demo")
+	if got != want {
+		t.Fatalf("expected %s, got %s", want, got)
+	}
+}
+
+func TestResolveProjectDestination_AbsoluteBase(t *testing.T) {
+	base := t.TempDir()
+	got, err := ResolveProjectDestination(base, "demo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := filepath.Join(base, "demo")
+	if got != want {
+		t.Fatalf("expected %s, got %s", want, got)
+	}
+}
+
+func TestResolveProjectDestination_SmartDedupe(t *testing.T) {
+	base := filepath.Join(t.TempDir(), "demo")
+	got, err := ResolveProjectDestination(base, "demo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != base {
+		t.Fatalf("expected %s, got %s", base, got)
+	}
+}
+
+func TestResolveProjectDestination_SmartDedupeWithTrailingSlash(t *testing.T) {
+	base := filepath.Join(t.TempDir(), "demo")
+	got, err := ResolveProjectDestination(base+string(os.PathSeparator), "demo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != base {
+		t.Fatalf("expected %s, got %s", base, got)
+	}
+}

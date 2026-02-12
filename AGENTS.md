@@ -32,11 +32,13 @@ go-kickstart/
 
 - Interactive mode (default): `gokickstart new`
   - Modern TUI wizard
-  - Asks for destination path (defaults to current directory)
+  - Asks for base destination path (defaults to current directory)
+  - Generates at `<base>/<project-name>`
   - Supports basic (defaults) and advanced (customize) flows
 - Non-interactive mode: `gokickstart new <name> [path] [flags]`
   - Flags-only (no prompts)
-  - `path` defaults to current directory when omitted
+  - `path` is a base directory; final destination is `<path>/<name>`
+  - omitted `path` defaults base to current directory
 
 Canonical contract doc: `specs/001-cli-scaffold-app/contracts/cli.md`
 
@@ -69,4 +71,3 @@ Run from `apps/cli/`:
 When you need details about the scaffolded monorepo (API/web/packages conventions, testing by layer, OpenAPI/email generation, auth rules, etc.), refer to:
 
 - `apps/cli/templates/monorepo/AGENTS.md`
-

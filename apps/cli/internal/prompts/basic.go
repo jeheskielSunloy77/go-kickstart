@@ -9,9 +9,6 @@ import (
 
 func BasicFlow(defaults scaffold.ScaffoldConfiguration) (scaffold.ScaffoldConfiguration, error) {
 	cfg := defaults
-	if cfg.Destination == "" {
-		cfg.Destination = "."
-	}
 	if cfg.ProjectName == "" {
 		cfg.ProjectName = "my-app"
 	}
@@ -22,7 +19,7 @@ func BasicFlow(defaults scaffold.ScaffoldConfiguration) (scaffold.ScaffoldConfig
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().Title("Project name").Value(&cfg.ProjectName),
-			huh.NewInput().Title("Destination path").Value(&cfg.Destination).Placeholder("."),
+			huh.NewInput().Title("Base destination path").Value(&cfg.Destination).Placeholder("current directory"),
 		),
 		huh.NewGroup(
 			huh.NewInput().Title("Go module path").Value(&cfg.ModulePath),
