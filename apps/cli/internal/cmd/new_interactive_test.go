@@ -22,6 +22,7 @@ func restoreInteractiveDeps() {
 	validateModulePathFn = validate.ModulePath
 	resolveProjectDestinationFn = validate.ResolveProjectDestination
 	isNonEmptyDirFn = validate.IsNonEmptyDir
+	showWelcomeFn = showWelcomeScreen
 	runWithSpinnerFn = ui.RunWithSpinner
 	scaffoldProjectFn = scaffold.ScaffoldProject
 	printSummaryFn = ui.PrintSummary
@@ -35,6 +36,7 @@ func TestRunInteractiveBasicSkipsAdvancedPrompts(t *testing.T) {
 	databaseCalled := false
 	storageCalled := false
 
+	showWelcomeFn = func() error { return nil }
 	chooseFlowFn = func() (prompts.FlowChoice, error) { return prompts.FlowBasic, nil }
 	basicFlowFn = func(cfg scaffold.ScaffoldConfiguration) (scaffold.ScaffoldConfiguration, error) {
 		cfg.ProjectName = "demo"
@@ -85,6 +87,10 @@ func TestRunInteractiveAdvancedFlowOrder(t *testing.T) {
 
 	var calls []string
 
+	showWelcomeFn = func() error {
+		calls = append(calls, "welcome")
+		return nil
+	}
 	chooseFlowFn = func() (prompts.FlowChoice, error) {
 		calls = append(calls, "choose")
 		return prompts.FlowAdvanced, nil
@@ -127,7 +133,7 @@ func TestRunInteractiveAdvancedFlowOrder(t *testing.T) {
 		t.Fatalf("runInteractive returned error: %v", err)
 	}
 
-	want := []string{"choose", "basic", "destination", "components", "database", "storage", "review"}
+	want := []string{"welcome", "choose", "basic", "destination", "components", "database", "storage", "review"}
 	if !reflect.DeepEqual(calls, want) {
 		t.Fatalf("unexpected call order: got %v, want %v", calls, want)
 	}

@@ -5,15 +5,20 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/ui"
 )
 
 func DestinationFlow(cfg *scaffold.ScaffoldConfiguration) error {
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Title("Base destination path").Value(&cfg.Destination).Placeholder("current directory"),
+			huh.NewInput().
+				Title(ui.DestinationTitle).
+				Description(ui.DestinationDescription).
+				Value(&cfg.Destination).
+				Placeholder("current directory"),
 		),
 	)
-	form.WithTheme(huh.ThemeCharm())
+	form.WithTheme(ui.HuhTheme())
 	form.WithWidth(80)
 	form.WithHeight(10)
 	form.WithOutput(os.Stdout)

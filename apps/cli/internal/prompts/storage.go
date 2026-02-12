@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/ui"
 )
 
 func StorageFlow(cfg *scaffold.ScaffoldConfiguration) error {
@@ -14,14 +15,16 @@ func StorageFlow(cfg *scaffold.ScaffoldConfiguration) error {
 	}
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Storage provider").
+			huh.NewSelect[string]().
+				Title(ui.StorageTitle).
+				Description(ui.StorageDescription).
 				Options(
-					huh.NewOption("Local", string(scaffold.StorageLocal)),
-					huh.NewOption("S3-compatible", string(scaffold.StorageS3)),
+					huh.NewOption(ui.StorageLocalLabel, string(scaffold.StorageLocal)),
+					huh.NewOption(ui.StorageS3Label, string(scaffold.StorageS3)),
 				).Value(&choice),
 		),
 	)
-	form.WithTheme(huh.ThemeCharm())
+	form.WithTheme(ui.HuhTheme())
 	form.WithWidth(80)
 	form.WithHeight(10)
 	form.WithOutput(os.Stdout)
@@ -36,10 +39,13 @@ func StorageFlow(cfg *scaffold.ScaffoldConfiguration) error {
 		}
 		localForm := huh.NewForm(
 			huh.NewGroup(
-				huh.NewInput().Title("Local storage base path").Value(&cfg.Storage.Local.Path),
+				huh.NewInput().
+					Title(ui.LocalPathTitle).
+					Description(ui.LocalPathDesc).
+					Value(&cfg.Storage.Local.Path),
 			),
 		)
-		localForm.WithTheme(huh.ThemeCharm())
+		localForm.WithTheme(ui.HuhTheme())
 		localForm.WithWidth(80)
 		localForm.WithHeight(8)
 		localForm.WithOutput(os.Stdout)
@@ -52,14 +58,14 @@ func StorageFlow(cfg *scaffold.ScaffoldConfiguration) error {
 		}
 		s3Form := huh.NewForm(
 			huh.NewGroup(
-				huh.NewInput().Title("S3 endpoint").Value(&cfg.Storage.S3.Endpoint),
-				huh.NewInput().Title("S3 region").Value(&cfg.Storage.S3.Region),
-				huh.NewInput().Title("S3 bucket").Value(&cfg.Storage.S3.Bucket),
-				huh.NewInput().Title("S3 access key").Value(&cfg.Storage.S3.AccessKey),
-				huh.NewInput().Title("S3 secret key").Value(&cfg.Storage.S3.SecretKey),
+				huh.NewInput().Title(ui.S3EndpointTitle).Value(&cfg.Storage.S3.Endpoint),
+				huh.NewInput().Title(ui.S3RegionTitle).Value(&cfg.Storage.S3.Region),
+				huh.NewInput().Title(ui.S3BucketTitle).Value(&cfg.Storage.S3.Bucket),
+				huh.NewInput().Title(ui.S3AccessTitle).Value(&cfg.Storage.S3.AccessKey),
+				huh.NewInput().Title(ui.S3SecretTitle).Value(&cfg.Storage.S3.SecretKey),
 			),
 		)
-		s3Form.WithTheme(huh.ThemeCharm())
+		s3Form.WithTheme(ui.HuhTheme())
 		s3Form.WithWidth(80)
 		s3Form.WithHeight(16)
 		s3Form.WithOutput(os.Stdout)

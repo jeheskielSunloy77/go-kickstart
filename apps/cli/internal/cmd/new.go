@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/charmbracelet/huh"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/prompts"
@@ -14,6 +15,8 @@ import (
 
 var interactive bool
 var flags newFlags
+
+const repoURL = "https://github.com/jeheskielSunloy77/go-kickstart"
 
 type newFlags struct {
 	name       string
@@ -52,6 +55,7 @@ var (
 	validateModulePathFn        = validate.ModulePath
 	resolveProjectDestinationFn = validate.ResolveProjectDestination
 	isNonEmptyDirFn             = validate.IsNonEmptyDir
+	showWelcomeFn               = showWelcomeScreen
 	runWithSpinnerFn            = ui.RunWithSpinner
 	scaffoldProjectFn           = scaffold.ScaffoldProject
 	printSummaryFn              = ui.PrintSummary
@@ -100,6 +104,10 @@ func init() {
 }
 
 func runInteractive() error {
+	if err := showWelcomeFn(); err != nil {
+		return err
+	}
+
 	cfg := scaffold.DefaultConfig()
 	flow := prompts.FlowBasic
 
@@ -169,9 +177,18 @@ func runInteractive() error {
 		confirm := false
 		form := huh.NewForm(
 			huh.NewGroup(
-				huh.NewConfirm().Title(fmt.Sprintf("Destination %q is not empty. Continue?", dest)).Value(&confirm),
+				huh.NewConfirm().
+					Title(fmt.Sprintf("%s\n%s", ui.OverwriteTitle, dest)).
+					Description("Existing files detected. Proceed only if this is intentional.").
+					Affirmative(ui.OverwriteAff).
+					Negative(ui.OverwriteNeg).
+					Value(&confirm),
 			),
 		)
+		form.WithTheme(ui.HuhTheme())
+		form.WithWidth(90)
+		form.WithHeight(12)
+		form.WithOutput(os.Stdout)
 		if err := form.Run(); err != nil {
 			return err
 		}
@@ -190,6 +207,24 @@ func runInteractive() error {
 
 	printSummaryFn(cfg.Destination)
 	return nil
+}
+
+func showWelcomeScreen() error {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewNote().
+				Title(ui.WelcomeTitle).
+				Description(ui.WelcomeCard(Version, repoURL)).
+				Next(true).
+				NextLabel(ui.WelcomeNextLabel),
+		),
+	)
+	form.WithTheme(ui.HuhTheme())
+	form.WithWidth(110)
+	form.WithHeight(20)
+	form.WithOutput(os.Stdout)
+
+	return form.Run()
 }
 
 func configFromFlags(args []string, flags newFlags) (scaffold.ScaffoldConfiguration, error) {

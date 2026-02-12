@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/ui"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/validate"
 )
 
@@ -23,16 +24,16 @@ func ReviewConfig(cfg scaffold.ScaffoldConfiguration) (ReviewAction, error) {
 	action := ReviewGenerate
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewNote().Title("Review").Description(summary),
-			huh.NewSelect[ReviewAction]().Title("What would you like to do?").
+			huh.NewNote().Title(ui.ReviewTitle).Description(summary),
+			huh.NewSelect[ReviewAction]().Title(ui.ReviewActionTitle).
 				Options(
-					huh.NewOption("Generate project", ReviewGenerate),
-					huh.NewOption("Edit answers", ReviewEdit),
-					huh.NewOption("Cancel", ReviewCancel),
+					huh.NewOption(ui.ReviewGenerateLabel, ReviewGenerate),
+					huh.NewOption(ui.ReviewEditLabel, ReviewEdit),
+					huh.NewOption(ui.ReviewCancelLabel, ReviewCancel),
 				).Value(&action),
 		),
 	)
-	form.WithTheme(huh.ThemeCharm())
+	form.WithTheme(ui.HuhTheme())
 	form.WithWidth(80)
 	form.WithHeight(20)
 	form.WithOutput(os.Stdout)
@@ -49,7 +50,8 @@ func resolveDisplayDestination(cfg scaffold.ScaffoldConfiguration) string {
 
 func reviewSummary(cfg scaffold.ScaffoldConfiguration) string {
 	return fmt.Sprintf(
-		"Project name: %s\nDestination: %s\nModule: %s\nWeb: %t\nDocker: %t\nGit: %t\nDatabase: %s\nStorage: %s\n",
+		"%s\nProject name: %s\nDestination: %s\nModule: %s\nWeb: %t\nDocker: %t\nGit: %t\nDatabase: %s\nStorage: %s\n",
+		ui.ReviewSummaryHeading,
 		cfg.ProjectName,
 		resolveDisplayDestination(cfg),
 		cfg.ModulePath,

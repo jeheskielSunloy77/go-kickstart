@@ -6,5 +6,5 @@ import (
 )
 
 func PrintError(err error) {
-	fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	fmt.Fprintf(os.Stderr, "❌ launch failed: %v\n", err)
 }

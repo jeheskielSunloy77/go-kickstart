@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/ui"
 )
 
 func defaultModulePath(projectName string) string {
@@ -26,10 +27,13 @@ func BasicFlow(defaults scaffold.ScaffoldConfiguration) (scaffold.ScaffoldConfig
 
 	projectForm := huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Title("Project name").Value(&cfg.ProjectName),
+			huh.NewInput().
+				Title(ui.ProjectNameTitle).
+				Description(ui.ProjectNameDescription).
+				Value(&cfg.ProjectName),
 		),
 	)
-	projectForm.WithTheme(huh.ThemeCharm())
+	projectForm.WithTheme(ui.HuhTheme())
 	projectForm.WithWidth(80)
 	projectForm.WithHeight(10)
 	projectForm.WithOutput(os.Stdout)
@@ -44,10 +48,13 @@ func BasicFlow(defaults scaffold.ScaffoldConfiguration) (scaffold.ScaffoldConfig
 
 	moduleForm := huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Title("Go module path").Value(&cfg.ModulePath),
+			huh.NewInput().
+				Title(ui.ModuleTitle).
+				Description(ui.ModuleDescription).
+				Value(&cfg.ModulePath),
 		),
 	)
-	moduleForm.WithTheme(huh.ThemeCharm())
+	moduleForm.WithTheme(ui.HuhTheme())
 	moduleForm.WithWidth(80)
 	moduleForm.WithHeight(10)
 	moduleForm.WithOutput(os.Stdout)
