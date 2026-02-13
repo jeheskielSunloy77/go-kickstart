@@ -12,7 +12,7 @@ func ProjectName(name string) error {
 	if strings.TrimSpace(name) == "" {
 		return errors.New("project name is required")
 	}
-	if strings.ContainsAny(name, "\\/\\\t\\n") {
+	if strings.ContainsAny(name, `/\`) || strings.ContainsAny(name, "\t\r\n") {
 		return errors.New("project name must not contain path separators")
 	}
 	return nil

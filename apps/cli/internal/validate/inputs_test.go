@@ -10,7 +10,10 @@ func TestProjectName(t *testing.T) {
 	}{
 		{"empty", "", true},
 		{"ok", "myapp", false},
+		{"ok with n", "admin", false},
 		{"slash", "my/app", true},
+		{"backslash", "my\\app", true},
+		{"newline", "my\napp", true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
