@@ -15,7 +15,7 @@ func InitGitRepo(path string) error {
 	if err := add.Run(); err != nil {
 		return err
 	}
-	commit := exec.Command("git", "commit", "-m", "chore: initial commit")
+	commit := exec.Command("git", "commit", "-m", "init: scaffolded a new project with go-kickstart CLI")
 	commit.Dir = path
 	if err := commit.Run(); err != nil {
 		return err
