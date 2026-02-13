@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}}
 
-A monorepo for a Go API and a Vite + React web app with shared TypeScript packages, managed with Turborepo and Bun workspaces. scaffolded with **go-kickstart** visit the
+A monorepo for a Go API with shared TypeScript packages, managed with Turborepo and Bun workspaces. scaffolded with **go-kickstart** visit the
 [repository](https://github.com/jeheskielSunloy77/go-kickstart) for more details.
 
 ## Repository layout
@@ -8,7 +8,9 @@ A monorepo for a Go API and a Vite + React web app with shared TypeScript packag
 ```
 {{PROJECT_NAME_KEBAB}}/
 ├── apps/api             # Go API (Fiber)
+{{IF_INCLUDE_WEB}}
 ├── apps/web             # Vite + React frontend
+{{END_IF_INCLUDE_WEB}}
 ├── packages/zod         # Shared Zod schemas
 ├── packages/openapi     # OpenAPI generation
 ├── packages/emails      # React Email for email templates generation
@@ -27,7 +29,9 @@ A monorepo for a Go API and a Vite + React web app with shared TypeScript packag
 ```bash
 bun install                          # Install dependencies for all apps and packages
 cp apps/api/.env.example apps/api/.env      # Set up API env
+{{IF_INCLUDE_WEB}}
 cp apps/web/.env.example apps/web/.env      # Set up Web env
+{{END_IF_INCLUDE_WEB}}
 bun run api:migrate:up   # Run DB migrations
 
 # Start all apps
@@ -62,8 +66,10 @@ cd apps/api && make migrate-down
 bun run openapi:generate    # Generate OpenAPI spec file from contracts
 bun run emails:generate     # Generate email HTML templates
 
+{{IF_INCLUDE_WEB}}
 # UI components
 bun run ui:shadcn:add <component>
+{{END_IF_INCLUDE_WEB}}
 ```
 
 ## API (apps/api)
@@ -99,6 +105,7 @@ bun run ui:shadcn:add <component>
 - OpenAPI docs are written to `apps/api/static/openapi.json` and served at `/api/docs`. Update `packages/zod` and `packages/openapi/src/contracts` when endpoints change.
 - Caching layer with Redis in `apps/api/internal/lib/cache`.
 
+{{IF_INCLUDE_WEB}}
 ## Web (apps/web)
 
 ### Technologies
@@ -124,12 +131,15 @@ bun run ui:shadcn:add <component>
 - Protected routes use `apps/web/src/auth/require-auth.tsx` (calls `/api/v1/auth/me`).
 - Auth routes under `/auth`: `/auth/login`, `/auth/register`, `/auth/verify-email`, `/auth/forgot-password`, `/auth/me`.
 - Google login uses `@react-oauth/google` (provider in `apps/web/src/main.tsx`).
+{{END_IF_INCLUDE_WEB}}
 
 ## Packages (packages/\*)
 
 - `@{{PROJECT_NAME_KEBAB}}/zod` (`packages/zod`): source of truth for API request/response schemas (exported from `packages/zod/src/index.ts`).
 - `@{{PROJECT_NAME_KEBAB}}/openapi` (`packages/openapi`): builds the OpenAPI spec from Zod + ts-rest contracts in `packages/openapi/src/contracts`. Regenerate with `bun run openapi:generate`.
-- `@{{PROJECT_NAME_KEBAB}}/ui` (`packages/ui`): shared shadcn/ui component and other reusable components used by web apps.
+{{IF_INCLUDE_WEB}}
+- `@{{PROJECT_NAME_KEBAB}}/ui` (`packages/ui`): shared shadcn/ui components and other reusable UI components.
+{{END_IF_INCLUDE_WEB}}
 - `@{{PROJECT_NAME_KEBAB}}/emails` (`packages/emails`): React Email templates in `packages/emails/src/templates`. Export HTML to `apps/api/templates/emails` via `bun run emails:generate`.
 
 ## Testing
@@ -142,6 +152,6 @@ bun run ui:shadcn:add <component>
 
 ## DevOps
 
-- This project is designed to be containerized. it is already dockerized with Dockerfiles in `apps/api/Dockerfile` and `apps/web/Dockerfile`. it also include a nginx configuration file in `apps/web/nginx.conf` for serving the web app and reverse proxying to the API.
+- This project is designed to be containerized. it is already dockerized with Dockerfiles in `apps/api/Dockerfile`{{IF_INCLUDE_WEB}} and `apps/web/Dockerfile`. it also include a nginx configuration file in `apps/web/nginx.conf` for serving the web app and reverse proxying to the API{{END_IF_INCLUDE_WEB}}.
 - Use docker compose file on `docker-compose.yml` for local development with containers.
 - CI/CD is set up with GitHub Actions in `.github/workflows/ci.yml`.

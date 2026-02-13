@@ -65,6 +65,7 @@ services:
       redis:
         condition: service_healthy
 
+{{IF_INCLUDE_WEB}}
   web:
     build:
       context: .
@@ -78,6 +79,7 @@ services:
     depends_on:
       api:
         condition: service_started
+{{END_IF_INCLUDE_WEB}}
 
 volumes:
   db_data:

@@ -22,9 +22,11 @@
 		"api:tidy": "cd apps/api && go fmt ./... && go mod tidy && go mod verify",
 		"api:install": "cd apps/api && go mod download",
 		"api:test": "turbo run test --filter=@{{PROJECT_NAME_KEBAB}}/api",
-		"web:test": "turbo run test --filter=@{{PROJECT_NAME_KEBAB}}/web",
+		{{IF_INCLUDE_WEB}}
 		"ui:shadcn:add": "cd packages/ui && bunx --bun shadcn@latest add",
+		"web:test": "turbo run test --filter=@{{PROJECT_NAME_KEBAB}}/web",
 		"web:shadcn:add": "bun run ui:shadcn:add",
+		{{END_IF_INCLUDE_WEB}}
 		"openapi:generate": "cd packages/openapi && bun generate",
 		"emails:generate": "cd packages/emails && bun run generate",
 		"ci:simulate": "bun install --frozen-lockfile && bun run openapi:generate && bun run emails:generate && git status --porcelain && bun run build && bun run test && echo '✅ CI simulation completed successfully!'",

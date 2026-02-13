@@ -1,6 +1,18 @@
 package scaffold
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
+
+var includeWebBlockRe = regexp.MustCompile(`(?s)\{\{IF_INCLUDE_WEB\}\}(.*?)\{\{END_IF_INCLUDE_WEB\}\}`)
+
+func ApplyTemplateConditions(input string, cfg ScaffoldConfiguration) string {
+	if cfg.IncludeWeb {
+		return includeWebBlockRe.ReplaceAllString(input, "$1")
+	}
+	return includeWebBlockRe.ReplaceAllString(input, "")
+}
 
 func ReplaceTokens(input string, replacements map[string]string) string {
 	out := input

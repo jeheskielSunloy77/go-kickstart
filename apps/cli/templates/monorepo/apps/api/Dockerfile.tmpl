@@ -3,7 +3,9 @@ FROM oven/bun:1.2.13 AS bun-builder
 WORKDIR /repo
 COPY package.json bun.lock turbo.json ./
 COPY packages ./packages
+{{IF_INCLUDE_WEB}}
 COPY apps/web/package.json ./apps/web/
+{{END_IF_INCLUDE_WEB}}
 COPY apps/api ./apps/api
 
 RUN bun install --frozen-lockfile --ignore-scripts

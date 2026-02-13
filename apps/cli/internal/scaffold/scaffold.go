@@ -40,7 +40,9 @@ func ScaffoldFromFS(cfg ScaffoldConfiguration, allowOverwrite bool, source fs.FS
 		if !strings.HasSuffix(path, ".tmpl") {
 			return content, nil
 		}
-		return []byte(ReplaceTokens(string(content), replacements)), nil
+		rendered := ApplyTemplateConditions(string(content), cfg)
+		rendered = ReplaceTokens(rendered, replacements)
+		return []byte(rendered), nil
 	}
 	if err := RenderFS(source, cfg.Destination, skip, transform); err != nil {
 		return err

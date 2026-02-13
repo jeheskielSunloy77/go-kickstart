@@ -2,7 +2,9 @@
 
 - Monorepo managed by Turborepo + Bun workspaces.
 - Go backend lives in `apps/api`; shared TypeScript packages live in `packages/*`.
+{{IF_INCLUDE_WEB}}
 - `apps/web` is a Vite + React app with Tailwind, shadcn/ui, zod, ts-rest, and React Query.
+{{END_IF_INCLUDE_WEB}}
 - OpenAPI docs are generated from shared Zod schemas in `packages/zod` and written into `apps/api/static/openapi.json`.
 - Email templates are authored in React Email (`packages/emails`) and exported to Go HTML templates consumed by the API.
 
@@ -108,6 +110,7 @@
 - Tests live next to code: `foo.go` -> `foo_test.go` or `foo_integration_test.go`.
 - Use helpers in `apps/api/internal/testing` (`SetupTestDB`, `WithRollbackTransaction`) for integration tests.
 
+{{IF_INCLUDE_WEB}}
 ## App #2: Web (apps/web)
 
 ### Stack & Architecture
@@ -172,6 +175,7 @@
 ### Language
 
 - User facing UI texts should always be in English to maintain consistency except for specific use cases where localization is required.
+{{END_IF_INCLUDE_WEB}}
 
 ## Packages (packages/\*)
 
