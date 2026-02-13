@@ -2,6 +2,7 @@
 	"name": "@go-kickstart/cli",
 	"private": true,
 	"scripts": {
+		"install": "go mod download",
 		"dev": "go run ./cmd/gokickstart",
 		"build": "go build -o ../../dist/gokickstart ./cmd/gokickstart",
 		"test": "go test ./...",

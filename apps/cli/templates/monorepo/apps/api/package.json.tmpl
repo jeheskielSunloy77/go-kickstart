@@ -3,6 +3,7 @@
 	"private": true,
 	"version": "1.0.0",
 	"scripts": {
+		"install": "go mod download",
 		"dev": "go run ./cmd/api",
 		"test": "sh -c \"go test -covermode=atomic -coverprofile=coverage.out ./internal/interface/http/handler ./internal/application ./internal/interface/http/middleware ./internal/infrastructure/repository && go tool cover -func=coverage.out | tail -n1 && go tool cover -html=coverage.out -o coverage.html\"",
 		"build": "go build -o bin/api ./cmd/api"
