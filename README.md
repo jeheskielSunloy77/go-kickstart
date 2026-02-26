@@ -22,10 +22,10 @@ The CLI is a Go module under `apps/cli/`. Run it from there:
 ```bash
 
 # Interactive (default)
-go run ./cmd/gokickstart new
+gokickstart new
 
 # Non-interactive
-go run ./cmd/gokickstart new <name> [path] --module github.com/acme/<name> --storage local
+gokickstart new <name> [path] --module github.com/acme/<name> --storage local
 ```
 
 Notes:
