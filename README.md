@@ -1,32 +1,25 @@
 # Go Kickstart (CLI Scaffolder)
 
 Go Kickstart is a CLI that generates a production-ready monorepo (Go API + Vite/React web app + shared TypeScript packages) from an embedded template.
-
 This repository is the scaffolder itself. The README for the generated project lives in the template at `apps/cli/templates/monorepo/README.md`.
 
-## What This Repo Contains
-
-```
-go-kickstart/
-├── apps/cli/                      # CLI app (this repo's primary code)
-│   ├── cmd/gokickstart/           # CLI entrypoint
-│   ├── internal/                  # CLI implementation (prompts, scaffold engine, validation)
-│   └── templates/monorepo/        # Templatized scaffold source (becomes the generated repo)
-└── specs/                         # Feature specs/plans for the scaffolder
-```
-
-## Why Use It
+## Why Use It?
 
 - Avoid copying a repo and manually renaming things.
 - Get a guided interactive setup (modern TUI wizard) or an automation-friendly CLI command.
-- Start from a consistent baseline with batteries included (API, web, jobs, caching, OpenAPI, emails, Docker).
+- Start from a consistent baseline with batteries included (API, web, jobs, caching, OpenAPI, emails, Docker). with best practices baked in, with clean architecture.
+
+## Installation
+
+```bash
+go install github.com/jeheskielSunloy77/go-kickstart/apps/cli/cmd/gokickstart@latest
+```
 
 ## Usage
 
 The CLI is a Go module under `apps/cli/`. Run it from there:
 
 ```bash
-cd apps/cli
 
 # Interactive (default)
 go run ./cmd/gokickstart new
@@ -131,6 +124,18 @@ Docker Compose is also supported by the template when enabled during scaffolding
 
 ## Developing This CLI
 
+### What This Repo Contains
+
+```
+go-kickstart/
+├── apps/cli/                      # CLI app (this repo's primary code)
+│   ├── cmd/gokickstart/           # CLI entrypoint
+│   ├── internal/                  # CLI implementation (prompts, scaffold engine, validation)
+│   └── templates/monorepo/        # Templatized scaffold source (becomes the generated repo)
+```
+
+````
+
 ### Root-level shortcuts
 
 You can run common tasks from the repo root (Bun + Turbo):
@@ -142,7 +147,7 @@ bun run test
 bun run lint
 bun run format:check
 bun run ci:simulate
-```
+````
 
 ```bash
 cd apps/cli
