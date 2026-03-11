@@ -63,7 +63,7 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *application.Serv
 		}),
 		helmet.New(),
 		middleware.RequestID(),
-		middlewares.Tracing.NewRelicMiddleware(),
+		middlewares.Tracing.HTTPMiddleware(),
 		middlewares.Tracing.EnhanceTracing(),
 		middlewares.ContextEnhancer.EnhanceContext(),
 		middlewares.ContextEnhancer.WithTimeout(),

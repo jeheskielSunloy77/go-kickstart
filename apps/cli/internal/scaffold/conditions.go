@@ -13,6 +13,12 @@ func ShouldSkipForConfig(cfg ScaffoldConfiguration) func(path string) bool {
 		if !cfg.IncludeDocker && strings.HasPrefix(path, "docker-compose") {
 			return true
 		}
+		if cfg.Observability != ObservabilityGrafanaOSS && (path == "ops/observability" || strings.HasPrefix(path, "ops/observability/")) {
+			return true
+		}
+		if cfg.Observability != ObservabilityGrafanaOSS && (path == "apps/api/internal/infrastructure/observability" || strings.HasPrefix(path, "apps/api/internal/infrastructure/observability/")) {
+			return true
+		}
 		return false
 	}
 }

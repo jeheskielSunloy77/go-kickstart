@@ -1,90 +1,120 @@
 package middleware
 
 import (
-	"fmt"
+{{IF_OBSERVABILITY_GRAFANA}}
+	"net/http"
+	"time"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/newrelic/go-agent/v3/integrations/nrpkgerrors"
-	"github.com/newrelic/go-agent/v3/newrelic"
-
 	"{{MODULE_PATH}}/internal/infrastructure/server"
+{{IF_OBSERVABILITY_GRAFANA}}
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 )
 
 type TracingMiddleware struct {
 	server *server.Server
-	nrApp  *newrelic.Application
+{{IF_OBSERVABILITY_GRAFANA}}
+	tracer          trace.Tracer
+	requestCounter  metric.Int64Counter
+	requestDuration metric.Float64Histogram
+{{END_IF_OBSERVABILITY_GRAFANA}}
 }
 
-func NewTracingMiddleware(s *server.Server, nrApp *newrelic.Application) *TracingMiddleware {
-	return &TracingMiddleware{
-		server: s,
-		nrApp:  nrApp,
-	}
+func NewTracingMiddleware(s *server.Server) *TracingMiddleware {
+	tm := &TracingMiddleware{server: s}
+{{IF_OBSERVABILITY_GRAFANA}}
+	tm.tracer = otel.Tracer("api/http")
+	meter := otel.Meter("api/http")
+	tm.requestCounter, _ = meter.Int64Counter("http.server.requests")
+	tm.requestDuration, _ = meter.Float64Histogram("http.server.duration", metric.WithUnit("ms"))
+{{END_IF_OBSERVABILITY_GRAFANA}}
+	return tm
 }
 
-// NewRelicMiddleware instruments fiber requests with New Relic.
-func (tm *TracingMiddleware) NewRelicMiddleware() fiber.Handler {
-	if tm.nrApp == nil {
-		return func(c *fiber.Ctx) error {
-			return c.Next()
-		}
-	}
+func (tm *TracingMiddleware) HTTPMiddleware() fiber.Handler {
+{{IF_OBSERVABILITY_GRAFANA}}
 	return func(c *fiber.Ctx) error {
 		routeName := c.Path()
 		if c.Route() != nil && c.Route().Path != "" {
 			routeName = c.Route().Path
 		}
 
-		txn := tm.nrApp.StartTransaction(fmt.Sprintf("%s %s", c.Method(), routeName))
-		defer txn.End()
-
-		ctx := newrelic.NewContext(c.UserContext(), txn)
+		ctx, span := tm.tracer.Start(c.UserContext(), routeName, trace.WithSpanKind(trace.SpanKindServer))
 		c.SetUserContext(ctx)
 
+		start := time.Now()
 		err := c.Next()
+		duration := time.Since(start)
 
-		txn.AddAttribute("http.method", c.Method())
-		txn.AddAttribute("http.route", routeName)
-		txn.AddAttribute("http.url", c.OriginalURL())
-		txn.AddAttribute("http.real_ip", c.IP())
-		txn.AddAttribute("http.status_code", c.Response().StatusCode())
-
-		if err != nil {
-			txn.NoticeError(nrpkgerrors.Wrap(err))
+		statusCode := c.Response().StatusCode()
+		if statusCode == 0 {
+			statusCode = http.StatusOK
 		}
+
+		attrs := []attribute.KeyValue{
+			attribute.String("http.method", c.Method()),
+			attribute.String("http.route", routeName),
+			attribute.String("http.url", c.OriginalURL()),
+			attribute.String("http.real_ip", c.IP()),
+			attribute.Int("http.status_code", statusCode),
+		}
+
+		span.SetAttributes(attrs...)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		} else if statusCode >= http.StatusInternalServerError {
+			span.SetStatus(codes.Error, http.StatusText(statusCode))
+		} else {
+			span.SetStatus(codes.Ok, "")
+		}
+		span.End()
+
+		tm.requestCounter.Add(ctx, 1, metric.WithAttributes(attrs...))
+		tm.requestDuration.Record(ctx, float64(duration.Milliseconds()), metric.WithAttributes(attrs...))
 
 		return err
 	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
+	return func(c *fiber.Ctx) error {
+		return c.Next()
+	}
 }
 
-// EnhanceTracing adds custom attributes to New Relic transactions
 func (tm *TracingMiddleware) EnhanceTracing() fiber.Handler {
+{{IF_OBSERVABILITY_GRAFANA}}
 	return func(c *fiber.Ctx) error {
-		txn := newrelic.FromContext(c.UserContext())
-		if txn == nil {
-			return c.Next()
-		}
-
-		txn.AddAttribute("http.real_ip", c.IP())
-		txn.AddAttribute("http.user_agent", c.Get(fiber.HeaderUserAgent))
-
-		if requestID := GetRequestID(c); requestID != "" {
-			txn.AddAttribute("request.id", requestID)
-		}
-
-		if userID := c.Locals(UserIDKey); userID != nil {
-			if userIDStr, ok := userID.(string); ok {
-				txn.AddAttribute("user.id", userIDStr)
+		span := trace.SpanFromContext(c.UserContext())
+		if span.SpanContext().IsValid() {
+			span.SetAttributes(
+				attribute.String("http.real_ip", c.IP()),
+				attribute.String("http.user_agent", c.Get(fiber.HeaderUserAgent)),
+			)
+			if requestID := GetRequestID(c); requestID != "" {
+				span.SetAttributes(attribute.String("request.id", requestID))
+			}
+			if userID := c.Locals(UserIDKey); userID != nil {
+				if userIDStr, ok := userID.(string); ok {
+					span.SetAttributes(attribute.String("user.id", userIDStr))
+				}
 			}
 		}
 
 		err := c.Next()
 		if err != nil {
-			txn.NoticeError(nrpkgerrors.Wrap(err))
+			span.RecordError(err)
 		}
 
-		txn.AddAttribute("http.status_code", c.Response().StatusCode())
-
 		return err
+	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
+	return func(c *fiber.Ctx) error {
+		return c.Next()
 	}
 }

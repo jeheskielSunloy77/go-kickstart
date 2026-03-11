@@ -26,6 +26,10 @@
 - Run tests for all apps and packages: `bun run test` or `bun run <APP NAME>:test` to test specific app.
 - Generate OpenAPI spec: `bun run openapi:generate`
 - Generate email HTML templates: `bun run emails:generate`
+{{IF_OBSERVABILITY_GRAFANA}}
+- Start the local observability stack: `docker compose --profile observability up --build`
+- Grafana dashboards are provisioned automatically in the `Observability` folder.
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 ## App #1: API (apps/api)
 
@@ -60,6 +64,10 @@
 - Auth sessions are stored in `auth_sessions` (see `apps/api/internal/database/migrations/000002_auth_sessions.up.sql`).
 - Cookie config lives under `AuthConfig` (`access_cookie_name`, `refresh_cookie_name`, `cookie_domain`, `cookie_same_site`).
 - Auth routes: `/api/v1/auth/register`, `/login`, `/google`, `/verify-email`, `/refresh`, `/me`, `/resend-verification`, `/logout`, `/logout-all`.
+{{IF_OBSERVABILITY_GRAFANA}}
+- OTEL bootstrap lives in `apps/api/internal/infrastructure/observability`; traces and metrics are exported through OTLP and logs are correlated by `trace.id` / `span.id`.
+- Local stack assets live in `ops/observability/grafana`; dashboard and datasource provisioning lives under `ops/observability/grafana/grafana`.
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 ### Caching
 

@@ -6,6 +6,7 @@ func TestShouldSkipForConfig(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.IncludeWeb = false
 	cfg.IncludeDocker = false
+	cfg.Observability = ObservabilityNone
 
 	skip := ShouldSkipForConfig(cfg)
 
@@ -23,6 +24,12 @@ func TestShouldSkipForConfig(t *testing.T) {
 	}
 	if !skip("docker-compose.yml") {
 		t.Fatalf("expected docker compose to be skipped")
+	}
+	if !skip("ops/observability/grafana/collector.yaml") {
+		t.Fatalf("expected observability assets to be skipped")
+	}
+	if !skip("apps/api/internal/infrastructure/observability/otel.go.tmpl") {
+		t.Fatalf("expected observability package to be skipped")
 	}
 	if skip("apps/api/main.go") {
 		t.Fatalf("did not expect api path to be skipped")

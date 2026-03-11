@@ -55,6 +55,11 @@ services:
       API_DATABASE.HOST: "db"
       API_DATABASE.PASSWORD: "postgres"
       API_CACHE.REDIS_ADDRESS: "redis:6379"
+{{IF_OBSERVABILITY_GRAFANA}}
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+      API_OBSERVABILITY.LOGGING.FORMAT: "json"
+{{END_IF_OBSERVABILITY_GRAFANA}}
     ports:
       - "8080:8080"
     depends_on:
@@ -81,6 +86,162 @@ services:
         condition: service_started
 {{END_IF_INCLUDE_WEB}}
 
+{{IF_OBSERVABILITY_GRAFANA}}
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.116.1
+    profiles: ["observability"]
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./ops/observability/grafana/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "9464:9464"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:13133/ >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    profiles: ["observability"]
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./ops/observability/grafana/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9090/-/ready >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      otel-collector:
+        condition: service_healthy
+      postgres-exporter:
+        condition: service_healthy
+      redis-exporter:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+
+  loki:
+    image: grafana/loki:3.2.0
+    profiles: ["observability"]
+    command: ["-config.file=/etc/loki/local-config.yml"]
+    volumes:
+      - ./ops/observability/grafana/loki.yml:/etc/loki/local-config.yml:ro
+    ports:
+      - "3100:3100"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3100/ready >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  promtail:
+    image: grafana/promtail:3.2.0
+    profiles: ["observability"]
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./ops/observability/grafana/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail_positions:/tmp/promtail
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9080/ready >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      loki:
+        condition: service_healthy
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    profiles: ["observability"]
+    command: ["-config.file=/etc/tempo/config.yml"]
+    volumes:
+      - ./ops/observability/grafana/tempo.yml:/etc/tempo/config.yml:ro
+    ports:
+      - "3200:3200"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3200/ready >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+    profiles: ["observability"]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres@db:5432/{{PROJECT_NAME_KEBAB}}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9187/metrics >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.67.0
+    profiles: ["observability"]
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "9121:9121"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9121/metrics >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    profiles: ["observability"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_METRICS_ENABLED: "true"
+    volumes:
+      - ./ops/observability/grafana/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./ops/observability/grafana/grafana/dashboard-providers.yml:/etc/grafana/provisioning/dashboards/dashboard-providers.yml:ro
+      - ./ops/observability/grafana/grafana/dashboards:/var/lib/grafana/dashboards/observability:ro
+    ports:
+      - "3005:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/api/health >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+{{END_IF_OBSERVABILITY_GRAFANA}}
+
 volumes:
   db_data:
   redis_data:
+{{IF_OBSERVABILITY_GRAFANA}}
+  promtail_positions:
+{{END_IF_OBSERVABILITY_GRAFANA}}

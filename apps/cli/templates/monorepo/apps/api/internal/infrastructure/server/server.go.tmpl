@@ -11,16 +11,16 @@ import (
 	"{{MODULE_PATH}}/internal/infrastructure/database"
 	"{{MODULE_PATH}}/internal/infrastructure/lib/job"
 	"{{MODULE_PATH}}/internal/infrastructure/lib/storage"
-	loggerPkg "{{MODULE_PATH}}/internal/infrastructure/logger"
-	"github.com/newrelic/go-agent/v3/integrations/nrredis-v9"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+{{IF_OBSERVABILITY_GRAFANA}}
+	"github.com/redis/go-redis/extra/redisotel/v9"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 )
 
 type Server struct {
 	Config        *config.Config
 	Logger        *zerolog.Logger
-	LoggerService *loggerPkg.LoggerService
 	DB            *database.Database
 	Redis         *redis.Client
 	Job           *job.JobService
@@ -28,8 +28,8 @@ type Server struct {
 	App           *fiber.App
 }
 
-func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.LoggerService) (*Server, error) {
-	db, err := database.NewDatabase(cfg, logger, loggerService)
+func NewServer(cfg *config.Config, logger *zerolog.Logger) (*Server, error) {
+	db, err := database.NewDatabase(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -39,15 +39,18 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	// Redis client with New Relic integration
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: cfg.Cache.RedisAddress,
 	})
 
-	// Add New Relic Redis hooks if available
-	if loggerService != nil && loggerService.GetApplication() != nil {
-		redisClient.AddHook(nrredis.NewHook(redisClient.Options()))
+{{IF_OBSERVABILITY_GRAFANA}}
+	if err := redisotel.InstrumentTracing(redisClient); err != nil {
+		logger.Warn().Err(err).Msg("failed to enable redis tracing")
 	}
+	if err := redisotel.InstrumentMetrics(redisClient); err != nil {
+		logger.Warn().Err(err).Msg("failed to enable redis metrics")
+	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 	// Test Redis connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -69,15 +72,11 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger, loggerService *logger
 	server := &Server{
 		Config:        cfg,
 		Logger:        logger,
-		LoggerService: loggerService,
 		DB:            db,
 		Redis:         redisClient,
 		Job:           jobService,
 		Storage:       storageProvider,
 	}
-
-	// Start metrics collection
-	// Runtime metrics are automatically collected by New Relic Go agent
 
 	return server, nil
 }

@@ -50,7 +50,7 @@ func resolveDisplayDestination(cfg scaffold.ScaffoldConfiguration) string {
 
 func reviewSummary(cfg scaffold.ScaffoldConfiguration) string {
 	return fmt.Sprintf(
-		"%s\nProject name: %s\nDestination: %s\nModule: %s\nWeb: %t\nDocker: %t\nGit: %t\nDatabase: %s\nStorage: %s\n",
+		"%s\nProject name: %s\nDestination: %s\nModule: %s\nWeb: %t\nDocker: %t\nGit: %t\nDatabase: %s\nStorage: %s\nObservability: %s\n",
 		ui.ReviewSummaryHeading,
 		cfg.ProjectName,
 		resolveDisplayDestination(cfg),
@@ -60,5 +60,6 @@ func reviewSummary(cfg scaffold.ScaffoldConfiguration) string {
 		cfg.InitGit,
 		cfg.DatabaseType,
 		cfg.Storage.Type,
+		cfg.Observability,
 	)
 }

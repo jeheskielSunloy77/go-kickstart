@@ -24,6 +24,7 @@ func DefaultConfig() ScaffoldConfiguration {
 				Path: "storage",
 			},
 		},
-		UseDefaults: true,
+		Observability: ObservabilityNone,
+		UseDefaults:   true,
 	}
 }

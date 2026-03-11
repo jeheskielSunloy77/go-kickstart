@@ -20,10 +20,6 @@ require (
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/v2 v2.2.2
 	github.com/lib/pq v1.10.9
-	github.com/newrelic/go-agent/v3 v3.42.0
-	github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter v1.0.4
-	github.com/newrelic/go-agent/v3/integrations/nrpkgerrors v1.1.0
-	github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rs/zerolog v1.34.0
@@ -34,6 +30,17 @@ require (
 	golang.org/x/text v0.31.0
 	google.golang.org/api v0.247.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+{{IF_OBSERVABILITY_GRAFANA}}
+	github.com/redis/go-redis/extra/redisotel/v9 v9.7.0
+	go.opentelemetry.io/otel v1.37.0
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.37.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.37.0
+	go.opentelemetry.io/otel/metric v1.37.0
+	go.opentelemetry.io/otel/sdk v1.37.0
+	go.opentelemetry.io/otel/sdk/metric v1.37.0
+	go.opentelemetry.io/otel/trace v1.37.0
+	gorm.io/plugin/opentelemetry v0.1.16
+{{END_IF_OBSERVABILITY_GRAFANA}}
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -120,7 +127,6 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/newrelic/go-agent/v3/integrations/logcontext-v2/nrwriter v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
@@ -139,14 +145,11 @@ require (
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+{{IF_OBSERVABILITY_GRAFANA}}
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.37.0 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
+{{END_IF_OBSERVABILITY_GRAFANA}}
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect

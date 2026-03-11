@@ -12,6 +12,9 @@ import (
 	"{{MODULE_PATH}}/internal/infrastructure/database"
 	"{{MODULE_PATH}}/internal/infrastructure/lib/cache"
 	"{{MODULE_PATH}}/internal/infrastructure/logger"
+{{IF_OBSERVABILITY_GRAFANA}}
+	"{{MODULE_PATH}}/internal/infrastructure/observability"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 	"{{MODULE_PATH}}/internal/infrastructure/repository"
 	"{{MODULE_PATH}}/internal/infrastructure/server"
 	"{{MODULE_PATH}}/internal/interface/http/handler"
@@ -26,11 +29,20 @@ func main() {
 		panic("failed to load config: " + err.Error())
 	}
 
-	// Initialize New Relic logger service
-	loggerService := logger.NewLoggerService(cfg.Observability)
-	defer loggerService.Shutdown()
-
-	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
+	log := logger.NewLogger(cfg.Observability)
+{{IF_OBSERVABILITY_GRAFANA}}
+	obs, err := observability.New(context.Background(), cfg.Observability, &log)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to initialize observability")
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if shutdownErr := obs.Shutdown(shutdownCtx); shutdownErr != nil {
+			log.Error().Err(shutdownErr).Msg("failed to shutdown observability")
+		}
+	}()
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 	if cfg.Primary.Env != config.EnvDevelopment {
 		log.Info().Msg(fmt.Sprintf("environment is not %s, running database migrations...", config.EnvDevelopment))
@@ -40,7 +52,7 @@ func main() {
 	}
 
 	// Initialize http server
-	httpServer, err := server.NewServer(cfg, &log, loggerService)
+	httpServer, err := server.NewServer(cfg, &log)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize server")
 	}

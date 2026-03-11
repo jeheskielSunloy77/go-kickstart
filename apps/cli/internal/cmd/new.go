@@ -19,28 +19,29 @@ var flags newFlags
 const repoURL = "https://github.com/jeheskielSunloy77/go-kickstart"
 
 type newFlags struct {
-	name       string
-	modulePath string
-	web        bool
-	noWeb      bool
-	docker     bool
-	noDocker   bool
-	git        bool
-	noGit      bool
-	db         string
-	dbHost     string
-	dbPort     string
-	dbUser     string
-	dbPassword string
-	dbName     string
-	dbSSLMode  string
-	pkg        string
-	storage    string
-	s3Endpoint string
-	s3Region   string
-	s3Bucket   string
-	s3Access   string
-	s3Secret   string
+	name          string
+	modulePath    string
+	web           bool
+	noWeb         bool
+	docker        bool
+	noDocker      bool
+	git           bool
+	noGit         bool
+	db            string
+	dbHost        string
+	dbPort        string
+	dbUser        string
+	dbPassword    string
+	dbName        string
+	dbSSLMode     string
+	pkg           string
+	storage       string
+	observability string
+	s3Endpoint    string
+	s3Region      string
+	s3Bucket      string
+	s3Access      string
+	s3Secret      string
 }
 
 var (
@@ -50,6 +51,7 @@ var (
 	componentsFlowFn            = prompts.ComponentsFlow
 	databaseFlowFn              = prompts.DatabaseFlow
 	storageFlowFn               = prompts.StorageFlow
+	observabilityFlowFn         = prompts.ObservabilityFlow
 	reviewConfigFn              = prompts.ReviewConfig
 	validateProjectNameFn       = validate.ProjectName
 	validateModulePathFn        = validate.ModulePath
@@ -95,6 +97,7 @@ func init() {
 	newCmd.Flags().StringVar(&flags.dbSSLMode, "db-ssl-mode", "", "database ssl mode")
 	newCmd.Flags().StringVar(&flags.pkg, "pkg", "bun", "package manager (bun)")
 	newCmd.Flags().StringVar(&flags.storage, "storage", "local", "storage type (local|s3)")
+	newCmd.Flags().StringVar(&flags.observability, "observability", string(scaffold.ObservabilityNone), "observability stack (none|grafana-oss)")
 	newCmd.Flags().StringVar(&flags.s3Endpoint, "s3-endpoint", "", "s3 endpoint")
 	newCmd.Flags().StringVar(&flags.s3Region, "s3-region", "", "s3 region")
 	newCmd.Flags().StringVar(&flags.s3Bucket, "s3-bucket", "", "s3 bucket")
@@ -137,6 +140,9 @@ func runInteractive() error {
 				return err
 			}
 			if err := storageFlowFn(&cfg); err != nil {
+				return err
+			}
+			if err := observabilityFlowFn(&cfg); err != nil {
 				return err
 			}
 		}
@@ -286,6 +292,15 @@ func configFromFlags(args []string, flags newFlags) (scaffold.ScaffoldConfigurat
 
 	cfg.PackageManager = scaffold.PackageManager(flags.pkg)
 	cfg.Storage.Type = scaffold.StorageType(flags.storage)
+	cfg.Observability = scaffold.ObservabilityNone
+	if flags.observability != "" {
+		cfg.Observability = scaffold.ObservabilityProvider(flags.observability)
+	}
+	switch cfg.Observability {
+	case scaffold.ObservabilityNone, scaffold.ObservabilityGrafanaOSS:
+	default:
+		return cfg, fmt.Errorf("unsupported observability stack: %s", flags.observability)
+	}
 
 	if cfg.Storage.Type == scaffold.StorageS3 {
 		if flags.s3Endpoint == "" || flags.s3Region == "" || flags.s3Bucket == "" || flags.s3Access == "" || flags.s3Secret == "" {

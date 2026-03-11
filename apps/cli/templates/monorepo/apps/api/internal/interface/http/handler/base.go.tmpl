@@ -7,8 +7,11 @@ import (
 	"{{MODULE_PATH}}/internal/infrastructure/server"
 	"{{MODULE_PATH}}/internal/interface/http/middleware"
 	"{{MODULE_PATH}}/internal/interface/http/validation"
-	"github.com/newrelic/go-agent/v3/integrations/nrpkgerrors"
-	"github.com/newrelic/go-agent/v3/newrelic"
+{{IF_OBSERVABILITY_GRAFANA}}
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 )
 
 // Handler provides base functionality for all handlers
@@ -31,7 +34,6 @@ type HandlerFuncNoContent[Req validation.Validatable] func(c *fiber.Ctx, req Req
 type ResponseHandler interface {
 	Handle(c *fiber.Ctx, result any) error
 	GetOperation() string
-	AddAttributes(txn *newrelic.Transaction, result any)
 }
 
 // JSONResponseHandler handles JSON responses
@@ -47,10 +49,6 @@ func (h JSONResponseHandler) GetOperation() string {
 	return "handler"
 }
 
-func (h JSONResponseHandler) AddAttributes(txn *newrelic.Transaction, result any) {
-	// http.status_code is already set by tracing middleware
-}
-
 // NoContentResponseHandler handles no-content responses
 type NoContentResponseHandler struct {
 	status int
@@ -62,10 +60,6 @@ func (h NoContentResponseHandler) Handle(c *fiber.Ctx, result any) error {
 
 func (h NoContentResponseHandler) GetOperation() string {
 	return "handler_no_content"
-}
-
-func (h NoContentResponseHandler) AddAttributes(txn *newrelic.Transaction, result any) {
-	// http.status_code is already set by tracing middleware
 }
 
 // FileResponseHandler handles file responses
@@ -86,17 +80,6 @@ func (h FileResponseHandler) GetOperation() string {
 	return "handler_file"
 }
 
-func (h FileResponseHandler) AddAttributes(txn *newrelic.Transaction, result any) {
-	if txn != nil {
-		// http.status_code is already set by tracing middleware
-		txn.AddAttribute("file.name", h.filename)
-		txn.AddAttribute("file.content_type", h.contentType)
-		if data, ok := result.([]byte); ok {
-			txn.AddAttribute("file.size_bytes", len(data))
-		}
-	}
-}
-
 // handleRequest is the unified handler function that eliminates code duplication
 func handleRequest[Req validation.Validatable](
 	c *fiber.Ctx,
@@ -112,23 +95,23 @@ func handleRequest[Req validation.Validatable](
 		route = c.Route().Path
 	}
 
-	// Get New Relic transaction from context
-	txn := newrelic.FromContext(c.UserContext())
-	if txn != nil {
-		txn.AddAttribute("handler.name", route)
-		txn.AddAttribute("http.method", method)
-		txn.AddAttribute("http.route", route)
-		responseHandler.AddAttributes(txn, nil)
+{{IF_OBSERVABILITY_GRAFANA}}
+	span := trace.SpanFromContext(c.UserContext())
+	if span.SpanContext().IsValid() {
+		span.SetAttributes(
+			attribute.String("handler.name", route),
+			attribute.String("http.method", method),
+			attribute.String("http.route", route),
+		)
 	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
-	// Get context-enhanced logger
 	loggerBuilder := middleware.GetLogger(c).With().
 		Str("operation", responseHandler.GetOperation()).
 		Str("method", method).
 		Str("path", path).
 		Str("route", route)
 
-	// Add file-specific fields to logger if it's a file handler
 	if fileHandler, ok := responseHandler.(FileResponseHandler); ok {
 		loggerBuilder = loggerBuilder.
 			Str("filename", fileHandler.filename).
@@ -136,12 +119,8 @@ func handleRequest[Req validation.Validatable](
 	}
 
 	logger := loggerBuilder.Logger()
-
-	// user.id is already set by tracing middleware
-
 	logger.Info().Msg("handling request")
 
-	// Validation with observability
 	validationStart := time.Now()
 	if err := validation.BindAndValidate(c, req); err != nil {
 		validationDuration := time.Since(validationStart)
@@ -151,25 +130,33 @@ func handleRequest[Req validation.Validatable](
 			Dur("validation_duration", validationDuration).
 			Msg("request validation failed")
 
-		if txn != nil {
-			txn.NoticeError(nrpkgerrors.Wrap(err))
-			txn.AddAttribute("validation.status", "failed")
-			txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
+{{IF_OBSERVABILITY_GRAFANA}}
+		if span.SpanContext().IsValid() {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			span.SetAttributes(
+				attribute.String("validation.status", "failed"),
+				attribute.Int64("validation.duration_ms", validationDuration.Milliseconds()),
+			)
 		}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 		return err
 	}
 
 	validationDuration := time.Since(validationStart)
-	if txn != nil {
-		txn.AddAttribute("validation.status", "success")
-		txn.AddAttribute("validation.duration_ms", validationDuration.Milliseconds())
+{{IF_OBSERVABILITY_GRAFANA}}
+	if span.SpanContext().IsValid() {
+		span.SetAttributes(
+			attribute.String("validation.status", "success"),
+			attribute.Int64("validation.duration_ms", validationDuration.Milliseconds()),
+		)
 	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 	logger.Debug().
 		Dur("validation_duration", validationDuration).
 		Msg("request validation successful")
 
-	// Execute handler with observability
 	handlerStart := time.Now()
 	result, err := handler(c, req)
 	handlerDuration := time.Since(handlerStart)
@@ -183,24 +170,40 @@ func handleRequest[Req validation.Validatable](
 			Dur("total_duration", totalDuration).
 			Msg("handler execution failed")
 
-		if txn != nil {
-			txn.NoticeError(nrpkgerrors.Wrap(err))
-			txn.AddAttribute("handler.status", "error")
-			txn.AddAttribute("handler.duration_ms", handlerDuration.Milliseconds())
-			txn.AddAttribute("total.duration_ms", totalDuration.Milliseconds())
+{{IF_OBSERVABILITY_GRAFANA}}
+		if span.SpanContext().IsValid() {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			span.SetAttributes(
+				attribute.String("handler.status", "error"),
+				attribute.Int64("handler.duration_ms", handlerDuration.Milliseconds()),
+				attribute.Int64("total.duration_ms", totalDuration.Milliseconds()),
+			)
 		}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 		return err
 	}
 
 	totalDuration := time.Since(start)
-
-	// Record success metrics and tracing
-	if txn != nil {
-		txn.AddAttribute("handler.status", "success")
-		txn.AddAttribute("handler.duration_ms", handlerDuration.Milliseconds())
-		txn.AddAttribute("total.duration_ms", totalDuration.Milliseconds())
-		responseHandler.AddAttributes(txn, result)
+{{IF_OBSERVABILITY_GRAFANA}}
+	if span.SpanContext().IsValid() {
+		attrs := []attribute.KeyValue{
+			attribute.String("handler.status", "success"),
+			attribute.Int64("handler.duration_ms", handlerDuration.Milliseconds()),
+			attribute.Int64("total.duration_ms", totalDuration.Milliseconds()),
+		}
+		if fileHandler, ok := responseHandler.(FileResponseHandler); ok {
+			attrs = append(attrs,
+				attribute.String("file.name", fileHandler.filename),
+				attribute.String("file.content_type", fileHandler.contentType),
+			)
+			if data, ok := result.([]byte); ok {
+				attrs = append(attrs, attribute.Int("file.size_bytes", len(data)))
+			}
+		}
+		span.SetAttributes(attrs...)
 	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 	logger.Info().
 		Dur("handler_duration", handlerDuration).

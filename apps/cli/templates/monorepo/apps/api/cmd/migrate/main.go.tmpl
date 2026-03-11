@@ -19,10 +19,7 @@ func main() {
 		panic("failed to load config: " + err.Error())
 	}
 
-	loggerService := logger.NewLoggerService(cfg.Observability)
-	defer loggerService.Shutdown()
-
-	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
+	log := logger.NewLogger(cfg.Observability)
 
 	timeout := cfg.Seeder.Timeout
 	if timeout == 0 {

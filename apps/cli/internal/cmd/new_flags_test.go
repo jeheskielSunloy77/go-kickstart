@@ -3,6 +3,8 @@ package cmd
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/jeheskielSunloy77/go-kickstart/apps/cli/internal/scaffold"
 )
 
 func TestConfigFromFlagsRequiresModule(t *testing.T) {
@@ -79,5 +81,29 @@ func TestConfigFromFlagsSmartDedupeWhenBaseEndsWithProjectName(t *testing.T) {
 	}
 	if cfg.Destination != base {
 		t.Fatalf("expected %s, got %s", base, cfg.Destination)
+	}
+}
+
+func TestConfigFromFlagsParsesObservability(t *testing.T) {
+	flags := newFlags{
+		modulePath:    "github.com/acme/demo",
+		observability: "grafana-oss",
+	}
+	cfg, err := configFromFlags([]string{"demo"}, flags)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Observability != scaffold.ObservabilityGrafanaOSS {
+		t.Fatalf("expected grafana-oss observability, got %s", cfg.Observability)
+	}
+}
+
+func TestConfigFromFlagsRejectsUnknownObservability(t *testing.T) {
+	flags := newFlags{
+		modulePath:    "github.com/acme/demo",
+		observability: "bogus",
+	}
+	if _, err := configFromFlags([]string{"demo"}, flags); err == nil {
+		t.Fatalf("expected error for unsupported observability")
 	}
 }

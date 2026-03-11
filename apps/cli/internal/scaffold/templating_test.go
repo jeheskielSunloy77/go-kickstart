@@ -32,3 +32,20 @@ func TestApplyTemplateConditionsThenReplaceTokens(t *testing.T) {
 		t.Fatalf("unexpected rendered content: %q", content)
 	}
 }
+
+func TestApplyTemplateConditionsObservabilityBlocks(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Observability = ObservabilityGrafanaOSS
+
+	input := "{{IF_OBSERVABILITY_ENABLED}}enabled{{END_IF_OBSERVABILITY_ENABLED}}{{IF_OBSERVABILITY_GRAFANA}} grafana{{END_IF_OBSERVABILITY_GRAFANA}}"
+	content := ApplyTemplateConditions(input, cfg)
+	if content != "enabled grafana" {
+		t.Fatalf("unexpected rendered content: %q", content)
+	}
+
+	cfg.Observability = ObservabilityNone
+	content = ApplyTemplateConditions(input, cfg)
+	if content != "" {
+		t.Fatalf("expected observability blocks to be removed, got %q", content)
+	}
+}

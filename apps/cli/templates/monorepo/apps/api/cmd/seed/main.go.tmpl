@@ -26,10 +26,7 @@ func main() {
 	migrate := flag.Bool("migrate", false, "run migrations before seeding")
 	flag.Parse()
 
-	loggerService := logger.NewLoggerService(cfg.Observability)
-	defer loggerService.Shutdown()
-
-	log := logger.NewLoggerWithService(cfg.Observability, loggerService)
+	log := logger.NewLogger(cfg.Observability)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -42,7 +39,7 @@ func main() {
 		cancel()
 	}
 
-	db, err := database.NewDatabase(cfg, &log, loggerService)
+	db, err := database.NewDatabase(cfg, &log)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}

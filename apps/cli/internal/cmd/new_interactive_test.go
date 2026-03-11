@@ -17,6 +17,7 @@ func restoreInteractiveDeps() {
 	componentsFlowFn = prompts.ComponentsFlow
 	databaseFlowFn = prompts.DatabaseFlow
 	storageFlowFn = prompts.StorageFlow
+	observabilityFlowFn = prompts.ObservabilityFlow
 	reviewConfigFn = prompts.ReviewConfig
 	validateProjectNameFn = validate.ProjectName
 	validateModulePathFn = validate.ModulePath
@@ -35,6 +36,7 @@ func TestRunInteractiveBasicSkipsAdvancedPrompts(t *testing.T) {
 	componentsCalled := false
 	databaseCalled := false
 	storageCalled := false
+	observabilityCalled := false
 
 	showWelcomeFn = func() error { return nil }
 	chooseFlowFn = func() (prompts.FlowChoice, error) { return prompts.FlowBasic, nil }
@@ -59,6 +61,10 @@ func TestRunInteractiveBasicSkipsAdvancedPrompts(t *testing.T) {
 		storageCalled = true
 		return nil
 	}
+	observabilityFlowFn = func(cfg *scaffold.ScaffoldConfiguration) error {
+		observabilityCalled = true
+		return nil
+	}
 	reviewConfigFn = func(cfg scaffold.ScaffoldConfiguration) (prompts.ReviewAction, error) {
 		return prompts.ReviewGenerate, nil
 	}
@@ -77,7 +83,7 @@ func TestRunInteractiveBasicSkipsAdvancedPrompts(t *testing.T) {
 	if destinationCalled {
 		t.Fatalf("destination flow should not run in basic mode")
 	}
-	if componentsCalled || databaseCalled || storageCalled {
+	if componentsCalled || databaseCalled || storageCalled || observabilityCalled {
 		t.Fatalf("advanced flows should not run in basic mode")
 	}
 }
@@ -117,6 +123,10 @@ func TestRunInteractiveAdvancedFlowOrder(t *testing.T) {
 		calls = append(calls, "storage")
 		return nil
 	}
+	observabilityFlowFn = func(cfg *scaffold.ScaffoldConfiguration) error {
+		calls = append(calls, "observability")
+		return nil
+	}
 	reviewConfigFn = func(cfg scaffold.ScaffoldConfiguration) (prompts.ReviewAction, error) {
 		calls = append(calls, "review")
 		return prompts.ReviewGenerate, nil
@@ -133,7 +143,7 @@ func TestRunInteractiveAdvancedFlowOrder(t *testing.T) {
 		t.Fatalf("runInteractive returned error: %v", err)
 	}
 
-	want := []string{"welcome", "choose", "basic", "destination", "components", "database", "storage", "review"}
+	want := []string{"welcome", "choose", "basic", "destination", "components", "database", "storage", "observability", "review"}
 	if !reflect.DeepEqual(calls, want) {
 		t.Fatalf("unexpected call order: got %v, want %v", calls, want)
 	}

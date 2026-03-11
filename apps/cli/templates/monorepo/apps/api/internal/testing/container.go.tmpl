@@ -114,7 +114,7 @@ func SetupTestDB(t *testing.T) (*TestDB, func()) {
 		// Sleep before first attempt too to give PostgreSQL time to initialize
 		time.Sleep(2 * time.Second)
 
-		db, lastErr = database.NewDatabase(cfg, &logger, nil)
+		db, lastErr = database.NewDatabase(cfg, &logger)
 		if lastErr == nil {
 			break
 		}

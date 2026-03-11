@@ -21,12 +21,6 @@ func CreateTestServer(logger *zerolog.Logger, db *TestDB) *server.Server {
 				Format:             "json",
 				SlowQueryThreshold: 100 * time.Millisecond,
 			},
-			NewRelic: config.NewRelicConfig{
-				LicenseKey:                "",    // Empty for tests
-				AppLogForwardingEnabled:   false, // Disabled for tests
-				DistributedTracingEnabled: false, // Disabled for tests
-				DebugLogging:              false, // Disabled for tests
-			},
 			HealthChecks: config.HealthChecksConfig{
 				Enabled: false,
 			},

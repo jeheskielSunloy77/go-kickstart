@@ -3,7 +3,6 @@ package middleware
 import (
 	"{{MODULE_PATH}}/internal/application"
 	"{{MODULE_PATH}}/internal/infrastructure/server"
-	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 type Middlewares struct {
@@ -16,12 +15,6 @@ type Middlewares struct {
 }
 
 func NewMiddlewares(s *server.Server, services *application.Services) *Middlewares {
-	// Get New Relic application instance from server
-	var nrApp *newrelic.Application
-	if s.LoggerService != nil {
-		nrApp = s.LoggerService.GetApplication()
-	}
-
 	var authorizer AuthorizationEnforcer
 	if services != nil {
 		authorizer = services.Authorization
@@ -32,7 +25,7 @@ func NewMiddlewares(s *server.Server, services *application.Services) *Middlewar
 		Auth:            NewAuthMiddleware(s),
 		Authorization:   NewAuthorizationMiddleware(authorizer),
 		ContextEnhancer: NewContextEnhancer(s),
-		Tracing:         NewTracingMiddleware(s, nrApp),
+		Tracing:         NewTracingMiddleware(s),
 		RateLimit:       NewRateLimitMiddleware(s),
 	}
 }

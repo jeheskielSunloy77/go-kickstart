@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"{{MODULE_PATH}}/internal/infrastructure/logger"
 	"{{MODULE_PATH}}/internal/infrastructure/server"
-	"github.com/newrelic/go-agent/v3/newrelic"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 )
 
@@ -54,9 +53,7 @@ func (ce *ContextEnhancer) EnhanceContext() fiber.Handler {
 			Str("ip", c.IP()).
 			Logger()
 
-		if txn := newrelic.FromContext(c.UserContext()); txn != nil {
-			contextLogger = logger.WithTraceContext(contextLogger, txn)
-		}
+		contextLogger = logger.WithTraceContext(c.UserContext(), contextLogger)
 
 		if userID := ce.extractUserID(c); userID != "" {
 			contextLogger = contextLogger.With().Str("user_id", userID).Logger()

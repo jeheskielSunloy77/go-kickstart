@@ -15,6 +15,9 @@ import (
 	"github.com/rs/zerolog"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+{{IF_OBSERVABILITY_GRAFANA}}
+	gormtracing "gorm.io/plugin/opentelemetry/tracing"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 )
 
 type Database struct {
@@ -25,7 +28,7 @@ type Database struct {
 
 const DatabasePingTimeout = 10
 
-func NewDatabase(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerConfig.LoggerService) (*Database, error) {
+func NewDatabase(cfg *config.Config, logger *zerolog.Logger) (*Database, error) {
 	dsn := buildDSN(cfg)
 
 	obsCfg := cfg.Observability
@@ -45,6 +48,11 @@ func NewDatabase(cfg *config.Config, logger *zerolog.Logger, loggerService *logg
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gorm database: %w", err)
 	}
+{{IF_OBSERVABILITY_GRAFANA}}
+	if err := gormDB.Use(gormtracing.NewPlugin()); err != nil {
+		return nil, fmt.Errorf("failed to instrument database: %w", err)
+	}
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 	sqlDB, err := gormDB.DB()
 	if err != nil {

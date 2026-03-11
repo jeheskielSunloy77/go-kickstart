@@ -44,6 +44,18 @@ Or you can use docker compose for local development:
 docker compose up --build
 ```
 
+{{IF_OBSERVABILITY_GRAFANA}}
+For the optional self-hosted observability stack:
+
+```bash
+docker compose --profile observability up --build
+```
+
+Grafana is available at `http://localhost:3005`, Prometheus at `http://localhost:9090`, and the OTLP collector at `http://localhost:4318`.
+The profile uses strict readiness checks, so first startup takes a bit longer but Grafana waits for Prometheus, Loki, and Tempo to be actually ready.
+Curated dashboards are provisioned automatically in the `Observability` folder: API Overview, API Errors & Latency, Logs Explorer, Traces Starter, OTEL Collector, Redis Overview, and Postgres Overview.
+{{END_IF_OBSERVABILITY_GRAFANA}}
+
 ## Common commands
 
 ```bash
@@ -79,11 +91,14 @@ bun run ui:shadcn:add <component>
 - Fiber web framework
 - GORM ORM with PostgreSQL
 - Asynq for background jobs with Redis
-- Zap + Zerolog for logging
+- Zerolog for logging
 - Testcontainers for integration tests
 - OpenAPI documentations UI
 - SMTP email handling
 - Redis caching layer
+{{IF_OBSERVABILITY_GRAFANA}}
+- OpenTelemetry instrumentation with Grafana OSS local stack
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 ### Architecture & Conventions
 
@@ -104,6 +119,10 @@ bun run ui:shadcn:add <component>
 - Email templates live in `apps/api/templates/emails` and are generated from `packages/emails`.
 - OpenAPI docs are written to `apps/api/static/openapi.json` and served at `/api/docs`. Update `packages/zod` and `packages/openapi/src/contracts` when endpoints change.
 - Caching layer with Redis in `apps/api/internal/lib/cache`.
+{{IF_OBSERVABILITY_GRAFANA}}
+- Local observability assets live in `ops/observability/grafana`; OTEL exports traces and metrics to the collector, while container logs are shipped to Loki through Promtail.
+- Grafana datasources and dashboards are provisioned from `ops/observability/grafana/grafana`; Prometheus also scrapes Redis/Postgres exporters and stack metrics for the curated infra dashboards.
+{{END_IF_OBSERVABILITY_GRAFANA}}
 
 {{IF_INCLUDE_WEB}}
 ## Web (apps/web)
@@ -154,4 +173,8 @@ bun run ui:shadcn:add <component>
 
 - This project is designed to be containerized. it is already dockerized with Dockerfiles in `apps/api/Dockerfile`{{IF_INCLUDE_WEB}} and `apps/web/Dockerfile`. it also include a nginx configuration file in `apps/web/nginx.conf` for serving the web app and reverse proxying to the API{{END_IF_INCLUDE_WEB}}.
 - Use docker compose file on `docker-compose.yml` for local development with containers.
+{{IF_OBSERVABILITY_GRAFANA}}
+- Start the local observability stack with `docker compose --profile observability up --build`.
+- The observability profile includes strict healthchecks for Grafana, Prometheus, Loki, Tempo, Promtail, the OTEL collector, and the Redis/Postgres exporters.
+{{END_IF_OBSERVABILITY_GRAFANA}}
 - CI/CD is set up with GitHub Actions in `.github/workflows/ci.yml`.

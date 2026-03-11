@@ -1,68 +1,25 @@
 package logger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"{{MODULE_PATH}}/internal/infrastructure/config"
-	"github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter"
-	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/pkgerrors"
+{{IF_OBSERVABILITY_GRAFANA}}
+	"go.opentelemetry.io/otel/trace"
+{{END_IF_OBSERVABILITY_GRAFANA}}
 )
 
-// LoggerService manages New Relic integration and logger creation
-type LoggerService struct {
-	nrApp *newrelic.Application
-}
-
-// NewLoggerService creates a new logger service with New Relic integration
-func NewLoggerService(cfg *config.ObservabilityConfig) *LoggerService {
-	service := &LoggerService{}
-
-	if cfg.NewRelic.LicenseKey == "" {
-		return service
+func NewLogger(cfg *config.ObservabilityConfig) zerolog.Logger {
+	if cfg == nil {
+		cfg = config.DefaultObservabilityConfig()
 	}
 
-	var configOptions []newrelic.ConfigOption
-	configOptions = append(configOptions,
-		newrelic.ConfigAppName(cfg.ServiceName),
-		newrelic.ConfigLicense(cfg.NewRelic.LicenseKey),
-		newrelic.ConfigAppLogForwardingEnabled(cfg.NewRelic.AppLogForwardingEnabled),
-		newrelic.ConfigDistributedTracerEnabled(cfg.NewRelic.DistributedTracingEnabled),
-	)
-
-	// Add debug logging only if explicitly enabled
-	if cfg.NewRelic.DebugLogging {
-		configOptions = append(configOptions, newrelic.ConfigDebugLogger(os.Stdout))
-	}
-
-	app, err := newrelic.NewApplication(configOptions...)
-	if err != nil {
-		return service
-	}
-
-	service.nrApp = app
-	return service
-}
-
-// Shutdown shuts down New Relic
-func (ls *LoggerService) Shutdown() {
-	if ls.nrApp != nil {
-		ls.nrApp.Shutdown(10 * time.Second)
-	}
-}
-
-// GetApplication returns the New Relic application instance
-func (ls *LoggerService) GetApplication() *newrelic.Application {
-	return ls.nrApp
-}
-
-// NewLoggerWithService creates a logger with full config and logger service
-func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *LoggerService) zerolog.Logger {
 	var logLevel zerolog.Level
 	level := cfg.GetLogLevel()
 
@@ -84,27 +41,11 @@ func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *Logger
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
 	var writer io.Writer
-
-	// Setup base writer
-	var baseWriter io.Writer
 	if cfg.IsProduction() && cfg.Logging.Format == "json" {
-		// In production, write to stdout
-		baseWriter = os.Stdout
-
-		// Wrap with New Relic zerologWriter for log forwarding in production
-		if loggerService != nil && loggerService.nrApp != nil {
-			nrWriter := zerologWriter.New(baseWriter, loggerService.nrApp)
-			writer = nrWriter
-		} else {
-			writer = baseWriter
-		}
+		writer = os.Stdout
 	} else {
-		// Development mode - use console writer
-		consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"}
-		writer = consoleWriter
+		writer = zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"}
 	}
-
-	// Note: New Relic log forwarding is now handled automatically by zerologWriter integration
 
 	logger := zerolog.New(writer).
 		Level(logLevel).
@@ -122,19 +63,17 @@ func NewLoggerWithService(cfg *config.ObservabilityConfig, loggerService *Logger
 	return logger
 }
 
-// WithTraceContext adds New Relic transaction context to logger
-func WithTraceContext(logger zerolog.Logger, txn *newrelic.Transaction) zerolog.Logger {
-	if txn == nil {
-		return logger
+func WithTraceContext(ctx context.Context, logger zerolog.Logger) zerolog.Logger {
+{{IF_OBSERVABILITY_GRAFANA}}
+	spanContext := trace.SpanContextFromContext(ctx)
+	if spanContext.IsValid() {
+		return logger.With().
+			Str("trace.id", spanContext.TraceID().String()).
+			Str("span.id", spanContext.SpanID().String()).
+			Logger()
 	}
-
-	// Get trace metadata from transaction
-	metadata := txn.GetTraceMetadata()
-
-	return logger.With().
-		Str("trace.id", metadata.TraceID).
-		Str("span.id", metadata.SpanID).
-		Logger()
+{{END_IF_OBSERVABILITY_GRAFANA}}
+	return logger
 }
 
 // NewPgxLogger creates a database logger

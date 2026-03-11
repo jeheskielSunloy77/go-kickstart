@@ -5,12 +5,15 @@ type DatabaseType string
 type PackageManager string
 
 type StorageType string
+type ObservabilityProvider string
 
 const (
-	DatabasePostgres DatabaseType   = "postgres"
-	PackageBun       PackageManager = "bun"
-	StorageLocal     StorageType    = "local"
-	StorageS3        StorageType    = "s3"
+	DatabasePostgres        DatabaseType          = "postgres"
+	PackageBun              PackageManager        = "bun"
+	StorageLocal            StorageType           = "local"
+	StorageS3               StorageType           = "s3"
+	ObservabilityNone       ObservabilityProvider = "none"
+	ObservabilityGrafanaOSS ObservabilityProvider = "grafana-oss"
 )
 
 type DBConnection struct {
@@ -51,5 +54,6 @@ type ScaffoldConfiguration struct {
 	IncludeDocker  bool
 	InitGit        bool
 	Storage        StorageConfig
+	Observability  ObservabilityProvider
 	UseDefaults    bool
 }

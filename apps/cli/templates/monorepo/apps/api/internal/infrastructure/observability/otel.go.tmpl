@@ -1,0 +1,89 @@
+package observability
+
+import (
+	"context"
+	"errors"
+
+	"{{MODULE_PATH}}/internal/infrastructure/config"
+	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+)
+
+type Service struct {
+	traceProvider *sdktrace.TracerProvider
+	meterProvider *sdkmetric.MeterProvider
+}
+
+func New(ctx context.Context, cfg *config.ObservabilityConfig, logger *zerolog.Logger) (*Service, error) {
+	if cfg == nil {
+		cfg = config.DefaultObservabilityConfig()
+	}
+
+	res, err := resource.New(ctx, resource.WithAttributes(
+		attribute.String("service.name", cfg.ServiceName),
+		attribute.String("deployment.environment", string(cfg.Env)),
+	))
+	if err != nil {
+		return nil, err
+	}
+
+	traceExporter, err := otlptracehttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	metricExporter, err := otlpmetrichttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	traceProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(traceExporter),
+		sdktrace.WithResource(res),
+	)
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
+		sdkmetric.WithResource(res),
+	)
+
+	otel.SetTracerProvider(traceProvider)
+	otel.SetMeterProvider(meterProvider)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+
+	if logger != nil {
+		logger.Info().
+			Str("service", cfg.ServiceName).
+			Str("environment", string(cfg.Env)).
+			Msg("opentelemetry initialized")
+	}
+
+	return &Service{
+		traceProvider: traceProvider,
+		meterProvider: meterProvider,
+	}, nil
+}
+
+func (s *Service) Shutdown(ctx context.Context) error {
+	if s == nil {
+		return nil
+	}
+
+	var shutdownErr error
+	if s.meterProvider != nil {
+		shutdownErr = errors.Join(shutdownErr, s.meterProvider.Shutdown(ctx))
+	}
+	if s.traceProvider != nil {
+		shutdownErr = errors.Join(shutdownErr, s.traceProvider.Shutdown(ctx))
+	}
+
+	return shutdownErr
+}
