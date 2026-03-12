@@ -5,6 +5,7 @@
 		"build": "turbo run build --filter=@go-kickstart/cli",
 		"dev": "turbo run dev --filter=@go-kickstart/cli",
 		"test": "turbo run test --filter=@go-kickstart/cli",
+		"test:e2e": "turbo run test:e2e --filter=@go-kickstart/cli",
 		"lint": "turbo run lint --filter=@go-kickstart/cli",
 		"format:check": "turbo run format:check --filter=@go-kickstart/cli",
 		"format:fix": "turbo run format:fix --filter=@go-kickstart/cli",

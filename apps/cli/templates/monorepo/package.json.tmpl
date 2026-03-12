@@ -20,7 +20,7 @@
 		"api:migrate:down": "cd apps/api && make migrate-down",
 		"api:migrate:fresh": "cd apps/api && make migrate-fresh",
 		"api:tidy": "cd apps/api && go fmt ./... && go mod tidy && go mod verify",
-		"api:install": "cd apps/api && go mod download",
+		"api:install": "cd apps/api && go mod tidy",
 		"api:test": "turbo run test --filter=@{{PROJECT_NAME_KEBAB}}/api",
 		{{IF_INCLUDE_WEB}}
 		"ui:shadcn:add": "cd packages/ui && bunx --bun shadcn@latest add",

@@ -9,7 +9,7 @@ import { RegisterPage } from "@/pages/auth/register";
 import { VerifyEmailPage } from "@/pages/auth/verify-email";
 import { HealthDemoPage } from "@/pages/health-demo";
 import { HomePage } from "@/pages/home";
-import { Navigate, Outlet, createBrowserRouter } from "react-router";
+import { Navigate, Outlet, createBrowserRouter } from "react-router-dom";
 
 export const router = createBrowserRouter([
   {

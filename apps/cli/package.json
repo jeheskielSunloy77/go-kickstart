@@ -6,6 +6,7 @@
 		"dev": "go run ./cmd/gokickstart",
 		"build": "go build -o ../../dist/gokickstart ./cmd/gokickstart",
 		"test": "go test ./...",
+		"test:e2e": "go test -count=1 -tags=e2e -timeout 45m ./e2e/...",
 		"lint": "go vet ./...",
 		"format:check": "test -z \"$(gofmt -l .)\"",
 		"format:fix": "gofmt -w .",
